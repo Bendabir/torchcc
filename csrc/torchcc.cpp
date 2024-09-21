@@ -4,10 +4,13 @@
 
 namespace torchcc
 {
-    // Just for first build tests and PoC
-    // FIXME : Remove this
-    torch::Tensor identity(const torch::Tensor &tensor)
+    torch::Tensor cc2d(const torch::Tensor &input, const uint8_t connectivity)
     {
-        return tensor;
+        return torch::zeros_like(input, torch::TensorOptions(torch::kUInt8));
+    }
+
+    torch::Tensor cc3d(const torch::Tensor &input, const uint8_t connectivity)
+    {
+        return torch::zeros_like(input, torch::TensorOptions(torch::kUInt8));
     }
 }
