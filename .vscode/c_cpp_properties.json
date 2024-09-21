@@ -11,7 +11,7 @@
             "defines": [],
             "compilerPath": "/usr/local/cuda/bin/nvcc",
             "cStandard": "gnu17",
-            "cppStandard": "gnu++14",
+            "cppStandard": "gnu++17", // CPP14 for Torch <= 2.0.1
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [
                 "-D__STRICT_ANSI__",
