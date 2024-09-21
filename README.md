@@ -39,15 +39,17 @@ More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-c
 
 ## Development
 
+### Libraries
+
 For local development, a few libraries are required. We need the NVIDIA CUDA Toolkit to build our CUDA kernels along with the Torch library (`libtorch`) for PyTorch bindings. We also need the Python headers for the bindings. The following instructions assume Linux (or WSL). This is mostly for integration with VSCode.
 
 Please carefully read all the instructions before running the setup.
 
-### NVIDIA CUDA Toolkit
+#### NVIDIA CUDA Toolkit
 
 The NVIDIA CUDA Toolkit can be downloaded from https://developer.nvidia.com/cuda-toolkit-archive. It will create a symbolic link to `/usr/local/cuda`. Versions can be switched with `update-alternatives`.
 
-### Torch
+#### Torch
 
 As we're building some bindings for Torch, we also need the different header files of `libtorch`. These can be downloaded from the official PyTorch website : https://pytorch.org/get-started/locally. The library must go to the `lib` directory.
 
@@ -70,13 +72,36 @@ cd lib
 ln -s $(poetry env info --path)/lib/python*/site-packages/torch libtorch
 ```
 
-### Python
+#### Python
 
 Because we can use different versions of Python, we need to provide the proper headers. On Linux, these are usually stored to `/usr/include/python<x>.<y>`. One easy solution is just to create another symbolic link in the `lib` directory.
 
 ```bash
 cd lib
 ln -s /usr/include/$(basename $(realpath $(poetry env info --executable))) python
+```
+
+### Install
+
+Prepare a virtual as follow :
+
+```bash
+poetry env use python
+poetry lock
+poetry install --with dev
+```
+
+### Build
+
+Once everything is setup, the library can be build with the following command. One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults is not provided.
+
+```bash
+poetry build -f wheel
+```
+
+```bash
+# Select the architectures
+MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry build -f wheel
 ```
 
 ## References
