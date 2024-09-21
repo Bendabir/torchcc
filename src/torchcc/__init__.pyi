@@ -1,0 +1,3 @@
+import torch
+
+def identity(tensor: torch.Tensor) -> torch.Tensor: ...
