@@ -192,6 +192,8 @@ unfixable = ["ERA001"]
 
     "SLF001",
 ]
+"build.py" = ["PTH"]
+"*.pyi" = ["CPY"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
