@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import glob
+import os
 from typing import Any
 
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
@@ -20,15 +21,17 @@ def build(setup_kwargs: dict[str, Any]) -> None:
                     #        so the lib file is a top level.
                     name="_libtorchcc",
                     sources=[
-                        *glob.glob("csrc/*.cpp"),
-                        *glob.glob("csrc/*.cu"),
+                        *glob.glob("csrc/**/*.cpp", recursive=True),
+                        *glob.glob("csrc/**/*.cu", recursive=True),
                     ],
                     include_dirs=[
-                        *glob.glob("include/**"),
+                        # NOTE : Need to provide the full path.
+                        #        Otherwise the compiler doesn't find our header files.
+                        #        Other libs (Python, Torch, CUDA, etc.)
+                        #        are automatically provided.
+                        os.path.abspath("include"),
                     ],
-                    define_macros=[],
                     extra_compile_args={
-                        "cxx": [],
                         "nvcc": [
                             "-D__STRICT_ANSI__",
                             "-DCUDA_HAS_FP16=1",
