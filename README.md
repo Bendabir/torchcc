@@ -39,7 +39,7 @@ More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-c
 
 ## Development
 
-For local development, a few libraries are required. We need the NVIDIA CUDA Toolkit to build our CUDA kernels along with the Torch library (`libtorch`) for PyTorch bindings. The following instructions assume Linux (or WSL).
+For local development, a few libraries are required. We need the NVIDIA CUDA Toolkit to build our CUDA kernels along with the Torch library (`libtorch`) for PyTorch bindings. We also need the Python headers for the bindings. The following instructions assume Linux (or WSL). This is mostly for integration with VSCode.
 
 Please carefully read all the instructions before running the setup.
 
@@ -68,6 +68,15 @@ One other alternative is to use the headers shipped with PyTorch directly.
 ```bash
 cd lib
 ln -s $(poetry env info --path)/lib/python*/site-packages/torch libtorch
+```
+
+### Python
+
+Because we can use different versions of Python, we need to provide the proper headers. On Linux, these are usually stored to `/usr/include/python<x>.<y>`. One easy solution is just to create another symbolic link in the `lib` directory.
+
+```bash
+cd lib
+ln -s /usr/include/$(basename $(realpath $(poetry env info --executable))) python
 ```
 
 ## References
