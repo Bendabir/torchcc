@@ -1,6 +1,0 @@
-from typing import Literal
-
-import torch
-
-def cc2d(input_: torch.Tensor, connectivity: Literal[4, 8]) -> torch.Tensor: ...
-def cc3d(input_: torch.Tensor, connectivity: Literal[6, 26]) -> torch.Tensor: ...
