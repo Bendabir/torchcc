@@ -37,7 +37,15 @@ pytest-randomly = "^3.15.0"
 opencv-python-headless = "^4.10.0.84"
 
 [build-system]
-requires = ["poetry-core", "setuptools", "ninja", "numpy<2", "torch", "wheel"]
+requires = [
+    # TODO : Check we need all of this
+    "poetry-core",
+    "setuptools",
+    "ninja",
+    "numpy",
+    "torch",
+    "wheel",
+]
 build-backend = "poetry.core.masonry.api"
 
 # --- black ---
