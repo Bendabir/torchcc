@@ -1,3 +1,6 @@
+#ifndef TORCHCC_H
+#define TORCHCC_H
+
 #include <torch/torch.h>
 
 namespace torchcc
@@ -6,3 +9,5 @@ namespace torchcc
     // FIXME : Remove this
     torch::Tensor identity(const torch::Tensor &tensor);
 }
+
+#endif // TORCHCC_H
