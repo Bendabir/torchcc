@@ -1,0 +1,79 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+minimum_pre_commit_version: 3.7.0
+fail_fast: true
+default_language_version:
+  python: python3.9
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-toml
+      - id: check-yaml
+        args:
+          - --allow-multiple-documents
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: name-tests-test
+      - id: fix-encoding-pragma
+        args:
+          - --remove
+  - repo: https://gitlab.com/bmares/check-json5
+    rev: v1.0.0
+    hooks:
+      - id: check-json5
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: poetry run black
+        args: ["--check"]
+        language: python
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff
+        name: ruff
+        entry: poetry run ruff check
+        args: ["--force-exclude"]
+        language: python
+        types_or: [python, pyi]
+        require_serial: true
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy
+        args: ["--ignore-missing-imports", "--scripts-are-modules"]
+        language: python
+        types_or: [python, pyi]
+        require_serial: true
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        alias: prettier-check
+        name: prettier (JSON, Markdown & YAML)
+        entry: prettier --check --ignore-unknown
+        files: "\\.(json|md|yaml|yml)$"
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.3
+    hooks:
+      - id: poetry-install
+        name: poetry install
+        args:
+          - --with
+          - dev,package
+          - --sync
+  - repo: local
+    hooks:
+      - id: forbid-yml-file
+        name: no .yml extension
+        entry: Yaml file must have the .yaml extension
+        language: fail
+        files: ".*\\.yml"
