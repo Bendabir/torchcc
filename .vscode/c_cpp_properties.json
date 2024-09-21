@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "CUDA",
+            "includePath": [
+                "/usr/local/cuda/lib64/**",
+                "${workspaceFolder}/include/**",
+                "${workspaceFolder}/lib/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/local/cuda/bin/nvcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerArgs": [
+                "-D__STRICT_ANSI__",
+                "-DCUDA_HAS_FP16=1",
+                "-D__CUDA_NO_HALF_OPERATORS__",
+                "-D__CUDA_NO_HALF_CONVERSIONS__",
+                "-D__CUDA_NO_HALF2_OPERATORS__"
+            ]
+        }
+    ],
+    "version": 4
+}
