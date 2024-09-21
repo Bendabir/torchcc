@@ -68,7 +68,7 @@ repos:
         name: poetry install
         args:
           - --with
-          - dev,package
+          - dev
           - --sync
   - repo: local
     hooks:
