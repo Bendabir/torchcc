@@ -12,9 +12,22 @@ documentation = "https://github.com/Bendabir/torchcc/README.md"
 keywords = ["torch"]
 packages = [{ include = "torchcc", from = "src" }]
 
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
+
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
 typing-extensions = "^4.12.0"
+torch = ">=1.7.1"
+opencv-python = { version = ">=4", optional = true }
+opencv-python-headless = { version = ">=4", optional = true }
+
+[tool.poetry.group.build.dependencies]
+setuptools = "*"
+ninja = "*"
+numpy = "<2"
+torch = "*"
 
 [tool.poetry.group.dev]
 optional = true
@@ -36,7 +49,7 @@ wheel = "^0.44.0"
 poetry-plugin-export = "^1.6.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core", "setuptools", "ninja", "numpy<2", "torch"]
 build-backend = "poetry.core.masonry.api"
 
 # --- black ---

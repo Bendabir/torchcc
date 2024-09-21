@@ -1,6 +1,7 @@
 **/__pycache__
 *.pyc
 *.o
+*.so
 **/.mypy_cache
 **/.mypy_cache_vscode
 **/.ruff_cache
@@ -12,3 +13,4 @@
 **/*.egg-info
 poetry.lock
 .coverage
+setup.py
