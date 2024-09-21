@@ -23,6 +23,20 @@ def build(setup_kwargs: dict[str, Any]) -> None:
                         *glob.glob("csrc/*.cpp"),
                         *glob.glob("csrc/*.cu"),
                     ],
+                    include_dirs=[
+                        *glob.glob("include/**"),
+                    ],
+                    define_macros=[],
+                    extra_compile_args={
+                        "cxx": [],
+                        "nvcc": [
+                            "-D__STRICT_ANSI__",
+                            "-DCUDA_HAS_FP16=1",
+                            "-D__CUDA_NO_HALF_OPERATORS__",
+                            "-D__CUDA_NO_HALF_CONVERSIONS__",
+                            "-D__CUDA_NO_HALF2_OPERATORS__",
+                        ],
+                    },
                 )
             ],
             "cmdclass": {
