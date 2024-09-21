@@ -1,0 +1,11 @@
+*.py     text eol=lf diff=python
+*.pyi    text eol=lf diff=python
+*.pyc    linguist-generated=true diff=generated
+*.typed  binary
+
+*.json   text eol=lf diff=json
+*.toml   text eol=lf diff=toml
+*.yaml   text eol=lf diff=yaml
+*.lock   text eol=lf
+
+*.md     text eol=lf diff=markdown
