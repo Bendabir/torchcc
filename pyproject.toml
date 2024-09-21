@@ -34,6 +34,7 @@ black = "^24.8.0"
 pytest = "^8.3.2"
 pytest-cov = "^5.0.0"
 pytest-randomly = "^3.15.0"
+opencv-python-headless = "^4.10.0.84"
 
 [build-system]
 requires = ["poetry-core", "setuptools", "ninja", "numpy<2", "torch", "wheel"]
