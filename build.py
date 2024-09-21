@@ -7,7 +7,54 @@ import glob
 import os
 from typing import Any
 
+import torch
+import torch.version
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
+
+# Define some default architectures to build for (basically all)
+# Couldn't find a better way to do this
+TORCH_CUDA_ARCH_LIST = "TORCH_CUDA_ARCH_LIST"
+
+if TORCH_CUDA_ARCH_LIST not in os.environ:
+    archs: list[str] = []
+
+    if torch.version.cuda is None:
+        raise RuntimeError("Couldn't infer CUDA version.")
+
+    version = tuple(map(int, torch.version.cuda.split(".")))
+
+    # More details :
+    # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
+    # https://en.wikipedia.org/wiki/CUDA
+    # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+    if version <= (10, 2):
+        archs.extend(("3.0", "3.5", "3.7"))
+
+    if version <= (11, 8):
+        archs.extend(("5.0", "5.2", "5.3"))
+
+    if version >= (8, 0):
+        archs.extend(("6.0", "6.1", "6.2"))
+
+    if version >= (9, 0):
+        archs.extend(("7.0", "7.2"))
+
+    if version >= (10, 0):
+        archs.append("7.5")
+
+    if version >= (11, 1):
+        archs.extend(("8.0", "8.6", "8.7"))
+
+    if version >= (11, 8):
+        archs.append("8.9")
+
+    if version >= (12, 0):
+        archs.extend(("9.0", "9.0a"))
+
+    if version >= (12, 6):
+        archs.append("10.0")
+
+    os.environ[TORCH_CUDA_ARCH_LIST] = " ".join(archs)
 
 
 def build(setup_kwargs: dict[str, Any]) -> None:
