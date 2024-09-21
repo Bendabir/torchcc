@@ -37,6 +37,39 @@
 
 More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
 
+## Development
+
+For local development, a few libraries are required. We need the NVIDIA CUDA Toolkit to build our CUDA kernels along with the Torch library (`libtorch`) for PyTorch bindings. The following instructions assume Linux (or WSL).
+
+Please carefully read all the instructions before running the setup.
+
+### NVIDIA CUDA Toolkit
+
+The NVIDIA CUDA Toolkit can be downloaded from https://developer.nvidia.com/cuda-toolkit-archive. It will create a symbolic link to `/usr/local/cuda`. Versions can be switched with `update-alternatives`.
+
+### Torch
+
+As we're building some bindings for Torch, we also need the different header files of `libtorch`. These can be downloaded from the official PyTorch website : https://pytorch.org/get-started/locally. The library must go to the `lib` directory.
+
+For example :
+
+```bash
+cd lib
+wget https://download.pytorch.org/libtorch/cu121/libtorch-shared-with-deps-2.4.1%2Bcu121.zip # libtorch 2.4.1 for CUDA 12.1 (Linux)
+unzip libtorch-shared-with-deps-2.4.1%2Bcu121.zip
+rm libtorch-shared-with-deps-2.4.1%2Bcu121.zip
+```
+
+> [!WARNING]
+> Make sure you downloaded the proper version of `libtorch` for both CUDA and your system. The `libtorch` version must match the PyTorch's one.
+
+One other alternative is to use the headers shipped with PyTorch directly.
+
+```bash
+cd lib
+ln -s $(poetry env info --path)/lib/python*/site-packages/torch libtorch
+```
+
 ## References
 
 This work is based on the following articles.

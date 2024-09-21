@@ -14,3 +14,4 @@
 poetry.lock
 .coverage
 setup.py
+**/lib/**

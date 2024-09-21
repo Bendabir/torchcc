@@ -5,7 +5,7 @@
             "includePath": [
                 "/usr/local/cuda/lib64/**",
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/lib/**"
+                "${workspaceFolder}/lib/libtorch/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/local/cuda/bin/nvcc",
