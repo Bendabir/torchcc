@@ -20,8 +20,8 @@ generate-setup-file = true
 python = ">=3.9,<4"
 typing-extensions = "^4.12.0"
 torch = ">=1.7.1"
-opencv-python = { version = ">=4", optional = true }
-opencv-python-headless = { version = ">=4", optional = true }
+opencv-python = { version = ">=4,<5", optional = true }
+opencv-python-headless = { version = ">=4,<5", optional = true }
 
 [tool.poetry.group.dev]
 optional = true
