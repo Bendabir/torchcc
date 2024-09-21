@@ -16,10 +16,7 @@ def build(setup_kwargs: dict[str, Any]) -> None:
         {
             "ext_modules": [
                 CUDAExtension(
-                    # NOTE : Couldn't find a way to build the lib to torchcc._C
-                    #        (or something else) and then import it properly,
-                    #        so the lib file is a top level.
-                    name="_libtorchcc",
+                    name="torchcc._cuda",
                     sources=[
                         *glob.glob("csrc/**/*.cpp", recursive=True),
                         *glob.glob("csrc/**/*.cu", recursive=True),
