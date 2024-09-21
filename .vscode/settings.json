@@ -47,6 +47,28 @@
     "[toml]": {
         "editor.formatOnSave": true
     },
+    "[cpp]": {
+        "editor.wordBasedSuggestions": "off",
+        "editor.suggest.insertMode": "replace",
+        "editor.semanticHighlighting.enabled": true,
+        "editor.wordWrapColumn": 120,
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.rulers": [120],
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    "[cuda-cpp]": {
+        "editor.wordBasedSuggestions": "off",
+        "editor.suggest.insertMode": "replace",
+        "editor.semanticHighlighting.enabled": true,
+        "editor.wordWrapColumn": 120,
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.rulers": [120],
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
     "files.watcherExclude": {
         "**/dist": true,
         "**/build": true,

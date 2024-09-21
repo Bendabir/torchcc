@@ -26,7 +26,7 @@ max_line_length = 88
 indent_style = space
 indent_size = 2
 
-[*.{cu,cpp,c,h}]
+[*.{cu,cpp,c,h,hpp}]
 indent_style = space
 indent_size = 4
 max_line_length = 120
