@@ -37,6 +37,29 @@
 
 More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
 
+## Usage
+
+### Install
+
+**TODO**
+
+### 2D Connected Components
+
+**TODO**
+
+### 3D Connected Components
+
+**TODO**
+
+### CPU support
+
+CPU support is delegated to third-party libraries. [OpenCV](https://github.com/opencv/opencv-python) is used for 2D Connected Components Labeling on CPU, while [ConnectedComponents3D](https://github.com/seung-lab/connected-components-3d) is used for 3D counterpart. Both libraries are optional. Install them for transparent CPU support.
+
+```bash
+pip install "opencv-python-headless>=4,<5" # 2D
+pip install "connected-components-3d>=3,<4" # 3D
+```
+
 ## Development
 
 ### Libraries
