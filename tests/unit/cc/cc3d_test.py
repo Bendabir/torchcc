@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+import cc3d as cpucc3d
 import numpy as np
 import pytest
 import torch
@@ -77,10 +78,11 @@ def test_cc2d(
 
     # Compare to what OpenCV would produce
     if len(size) == 3:
-        raise NotImplementedError
+        expected = cpucc3d.connected_components(_x, connectivity=connectivity)
 
     if len(size) == 4:
-        raise NotImplementedError
+        for i in range(len(_x)):
+            expected[i] = cpucc3d.connected_components(_x[i], connectivity=connectivity)
 
     # Use NumPy for better explainability
     np.testing.assert_array_equal(_labels, expected, strict=True)
