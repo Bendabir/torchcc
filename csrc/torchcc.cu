@@ -15,7 +15,7 @@ namespace torchcc
         TORCH_CHECK_VALUE(
             (connectivity == 4) || (connectivity == 8),
             "Only 4-connectivity and 8-connectivity are supported.");
-        TORCH_CHECK_NOT_IMPLEMENTED(connectivity == 4, "2D CCL 4-connectivity is not yet supported.");
+        TORCH_CHECK_NOT_IMPLEMENTED(connectivity != 4, "2D CCL 4-connectivity is not yet supported.");
 
         const size_t ndim = x.ndimension();
 
@@ -55,9 +55,9 @@ namespace torchcc
         TORCH_CHECK_VALUE(
             (connectivity == 6) || (connectivity == 18) || (connectivity == 26),
             "Only 6-connectivity, 18-connectivity and 26-connectivity are supported.");
-        TORCH_CHECK_NOT_IMPLEMENTED(connectivity == 6, "3D CCL 6-connectivity is not yet supported.");
-        TORCH_CHECK_NOT_IMPLEMENTED(connectivity == 18, "3D CCL 18-connectivity is not yet supported.");
-        TORCH_CHECK_NOT_IMPLEMENTED(connectivity == 26, "3D CCL 26-connectivity is not yet supported.");
+        TORCH_CHECK_NOT_IMPLEMENTED(connectivity != 6, "3D CCL 6-connectivity is not yet supported.");
+        TORCH_CHECK_NOT_IMPLEMENTED(connectivity != 18, "3D CCL 18-connectivity is not yet supported.");
+        TORCH_CHECK_NOT_IMPLEMENTED(connectivity != 26, "3D CCL 26-connectivity is not yet supported.");
 
         const size_t ndim = x.ndimension();
 
@@ -65,6 +65,8 @@ namespace torchcc
         TORCH_CHECK_VALUE((ndim == 3) || (ndim == 4), "Input must be a volume [H, W, D] or a batch [N, H, W, D].");
         TORCH_CHECK_TYPE(x.scalar_type() == torch::kUInt8, "Input must be uint8 data.");
 
-        return torch::zeros_like(x); // TODO
+        const torch::TensorOptions options = torch::TensorOptions(torch::kInt32);
+
+        return torch::zeros_like(x, options); // TODO
     }
 }
