@@ -65,9 +65,10 @@ def cc2d(x: torch.Tensor, connectivity: Literal[4, 8]) -> torch.Tensor:
             labels = np.zeros(data.shape, dtype=np.uint8)
 
             for i in range(len(data)):
-                _, cc = cv2.connectedComponents(data[i], connectivity=connectivity)
-
-                labels[i] = cc
+                _, labels[i] = cv2.connectedComponents(
+                    data[i],
+                    connectivity=connectivity,
+                )
 
             return torch.from_numpy(labels)
 
