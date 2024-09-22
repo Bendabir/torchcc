@@ -38,7 +38,7 @@ def cc2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     if x.is_cuda:
         return _cuda.cc2d(x, connectivity)
 
-    return _cpu.cc2d(x, connectivity)
+    return _cpu.cc2d(x, connectivity)  # pragma: no cover
 
 
 def cc3d(x: torch.Tensor, connectivity: Literal[6, 26] = 26) -> torch.Tensor:
@@ -69,4 +69,4 @@ def cc3d(x: torch.Tensor, connectivity: Literal[6, 26] = 26) -> torch.Tensor:
     if x.is_cuda:
         return _cuda.cc3d(x, connectivity)
 
-    return _cpu.cc3d(x, connectivity)
+    return _cpu.cc3d(x, connectivity)  # pragma: no cover

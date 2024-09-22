@@ -114,6 +114,14 @@ poetry run ruff check --fix src tests *.py
 poetry run mypy src tests *.py
 ```
 
+### Tests
+
+PyTest is used to run unit tests. Only the GPU code is tested (after build). CPU code is assumed correct as it lies on third-party libraries.
+
+```bash
+poetry run pytest --cov=src/torchcc tests/unit
+```
+
 ## References
 
 This work is based on the following articles.
