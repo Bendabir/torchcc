@@ -10,13 +10,16 @@ import torch
 
 try:
     import cv2
-except ImportError:
+except ImportError:  # pragma: no cover
     CV2_INSTALLED = False
 else:
     CV2_INSTALLED = True
 
 
-def cc2d(x: torch.Tensor, connectivity: Literal[4, 8]) -> torch.Tensor:
+def cc2d(  # pragma: no cover
+    x: torch.Tensor,
+    connectivity: Literal[4, 8],
+) -> torch.Tensor:
     """Run Connected Components Labeling on 2D images (or batches) on CPU.
 
     Note
@@ -80,7 +83,10 @@ def cc2d(x: torch.Tensor, connectivity: Literal[4, 8]) -> torch.Tensor:
     )
 
 
-def cc3d(x: torch.Tensor, connectivity: Literal[6, 26]) -> torch.Tensor:
+def cc3d(  # pragma: no cover
+    x: torch.Tensor,
+    connectivity: Literal[6, 26],
+) -> torch.Tensor:
     """Run Connected Components Labeling on 3D volumes (or batches) on CPU.
 
     Note
