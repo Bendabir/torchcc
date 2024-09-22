@@ -22,8 +22,8 @@ namespace torchcc
     torch::Tensor cc3d(const torch::Tensor &x, const uint8_t connectivity)
     {
         TORCH_CHECK_VALUE(
-            (connectivity == 6) || (connectivity == 26),
-            "Only 6-connectivity and 26-connectivity are supported.");
+            (connectivity == 6) || (connectivity == 18) || (connectivity == 26),
+            "Only 6-connectivity, 18-connectivity and 26-connectivity are supported.");
 
         const size_t ndim = x.ndimension();
 

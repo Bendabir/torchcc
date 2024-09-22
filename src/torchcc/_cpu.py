@@ -85,7 +85,7 @@ def cc2d(  # pragma: no cover
 
 def cc3d(  # pragma: no cover
     x: torch.Tensor,
-    connectivity: Literal[6, 26],
+    connectivity: Literal[6, 18, 26],
 ) -> torch.Tensor:
     """Run Connected Components Labeling on 3D volumes (or batches) on CPU.
 
@@ -99,9 +99,11 @@ def cc3d(  # pragma: no cover
         Data to perform CCL on.
         It must be an image (H, W, D) or a batch of images (N, H, W, D).
         Only uint8 data is supported.
-    connectivity : {6, 26}
+    connectivity : {6, 18, 26}
         Define how to perform CCL.
         With 6-connectivity, pixels are considered connected if they share a side.
+        With 18-connectivity, pixels are considered connected if they share at least
+        an edge.
         With 26-connectivity, pixels are considered connected if they share at least
         a vertex.
 

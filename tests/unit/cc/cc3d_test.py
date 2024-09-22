@@ -46,7 +46,7 @@ from torchcc import cc3d
     [True, False],
     ids=["contiguous", "non-contiguous"],
 )
-@pytest.mark.parametrize("connectivity", [6, 26])
+@pytest.mark.parametrize("connectivity", [6, 18, 26])
 @pytest.mark.skipif(
     not torch.cuda.is_available(),
     reason="CUDA is not available.",
@@ -56,7 +56,7 @@ def test_cc2d(
     device: torch.device,
     size: tuple[int, ...],
     contiguous: bool,  # noqa: FBT001
-    connectivity: Literal[6, 26],
+    connectivity: Literal[6, 18, 26],
 ) -> None:
     x = torch.randint(
         low=0,
