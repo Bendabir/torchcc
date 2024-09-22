@@ -104,6 +104,16 @@ poetry build -f wheel
 MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry build -f wheel
 ```
 
+### Quality
+
+Code quality is ensured by several tools (`ruff`, `mypy` & `black`).
+
+```bash
+poetry run black src tests *.py
+poetry run ruff check --fix src tests *.py
+poetry run mypy src tests *.py
+```
+
 ## References
 
 This work is based on the following articles.

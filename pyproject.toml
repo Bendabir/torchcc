@@ -190,6 +190,7 @@ unfixable = ["ERA001"]
 ]
 "build.py" = ["PTH"]
 "*.pyi" = ["CPY"]
+"setup.py" = ["ALL"] # File is generated, ignoring all
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
