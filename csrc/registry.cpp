@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Bendabir.
 #include <torch/extension.h>
 #include <torchcc.h>
 

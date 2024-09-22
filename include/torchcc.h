@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Bendabir.
 #ifndef TORCHCC_H
 #define TORCHCC_H
 
