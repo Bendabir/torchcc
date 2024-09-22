@@ -15,6 +15,13 @@ except ImportError:  # pragma: no cover
 else:
     CV2_INSTALLED = True
 
+try:
+    import cc3d as cpucc3d
+except ImportError:  # pragma: no cover
+    CC3D_INSTALLED = False
+else:
+    CC3D_INSTALLED = True
+
 
 def cc2d(  # pragma: no cover
     x: torch.Tensor,
@@ -52,7 +59,7 @@ def cc2d(  # pragma: no cover
     """
     if CV2_INSTALLED:
         warnings.warn(
-            "Falling back to OpenCV for CCL on CPU. "
+            "Falling back to OpenCV for 2D CCL on CPU. "
             "This will (highly) affect performances.",
             UserWarning,
             stacklevel=2,
@@ -111,5 +118,43 @@ def cc3d(  # pragma: no cover
     -------
     torch.Tensor
         The labeled Connected Components.
+
+    Raises
+    ------
+    RuntimeError
+        If the data is not CPU and ConnectedComponents3D is not installed.
+    ValueError
+        If the provided data is not a volume or a batch of volumes.
     """
-    raise NotImplementedError("3D CCL on CPU is not supported.")
+    if CC3D_INSTALLED:
+        warnings.warn(
+            "Falling back to ConnectedComponents3D for 3D CCL on CPU. "
+            "This will (highly) affect performances.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+        if x.ndim == 3:  # noqa: PLR2004
+            labels = cpucc3d.connected_components(x.numpy(), connectivity=connectivity)
+
+            return torch.from_numpy(labels)
+
+        if x.ndim == 4:  # noqa: PLR2004
+            data = x.numpy()
+            labels = np.zeros(data.shape, dtype=np.uint8)
+
+            for i in range(len(data)):
+                labels[i] = cpucc3d.connected_components(
+                    data[i],
+                    connectivity=connectivity,
+                )
+
+            return torch.from_numpy(labels)
+
+        raise ValueError("Input must be a volume [H, W, D] or a batch [N, H, W, D].")
+
+    raise RuntimeError(
+        "3D CCL on CPU is not natively supported. "
+        "Install ConnectedComponents3D for CPU support : "
+        'pip install "connected-components-3d>=3,<4".'
+    )
