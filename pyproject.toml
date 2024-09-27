@@ -48,14 +48,26 @@ cyclopts = "^2.9.9"
 pandas = "^2.2.3"
 pandas-stubs = "^2.2.2.240807"
 
+[tool.poetry.group.build]
+optional = true
+
+[tool.poetry.group.build.dependencies]
+poetry-core = "*"
+torch = "*"
+numpy = "*"
+ninja = "*"
+setuptools = "*"
+typing-extensions = "*"
+wheel = "*"
+
 [build-system]
 requires = [
-    # TODO : Check we need all of this
     "poetry-core",
-    "setuptools",
     "ninja",
-    "numpy",
     "torch",
+    "setuptools",
+    "numpy",
+    "typing-extensions",
     "wheel",
 ]
 build-backend = "poetry.core.masonry.api"
