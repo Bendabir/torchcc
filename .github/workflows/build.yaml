@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: install-poetry
-        run: pip install "poetry==${{ env.POETRY_VERSION }}" poetry-plugin-export<2
+        run: pip install "poetry==${{ env.POETRY_VERSION }}" "poetry-plugin-export<2"
       - name: install-torch
         env:
           CUDA_VERSION: ${{ matrix.cuda-version }}
