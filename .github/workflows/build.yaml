@@ -13,6 +13,8 @@ jobs:
           - cuda-version: "12.1"
             python-version: "3.9"
             torch-version: "2.4.1"
+    env:
+      POETRY_VERSION: "1.8.3"
     container:
       image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
     steps:
@@ -22,3 +24,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: install-poetry
+        run: pip install "poetry==${{ env.POETRY_VERSION }}" poetry-plugin-export<2
+      - name: install-torch
+        env:
+          CUDA_VERSION: ${{ matrix.cuda-version }}
+        run: |
+          pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/${CUDA_VERSION//\./}
+      - name: prepare-env
+        run: |
+          poetry lock
+          poetry export -f requirements.txt --without-hashes --only build > requirements.txt
+          pip install -r requirements.txt
+      - name: generate-setup
+        run: python poetry2setup.py
+      - name: build
+        run: python setup.py build
