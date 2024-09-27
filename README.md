@@ -117,7 +117,7 @@ poetry install --with dev
 
 ### Build
 
-Once everything is setup, the library can be build with the following command. One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults is not provided.
+Once everything is setup, the library can be build with the following command. One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults if not provided.
 
 ```bash
 poetry build -f wheel
