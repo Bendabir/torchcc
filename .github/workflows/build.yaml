@@ -29,8 +29,8 @@ jobs:
       - name: install-torch
         env:
           CUDA_VERSION: ${{ matrix.cuda-version }}
-        run: |
-          python -m pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/${CUDA_VERSION//\./}
+        shell: bash
+        run: python -m pip install torch==${{ matrix.torch-version }} --index-url https://download.pytorch.org/whl/${CUDA_VERSION//\./}
       - name: prepare-env
         run: |
           poetry lock
