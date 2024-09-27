@@ -1,0 +1,24 @@
+name: Build
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    name: build-image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - cuda-version: "12.1"
+            python-version: "3.9"
+            torch-version: "2.4.1"
+    container:
+      image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
+    steps:
+      - name: sync-code
+        uses: actions/checkout@v4
+      - name: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
