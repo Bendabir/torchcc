@@ -116,16 +116,33 @@ poetry install --with dev
 
 ### Build
 
-Once everything is setup, the library can be build with the following command. One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults if not provided.
+Once everything is setup, the library can be build with the following script. This is a bit hacky as we don't have control on the build env used by Poetry, which is an issue here (as we need dynamic control over CUDA version, thus PyTorch version).
+First, a build env must be prepared.
 
 ```bash
-poetry build -f wheel
+# First, install PyTorch for a given version of CUDA
+poetry run pip install torch --index-url https://download.pytorch.org/whl/121
+
+# Then install required build packages
+poetry install --no-root --only build
+
+# Generate a setup.py file
+poetry run python poetry2setup.py
 ```
+
+```bash
+# Then build
+poetry run python setup.py build
+```
+
+One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults if not provided.
 
 ```bash
 # Select the architectures
-MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry build -f wheel
+MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry run python setup.py build
 ```
+
+The library can be built with debug mode by defined the `DEBUG_MODE=true` env variable.
 
 ### Quality
 
