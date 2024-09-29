@@ -50,6 +50,8 @@ namespace torchcc
 
             // Start with BUF algorithm because it's easier to implement
             // but we should move to BKE at some point because it's more efficient.
+            // We need to split the algorithm in multiple kernels
+            // as we need to store intermediate results to global memory for synchronization.
             buf::ccl2d::init<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
             buf::ccl2d::merge<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
             buf::ccl2d::compress<<<grid, blocks, 0, stream>>>(labels_ptr, w, h);

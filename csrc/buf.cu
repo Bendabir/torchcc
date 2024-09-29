@@ -52,59 +52,59 @@ namespace buf
     {
         // Only use it with unsigned numeric types
         template <typename T>
-        __device__ __forceinline__ uint8_t hasBit(T d_bitmap, uint8_t d_pos)
+        __device__ __forceinline__ uint8_t hasBit(T bitmap, uint8_t pos)
         {
-            return (d_bitmap >> d_pos) & 1;
+            return (bitmap >> pos) & 1;
         }
 
         // Returns the root index of the UFTree
         // (the identiﬁer of the subset that contains a)
-        __device__ uint32_t find(const int32_t *const s_buffer, uint32_t d_n)
+        __device__ uint32_t find(const int32_t *const g_buffer, uint32_t n)
         {
-            while (s_buffer[d_n] != d_n)
+            while (g_buffer[n] != n)
             {
-                d_n = s_buffer[d_n];
+                n = g_buffer[n];
             }
 
-            return d_n;
+            return n;
         }
 
-        __device__ uint32_t findAndCompress(int32_t *const s_buffer, uint32_t d_n)
+        __device__ uint32_t findAndCompress(int32_t *const g_buffer, uint32_t n)
         {
-            const uint32_t id = d_n;
+            const uint32_t id = n;
 
-            while (s_buffer[d_n] != d_n)
+            while (g_buffer[n] != n)
             {
-                d_n = s_buffer[d_n];
-                s_buffer[id] = d_n;
+                n = g_buffer[n];
+                g_buffer[id] = n;
             }
 
-            return d_n;
+            return n;
         }
 
         // Merges the UFTrees of a and b, linking one root to the other
         // (joins the subsets containing a and b)
-        __device__ void computeUnion(int32_t *const s_buffer, uint32_t d_a, uint32_t d_b)
+        __device__ void computeUnion(int32_t *const g_buffer, uint32_t a, uint32_t b)
         {
             bool done = false;
 
             do
             {
 
-                d_a = find(s_buffer, d_a);
-                d_b = find(s_buffer, d_b);
+                a = find(g_buffer, a);
+                b = find(g_buffer, b);
 
-                if (d_a < d_b)
+                if (a < b)
                 {
-                    int32_t old = atomicMin(s_buffer + d_b, d_a);
-                    done = (old == d_b);
-                    d_b = old;
+                    int32_t old = atomicMin(g_buffer + b, a);
+                    done = (old == b);
+                    b = old;
                 }
-                else if (d_b < d_a)
+                else if (b < a)
                 {
-                    int32_t old = atomicMin(s_buffer + d_a, d_b);
-                    done = (old == d_a);
-                    d_a = old;
+                    int32_t old = atomicMin(g_buffer + a, b);
+                    done = (old == a);
+                    a = old;
                 }
                 else
                 {
@@ -115,7 +115,7 @@ namespace buf
         }
 
         // --- KERNELS ---
-        __global__ void init(const uint8_t *const img, int32_t *const labels, const uint32_t w, const uint32_t h)
+        __global__ void init(const uint8_t *const g_img, int32_t *const g_labels, const uint32_t w, const uint32_t h)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
@@ -124,17 +124,16 @@ namespace buf
             // Assign each block to the raster index of the top-left pixel
             if ((row < h) && (col < w))
             {
-                labels[index] = index;
+                g_labels[index] = index;
             }
         }
 
-        __global__ void merge(const uint8_t *const img, int32_t *const labels, const uint32_t w, const uint32_t h)
+        __global__ void merge(const uint8_t *const g_img, int32_t *const g_labels, const uint32_t w, const uint32_t h)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t index = row * w + col; // Basically pixel 5
 
-            // Avoid nesting too much
             if ((row >= h) || (col >= w))
             {
                 return;
@@ -144,17 +143,17 @@ namespace buf
 
             // First, check the pixels of the block
             // No check on the bottom-right pixel as it's never responsible for connections between blocks
-            if (img[index]) // top-left
+            if (g_img[index]) // top-left
             {
                 bitset |= BITMASK_3x3;
             }
 
-            if ((row <= h) && img[index + 1]) // top-right, checking we don't overflow
+            if ((row <= h) && g_img[index + 1]) // top-right, checking we don't overflow
             {
                 bitset |= BITMASK_3x3 << 1;
             }
 
-            if ((col <= w) && img[index + w]) // bottom-left, checking we don't overflow
+            if ((col <= w) && g_img[index + w]) // bottom-left, checking we don't overflow
             {
                 bitset |= BITMASK_3x3 << 4;
             }
@@ -196,38 +195,38 @@ namespace buf
 
             // If we have a top-left pixel (5) and a top-left pixel (0)
             // i.e. is pixel 0 connected to block X
-            if (hasBit(bitset, 0) && img[index - w - 1])
+            if (hasBit(bitset, 0) && g_img[index - w - 1])
             {
                 // Merge block X with block P (top-left)
-                computeUnion(labels, index, index - 2 * w - 2); // above, left
+                computeUnion(g_labels, index, index - 2 * w - 2); // above, left
             }
 
             // Check if we have pixels in the bottom of the top block
             // i.e. are pixels 1 or 2 connected to block X
-            if ((hasBit(bitset, 1) && img[index - w]) || (hasBit(bitset, 2) && img[index - w + 1]))
+            if ((hasBit(bitset, 1) && g_img[index - w]) || (hasBit(bitset, 2) && g_img[index - w + 1]))
             {
                 // Merge block X with block Q
-                computeUnion(labels, index, index - 2 * w); // above
+                computeUnion(g_labels, index, index - 2 * w); // above
             }
 
             // Check if we have a top-right pixel and a top-right diagonal pixel
             // i.e. is pixel 3 connected to block X
-            if (hasBit(bitset, 3) && img[index - w + 2])
+            if (hasBit(bitset, 3) && g_img[index - w + 2])
             {
                 // Merge block X with block R
-                computeUnion(labels, index, index - 2 * w + 2); // above, right
+                computeUnion(g_labels, index, index - 2 * w + 2); // above, right
             }
 
             // Check if we have pixels in the right of the left block
             // i.e. are pixels 4 or 8 connected to block X
-            if ((hasBit(bitset, 4) && img[index - 1]) || (hasBit(bitset, 8) && img[index + w - 1]))
+            if ((hasBit(bitset, 4) && g_img[index - 1]) || (hasBit(bitset, 8) && g_img[index + w - 1]))
             {
                 // Merge block X with block S
-                computeUnion(labels, index, index - 2); // left
+                computeUnion(g_labels, index, index - 2); // left
             }
         }
 
-        __global__ void compress(int32_t *const labels, const uint32_t w, const uint32_t h)
+        __global__ void compress(int32_t *const g_labels, const uint32_t w, const uint32_t h)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
@@ -235,11 +234,15 @@ namespace buf
 
             if ((row < h) && (col < w))
             {
-                findAndCompress(labels, index);
+                findAndCompress(g_labels, index);
             }
         }
 
-        __global__ void finalize(const uint8_t *const img, int32_t *const labels, const uint32_t w, const uint32_t h)
+        __global__ void finalize(
+            const uint8_t *const g_img,
+            int32_t *const g_labels,
+            const uint32_t w,
+            const uint32_t h)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
@@ -251,30 +254,28 @@ namespace buf
                 return;
             }
 
-            uint32_t label = labels[index] + 1;
+            uint32_t label = g_labels[index] + 1;
 
             // Pseudo-algorithm of the paper uses multiplication to avoid checks
             // but I suppose that checks are more efficient
             // Apply the labels of the different blocks uniformaly
             // Accounting for edges
-            labels[index] = img[index] ? label : 0;
+            g_labels[index] = g_img[index] ? label : 0;
 
             if (col + 1 < w)
             {
-                labels[index + 1] = img[index + 1] ? label : 0;
+                g_labels[index + 1] = g_img[index + 1] ? label : 0;
 
                 if (row + 1 < h)
                 {
-                    labels[index + w + 1] = img[index + w + 1] ? label : 0;
+                    g_labels[index + w + 1] = g_img[index + w + 1] ? label : 0;
                 }
             }
 
             if (row + 1 < h)
             {
-                labels[index + w] = img[index + w] ? label : 0;
+                g_labels[index + w] = g_img[index + w] ? label : 0;
             }
         }
-
-        // NOTE : Perhaps we can fuse kernels ?
     }
 }
