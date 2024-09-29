@@ -7,4 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support 2D CCL (8-connectivity) on CUDA (using BUF algorithm).
+- Support 2D and 3D CCL on CPU through third-party libraries (all connectivities).
+
 [Unreleased]: https://github.com/bendabir/trackotron/tree/develop
