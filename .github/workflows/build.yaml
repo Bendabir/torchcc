@@ -98,4 +98,4 @@ jobs:
       - name: generate-setup
         run: python poetry2setup.py
       - name: build
-        run: python setup.py build
+        run: python setup.py bdist_wheel

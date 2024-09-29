@@ -132,14 +132,14 @@ poetry run python poetry2setup.py
 
 ```bash
 # Then build
-poetry run python setup.py build
+poetry run python setup.py bdist_wheel
 ```
 
 One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults if not provided.
 
 ```bash
 # Select the architectures
-MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry run python setup.py build
+MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry run python setup.py bdist_wheel
 ```
 
 The library can be built with debug mode by defined the `DEBUG_MODE=true` env variable.
