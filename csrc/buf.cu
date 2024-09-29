@@ -50,59 +50,53 @@ namespace buf
 {
     namespace ccl2d
     {
-        // Only use it with unsigned numeric types
-        template <typename T>
-        __device__ __forceinline__ uint8_t hasBit(T bitmap, uint8_t pos)
+        __device__ __forceinline__ uint8_t hasBit(const uint16_t mask, const uint8_t pos)
         {
-            return (bitmap >> pos) & 1;
+            return (mask >> pos) & 1;
         }
 
-        // Returns the root index of the UFTree
-        // (the identiﬁer of the subset that contains a)
-        __device__ uint32_t find(const int32_t *const g_buffer, uint32_t n)
+        __device__ uint32_t find(const int32_t *const g_labels, uint32_t n)
         {
-            while (g_buffer[n] != n)
+            while (g_labels[n] != n)
             {
-                n = g_buffer[n];
+                n = g_labels[n];
             }
 
             return n;
         }
 
-        __device__ uint32_t findAndCompress(int32_t *const g_buffer, uint32_t n)
+        __device__ uint32_t findAndCompress(int32_t *const g_labels, uint32_t n)
         {
             const uint32_t id = n;
 
-            while (g_buffer[n] != n)
+            while (g_labels[n] != n)
             {
-                n = g_buffer[n];
-                g_buffer[id] = n;
+                n = g_labels[n];
+                g_labels[id] = n;
             }
 
             return n;
         }
 
-        // Merges the UFTrees of a and b, linking one root to the other
-        // (joins the subsets containing a and b)
-        __device__ void computeUnion(int32_t *const g_buffer, uint32_t a, uint32_t b)
+        __device__ void computeUnion(int32_t *const g_labels, uint32_t a, uint32_t b)
         {
             bool done = false;
 
             do
             {
 
-                a = find(g_buffer, a);
-                b = find(g_buffer, b);
+                a = find(g_labels, a);
+                b = find(g_labels, b);
 
                 if (a < b)
                 {
-                    const int32_t old = atomicMin(g_buffer + b, a);
+                    const int32_t old = atomicMin(g_labels + b, a);
                     done = (old == b);
                     b = old;
                 }
                 else if (b < a)
                 {
-                    const int32_t old = atomicMin(g_buffer + a, b);
+                    const int32_t old = atomicMin(g_labels + a, b);
                     done = (old == a);
                     a = old;
                 }
@@ -137,71 +131,94 @@ namespace buf
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t index = row * w + col; // Basically pixel 5
 
-            if ((row > h) || (col > w))
+            if ((row >= h) || (col >= w))
             {
                 return;
             }
 
-            uint16_t bitset = 0;
+            uint16_t mask = 0;
+            uint8_t pixels[4] = {0, 0, 0, 0};
 
-            // TODO : Use a buffer in register memory (or shared memory)
-            //        to load the pixels of interest at once from global memory
+            // NOTE : This might be suboptimal.
+            //        Perhaps we can leverage some casting to transfer the 4 bytes directly.
+            //        Loop is unrolled to avoid usage of %, which is slow.
+            //        Not sure this is more efficient though.
+            //        Perhaps we should copy all the image data we need in the thread at once (if possible).
+            pixels[0] = g_img[index]; // top-left
 
-            // First, check the pixels of the block
-            // No check on the bottom-right pixel as it's never responsible for connections between blocks
-            if (g_img[index]) // top-left
+            if (col + 1 <= w)
             {
-                bitset |= BITMASK_3x3;
+                pixels[1] = g_img[index + 1]; // top-right
             }
 
-            if ((row <= h) && g_img[index + 1]) // top-right, checking we don't overflow
+            if (row + 1 <= h)
             {
-                bitset |= BITMASK_3x3 << 1;
+                pixels[2] = g_img[index + w]; // bottom-left
             }
 
-            if ((col <= w) && g_img[index + w]) // bottom-left, checking we don't overflow
+            if ((col + 1 <= w) && (row + 1 <= h))
             {
-                bitset |= BITMASK_3x3 << 4;
+                pixels[3] = g_img[index + w + 1]; // bottom-right
+            }
+
+            // First, check the pixels of the block, so we build a "pixels-to-check" mask for foreground pixels.
+            // No check on the bottom-right pixel as it's never responsible for connections between blocks.
+            if (pixels[0])
+            {
+                mask |= BITMASK_3x3;
+            }
+
+            if (pixels[1])
+            {
+                mask |= BITMASK_3x3 << 1;
+            }
+
+            if (pixels[2])
+            {
+                mask |= BITMASK_3x3 << 4;
             }
 
             // Check the different edge cases
-            if (col == 0) // no left-pixel, droping 1st column of the bitset
+            if (col == 0) // no left-pixel, droping 1st column of the mask
             {
-                bitset &= BITMASK_3x4R;
+                mask &= BITMASK_3x4R;
             }
 
-            if (col > w) // no right-pixel, but blocks are 2-pixels wide, dropping the 2 last columns of the bitset
+            // no right-pixel, but blocks are 2-pixels wide, dropping the 2 last columns of the mask
+            // because we don't need to check them as they don't exist
+            if (col + 1 >= w)
             {
-                bitset &= BITMASK_2x4L;
+                mask &= BITMASK_2x4L;
             }
-            else if (col + 1 > w) // almost on the right edge, dropping the last column of the bitset
+            else if (col + 2 >= w) // no column on the right side of the block (2 apart from the index)
             {
-                bitset &= BITMASK_3x4L;
+                mask &= BITMASK_3x4L;
             }
 
             if (row == 0) // likewise, no top-pixel
             {
-                bitset &= BITMASK_4x3B;
+                mask &= BITMASK_4x3B;
             }
 
-            if (row > h) // no bottom-pixel, but 2-pixels large, similarly dropping the last 2 rows of the bitset
+            // same for the bottom-pixel, it doesn't exist, so we don't need to check it nor the bottom of the block
+            if (row + 1 >= h)
             {
-                bitset &= BITMASK_4x2T;
+                mask &= BITMASK_4x2T;
             }
-            else if (row + 1 > h) // again, almost on the bottom edge, dropping the last row of the bitset
+            else if (row + 2 >= h) // no row on the bottom side of the block (2 apart from the index)
             {
-                bitset &= BITMASK_4x3T;
+                mask &= BITMASK_4x3T;
             }
 
             // We can now check for neighbour blocks
-            if (!bitset)
+            if (!mask)
             {
                 return;
             }
 
             // If we have a top-left pixel (5) and a top-left pixel (0)
             // i.e. is pixel 0 connected to block X
-            if (hasBit(bitset, 0) && g_img[index - w - 1])
+            if (hasBit(mask, 0) && g_img[index - w - 1])
             {
                 // Merge block X with block P (top-left)
                 computeUnion(g_labels, index, index - 2 * w - 2); // above, left
@@ -209,7 +226,7 @@ namespace buf
 
             // Check if we have pixels in the bottom of the top block
             // i.e. are pixels 1 or 2 connected to block X
-            if ((hasBit(bitset, 1) && g_img[index - w]) || (hasBit(bitset, 2) && g_img[index - w + 1]))
+            if ((hasBit(mask, 1) && g_img[index - w]) || (hasBit(mask, 2) && g_img[index - w + 1]))
             {
                 // Merge block X with block Q
                 computeUnion(g_labels, index, index - 2 * w); // above
@@ -217,7 +234,7 @@ namespace buf
 
             // Check if we have a top-right pixel and a top-right diagonal pixel
             // i.e. is pixel 3 connected to block X
-            if (hasBit(bitset, 3) && g_img[index - w + 2])
+            if (hasBit(mask, 3) && g_img[index - w + 2])
             {
                 // Merge block X with block R
                 computeUnion(g_labels, index, index - 2 * w + 2); // above, right
@@ -225,7 +242,7 @@ namespace buf
 
             // Check if we have pixels in the right of the left block
             // i.e. are pixels 4 or 8 connected to block X
-            if ((hasBit(bitset, 4) && g_img[index - 1]) || (hasBit(bitset, 8) && g_img[index + w - 1]))
+            if ((hasBit(mask, 4) && g_img[index - 1]) || (hasBit(mask, 8) && g_img[index + w - 1]))
             {
                 // Merge block X with block S
                 computeUnion(g_labels, index, index - 2); // left
@@ -272,16 +289,16 @@ namespace buf
             if (col + 1 < w)
             {
                 g_labels[index + 1] = g_img[index + 1] ? label : 0; // top-right
-
-                if (row + 1 < h)
-                {
-                    g_labels[index + w + 1] = g_img[index + w + 1] ? label : 0; // bottom-right
-                }
             }
 
             if (row + 1 < h)
             {
                 g_labels[index + w] = g_img[index + w] ? label : 0; // bottom-left
+            }
+
+            if ((col + 1 < w) && (row + 1 < h))
+            {
+                g_labels[index + w + 1] = g_img[index + w + 1] ? label : 0; // bottom-right
             }
         }
     }

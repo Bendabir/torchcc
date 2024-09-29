@@ -45,8 +45,9 @@ namespace torchcc
         {
             const dim3 grid = dim3(
                 ((w + 1) / 2 + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
-                ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS);
-            const dim3 blocks = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
+                ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
+                1);
+            const dim3 blocks = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS, 1);
 
             // Start with BUF algorithm because it's easier to implement
             // but we should move to BKE at some point because it's more efficient.
