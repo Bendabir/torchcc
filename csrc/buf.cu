@@ -96,13 +96,13 @@ namespace buf
 
                 if (a < b)
                 {
-                    int32_t old = atomicMin(g_buffer + b, a);
+                    const int32_t old = atomicMin(g_buffer + b, a);
                     done = (old == b);
                     b = old;
                 }
                 else if (b < a)
                 {
-                    int32_t old = atomicMin(g_buffer + a, b);
+                    const int32_t old = atomicMin(g_buffer + a, b);
                     done = (old == a);
                     a = old;
                 }
@@ -136,7 +136,7 @@ namespace buf
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t index = row * w + col; // Basically pixel 5
 
-            if ((row >= h) || (col >= w))
+            if ((row > h) || (col > w))
             {
                 return;
             }
