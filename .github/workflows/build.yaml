@@ -10,33 +10,34 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          # CUDA 9.2
-          - cuda-version: "9.2"
-            python-version: "3.9"
-          # CUDA 10.1
-          - cuda-version: "10.1"
-            python-version: "3.9"
-          # CUDA 10.2
-          - cuda-version: "10.2"
-            python-version: "3.9"
-          - cuda-version: "10.2"
-            python-version: "3.10"
-          # CUDA 11.0
-          - cuda-version: "11.0"
-            python-version: "3.9"
-          # CUDA 11.1
-          - cuda-version: "11.1"
-            python-version: "3.9"
-          # CUDA 11.3
-          - cuda-version: "11.3"
-            python-version: "3.9"
-          - cuda-version: "11.3"
-            python-version: "3.10"
-          # CUDA 11.6
-          - cuda-version: "11.6"
-            python-version: "3.9"
-          - cuda-version: "11.6"
-            python-version: "3.10"
+          # FIXME : Fix GLIBC issues on older systems
+          # # CUDA 9.2
+          # - cuda-version: "9.2"
+          #   python-version: "3.9"
+          # # CUDA 10.1
+          # - cuda-version: "10.1"
+          #   python-version: "3.9"
+          # # CUDA 10.2
+          # - cuda-version: "10.2"
+          #   python-version: "3.9"
+          # - cuda-version: "10.2"
+          #   python-version: "3.10"
+          # # CUDA 11.0
+          # - cuda-version: "11.0"
+          #   python-version: "3.9"
+          # # CUDA 11.1
+          # - cuda-version: "11.1"
+          #   python-version: "3.9"
+          # # CUDA 11.3
+          # - cuda-version: "11.3"
+          #   python-version: "3.9"
+          # - cuda-version: "11.3"
+          #   python-version: "3.10"
+          # # CUDA 11.6
+          # - cuda-version: "11.6"
+          #   python-version: "3.9"
+          # - cuda-version: "11.6"
+          #   python-version: "3.10"
           # CUDA 11.7
           - cuda-version: "11.7"
             python-version: "3.9"
@@ -77,7 +78,7 @@ jobs:
       image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
     steps:
       - name: sync-code
-        uses: actions/checkout@v3 # No v4, because of GLIBC issues on older Ubuntu versions
+        uses: actions/checkout@v4
       - name: setup-python
         uses: actions/setup-python@v5
         with:
