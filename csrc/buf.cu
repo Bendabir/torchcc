@@ -122,10 +122,12 @@ namespace buf
             const uint32_t index = row * w + col;
 
             // Assign each block to the raster index of the top-left pixel
-            if ((row < h) && (col < w))
+            if ((row >= h) || (col >= w))
             {
-                g_labels[index] = index;
+                return;
             }
+
+            g_labels[index] = index;
         }
 
         __global__ void merge(const uint8_t *const g_img, int32_t *const g_labels, const uint32_t w, const uint32_t h)
@@ -232,10 +234,12 @@ namespace buf
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t index = row * w + col;
 
-            if ((row < h) && (col < w))
+            if ((row >= h) || (col >= w))
             {
-                findAndCompress(g_labels, index);
+                return;
             }
+
+            findAndCompress(g_labels, index);
         }
 
         __global__ void finalize(
@@ -248,7 +252,6 @@ namespace buf
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t index = row * w + col;
 
-            // Early stop
             if ((row >= h) || (col >= w))
             {
                 return;
