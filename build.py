@@ -54,6 +54,10 @@ if TORCH_CUDA_ARCH_LIST not in os.environ:
     if version >= (12, 6):
         archs.append("10.0")
 
+    # For forward-compatibility
+    # See : https://pytorch.org/docs/stable/cpp_extension.html
+    archs[-1] = f"{archs[-1]}+PTX"
+
     os.environ[TORCH_CUDA_ARCH_LIST] = " ".join(archs)
 
 
