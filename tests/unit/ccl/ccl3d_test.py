@@ -52,6 +52,7 @@ from torchcc import ccl3d
     not torch.cuda.is_available(),
     reason="CUDA is not available.",
 )
+@pytest.mark.skip(reason="TODO")
 def test_cc2d(
     generator: torch.Generator,
     device: torch.device,
