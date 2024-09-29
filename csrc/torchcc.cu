@@ -31,6 +31,9 @@ namespace torchcc
 
         const cudaStream_t stream = c10::cuda::getCurrentCUDAStream();
 
+        // NOTE : There are new const_data_ptr and mutable_data_ptr accessors
+        //        but keep legacy ones for backward compatibility.
+        //        Especially because TORCH_VERSION_* definition were introduced with Torch 1.8
         const uint8_t *const x_ptr = x.data_ptr<uint8_t>();
         int32_t *const labels_ptr = labels.data_ptr<int32_t>();
 
@@ -41,6 +44,8 @@ namespace torchcc
                 ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS);
             const dim3 blocks = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
 
+            // Start with BUF algorithm because it's easier to implement
+            // but we should move to BKE at some point because it's more efficient.
             buf::ccl2d::init<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
             buf::ccl2d::merge<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
             buf::ccl2d::compress<<<grid, blocks, 0, stream>>>(labels_ptr, w, h);
