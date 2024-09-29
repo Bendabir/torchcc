@@ -4,7 +4,7 @@ on:
     branches: [main]
 jobs:
   build:
-    name: build-image
+    name: build-library
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
