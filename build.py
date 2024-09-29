@@ -78,7 +78,7 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
     return extra_compile_args
 
 
-def _extra_links_args(*, debug_mode: bool) -> list[str]:
+def _extra_link_args(*, debug_mode: bool) -> list[str]:
     if debug_mode:
         return ["-O0", "-g"]
 
@@ -108,7 +108,7 @@ def build(setup_kwargs: dict[str, Any]) -> None:
                     extra_compile_args={
                         "nvcc": _nvcc_extra_compile_args(debug_mode=debug_mode),
                     },
-                    extra_links_args=_extra_links_args(debug_mode=debug_mode),
+                    extra_link_args=_extra_link_args(debug_mode=debug_mode),
                 )
             ],
             "cmdclass": {
