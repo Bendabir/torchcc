@@ -14,6 +14,7 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 # Define some default architectures to build for (basically all)
 # Couldn't find a better way to do this
 TORCH_CUDA_ARCH_LIST = "TORCH_CUDA_ARCH_LIST"
+DEBUG_MODE = "DEBUG_MODE"
 
 if TORCH_CUDA_ARCH_LIST not in os.environ:
     archs: list[str] = []
@@ -61,8 +62,33 @@ if TORCH_CUDA_ARCH_LIST not in os.environ:
     os.environ[TORCH_CUDA_ARCH_LIST] = " ".join(archs)
 
 
+def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
+    extra_compile_args = [
+        "-D__STRICT_ANSI__",
+        "-DCUDA_HAS_FP16=1",
+        "-D__CUDA_NO_HALF_OPERATORS__",
+        "-D__CUDA_NO_HALF_CONVERSIONS__",
+        "-D__CUDA_NO_HALF2_OPERATORS__",
+        "-O0" if debug_mode else "-O3",
+    ]
+
+    if debug_mode:
+        extra_compile_args.append("-g")
+
+    return extra_compile_args
+
+
+def _extra_links_args(*, debug_mode: bool) -> list[str]:
+    if debug_mode:
+        return ["-O0", "-g"]
+
+    return []
+
+
 def build(setup_kwargs: dict[str, Any]) -> None:
     """Add specifications to build the CUDA extension."""
+    debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"
+
     setup_kwargs.update(
         {
             "ext_modules": [
@@ -80,14 +106,9 @@ def build(setup_kwargs: dict[str, Any]) -> None:
                         os.path.abspath("include"),
                     ],
                     extra_compile_args={
-                        "nvcc": [
-                            "-D__STRICT_ANSI__",
-                            "-DCUDA_HAS_FP16=1",
-                            "-D__CUDA_NO_HALF_OPERATORS__",
-                            "-D__CUDA_NO_HALF_CONVERSIONS__",
-                            "-D__CUDA_NO_HALF2_OPERATORS__",
-                        ],
+                        "nvcc": _nvcc_extra_compile_args(debug_mode=debug_mode),
                     },
+                    extra_links_args=_extra_links_args(debug_mode=debug_mode),
                 )
             ],
             "cmdclass": {
