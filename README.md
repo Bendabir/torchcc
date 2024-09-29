@@ -162,6 +162,18 @@ PyTest is used to run unit tests. Only the GPU code is tested (after build). CPU
 poetry run pytest --cov=src/torchcc tests/unit
 ```
 
+## Implementation
+
+The following algorithms are used in the implementation. Some algorithms are not implemented yet. This is still a work in progress.
+
+| Geometry | Connectivity | Algorithm | References | Implemented |
+| -------- | ------------ | --------- | ---------- | :---------: |
+| 2D       | 4            | HA4       | [3], [4]   |     ❌      |
+| 2D       | 8            | BUF       | [1], [3]   |     ✔️      |
+| 3D       | 6            |           |            |     ❌      |
+| 3D       | 18           |           |            |     ❌      |
+| 3D       | 26           | BUF       | [1], [3]   |     ❌      |
+
 ## References
 
 This work is based on the following articles.
@@ -171,6 +183,8 @@ This work is based on the following articles.
 [2] Grana, C., Bolelli, F., Baraldi, L., & Vezzani, R. (2016). [YACCLAB-Yet Another Connected Components Labeling Benchmark](https://federicobolelli.it/pub_files/2016icpr.pdf). https://doi.org/10.1109/ICPR.2016.7900112
 
 [3] Bolelli, F., Allegretti, S., Lumetti, L., & Grana, C. (2024). [A State-of-the-Art Review with Code about Connected Components Labeling on GPUs](https://federicobolelli.it/pub_files/2024tpds.pdf).
+
+[4] Hennequin, A., Lacassagne, L., Cabaret, L., Meunier, Q., & Meunier, Q. A. (2018). [A new Direct Connected Component Labeling and Analysis Algorithms for GPUs](https://hal.science/hal-01923784/document). https://doi.org/10.1109/dasip.2018.8596835ï
 
 ### Online Resources
 
