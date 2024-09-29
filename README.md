@@ -86,7 +86,7 @@ rm libtorch-shared-with-deps-2.4.1%2Bcu121.zip
 ```
 
 > [!WARNING]
-> Make sure you downloaded the proper version of `libtorch` for both CUDA and your system. The `libtorch` version must match the PyTorch's one.
+> Make sure you've downloaded the proper version of `libtorch` for both CUDA and your system. The `libtorch` version must match the PyTorch's one.
 
 One other alternative is to use the headers shipped with PyTorch directly.
 
