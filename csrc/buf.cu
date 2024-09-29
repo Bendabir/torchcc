@@ -117,6 +117,7 @@ namespace buf
         // --- KERNELS ---
         __global__ void init(const uint8_t *const g_img, int32_t *const g_labels, const uint32_t w, const uint32_t h)
         {
+            // Each thread basically work on the top-left pixel
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t index = row * w + col;
@@ -266,21 +267,21 @@ namespace buf
             // but I suppose that checks are more efficient
             // Apply the labels of the different blocks uniformaly
             // Accounting for edges
-            g_labels[index] = g_img[index] ? label : 0;
+            g_labels[index] = g_img[index] ? label : 0; // top-left
 
             if (col + 1 < w)
             {
-                g_labels[index + 1] = g_img[index + 1] ? label : 0;
+                g_labels[index + 1] = g_img[index + 1] ? label : 0; // top-right
 
                 if (row + 1 < h)
                 {
-                    g_labels[index + w + 1] = g_img[index + w + 1] ? label : 0;
+                    g_labels[index + w + 1] = g_img[index + w + 1] ? label : 0; // bottom-right
                 }
             }
 
             if (row + 1 < h)
             {
-                g_labels[index + w] = g_img[index + w] ? label : 0;
+                g_labels[index + w] = g_img[index + w] ? label : 0; // bottom-left
             }
         }
     }
