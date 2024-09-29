@@ -10,8 +10,67 @@ jobs:
       fail-fast: true
       matrix:
         include:
+          # CUDA 9.2
+          - cuda-version: "9.2"
+            python-version: "3.9"
+          # CUDA 10.1
+          - cuda-version: "10.1"
+            python-version: "3.9"
+          # CUDA 10.2
+          - cuda-version: "10.2"
+            python-version: "3.9"
+          - cuda-version: "10.2"
+            python-version: "3.10"
+          # CUDA 11.0
+          - cuda-version: "11.0"
+            python-version: "3.9"
+          # CUDA 11.1
+          - cuda-version: "11.1"
+            python-version: "3.9"
+          # CUDA 11.3
+          - cuda-version: "11.3"
+            python-version: "3.9"
+          - cuda-version: "11.3"
+            python-version: "3.10"
+          # CUDA 11.6
+          - cuda-version: "11.6"
+            python-version: "3.9"
+          - cuda-version: "11.6"
+            python-version: "3.10"
+          # CUDA 11.7
+          - cuda-version: "11.7"
+            python-version: "3.9"
+          - cuda-version: "11.7"
+            python-version: "3.10"
+          - cuda-version: "11.7"
+            python-version: "3.11"
+          # CUDA 11.8
+          - cuda-version: "11.8"
+            python-version: "3.9"
+          - cuda-version: "11.8"
+            python-version: "3.10"
+          - cuda-version: "11.8"
+            python-version: "3.11"
+          - cuda-version: "11.8"
+            python-version: "3.12"
+          # CUDA 12.1
           - cuda-version: "12.1"
             python-version: "3.9"
+          - cuda-version: "12.1"
+            python-version: "3.10"
+          - cuda-version: "12.1"
+            python-version: "3.11"
+          - cuda-version: "12.1"
+            python-version: "3.12"
+          # CUDA 12.4
+          - cuda-version: "12.4"
+            python-version: "3.9"
+          - cuda-version: "12.4"
+            python-version: "3.10"
+          - cuda-version: "12.4"
+            python-version: "3.11"
+          - cuda-version: "12.4"
+            python-version: "3.12"
     env:
       POETRY_VERSION: "1.8.3"
     container:
