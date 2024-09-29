@@ -6,7 +6,7 @@
 
 namespace buf
 {
-    namespace cc2d
+    namespace ccl2d
     {
         __global__ void init(const uint8_t *const img, int32_t *const labels, const uint32_t w, const uint32_t h);
         __global__ void merge(const uint8_t *const img, int32_t *const labels, const uint32_t w, const uint32_t h);

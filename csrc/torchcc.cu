@@ -10,7 +10,7 @@
 
 namespace torchcc
 {
-    torch::Tensor cc2d(const torch::Tensor &x, const uint8_t connectivity)
+    torch::Tensor ccl2d(const torch::Tensor &x, const uint8_t connectivity)
     {
         TORCH_CHECK_VALUE(
             (connectivity == 4) || (connectivity == 8),
@@ -41,16 +41,16 @@ namespace torchcc
                 ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS);
             const dim3 blocks = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
 
-            buf::cc2d::init<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
-            buf::cc2d::merge<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
-            buf::cc2d::compress<<<grid, blocks, 0, stream>>>(labels_ptr, w, h);
-            buf::cc2d::finalize<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
+            buf::ccl2d::init<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
+            buf::ccl2d::merge<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
+            buf::ccl2d::compress<<<grid, blocks, 0, stream>>>(labels_ptr, w, h);
+            buf::ccl2d::finalize<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
         }
 
         return labels;
     }
 
-    torch::Tensor cc3d(const torch::Tensor &x, const uint8_t connectivity)
+    torch::Tensor ccl3d(const torch::Tensor &x, const uint8_t connectivity)
     {
         TORCH_CHECK_VALUE(
             (connectivity == 6) || (connectivity == 18) || (connectivity == 26),

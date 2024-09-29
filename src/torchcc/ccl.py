@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     import torch
 
 
-def cc2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
+def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     """Run Connected Components Labeling on 2D images (or batches).
 
     Note
@@ -36,12 +36,12 @@ def cc2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
         The labeled Connected Components.
     """
     if x.is_cuda:
-        return _cuda.cc2d(x, connectivity)
+        return _cuda.ccl2d(x, connectivity)
 
-    return _cpu.cc2d(x, connectivity)  # pragma: no cover
+    return _cpu.ccl2d(x, connectivity)  # pragma: no cover
 
 
-def cc3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tensor:
+def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tensor:
     """Run Connected Components Labeling on 3D volumes (or batches).
 
     Note
@@ -69,6 +69,6 @@ def cc3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tensor
         The labeled Connected Components.
     """
     if x.is_cuda:
-        return _cuda.cc3d(x, connectivity)
+        return _cuda.ccl3d(x, connectivity)
 
-    return _cpu.cc3d(x, connectivity)  # pragma: no cover
+    return _cpu.ccl3d(x, connectivity)  # pragma: no cover

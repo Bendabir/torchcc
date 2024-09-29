@@ -48,7 +48,7 @@
 
 namespace buf
 {
-    namespace cc2d
+    namespace ccl2d
     {
         // Only use it with unsigned numeric types
         template <typename T>

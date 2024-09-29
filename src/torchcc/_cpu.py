@@ -23,7 +23,7 @@ else:
     CC3D_INSTALLED = True
 
 
-def cc2d(  # pragma: no cover
+def ccl2d(  # pragma: no cover
     x: torch.Tensor,
     connectivity: Literal[4, 8],
 ) -> torch.Tensor:
@@ -90,7 +90,7 @@ def cc2d(  # pragma: no cover
     )
 
 
-def cc3d(  # pragma: no cover
+def ccl3d(  # pragma: no cover
     x: torch.Tensor,
     connectivity: Literal[6, 18, 26],
 ) -> torch.Tensor:

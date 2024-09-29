@@ -4,6 +4,6 @@
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
-    m.def("cc2d", &torchcc::cc2d, "Compute Connected Components of a 2D image (or a batch of 2D images).");
-    m.def("cc3d", &torchcc::cc3d, "Compute Connected Components of a 3D volume (or a batch of 3D volumes).");
+    m.def("ccl2d", &torchcc::ccl2d, "Compute Connected Components Labeling of a 2D image (or a batch of 2D images).");
+    m.def("ccl3d", &torchcc::ccl3d, "Compute Connected Components Labeling of a 3D volume (or a batch of 3D volumes).");
 }
