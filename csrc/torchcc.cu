@@ -38,7 +38,9 @@ namespace torchcc
         // NOTE : There are new const_data_ptr and mutable_data_ptr accessors
         //        but keep legacy ones for backward compatibility.
         //        Especially because TORCH_VERSION_* definition were introduced with Torch 1.8
-        const uint8_t *const x_ptr = x.data_ptr<uint8_t>();
+        // NOTE : The current implementation of the BUF algorithm requires contiguous data
+        //        but we could probably deal with non-contiguous data by inverting rows and cols.
+        const uint8_t *const x_ptr = x.contiguous().data_ptr<uint8_t>();
         int32_t *const labels_ptr = labels.data_ptr<int32_t>();
 
         if ((ndim == 2) && (connectivity == 8))
