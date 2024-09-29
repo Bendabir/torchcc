@@ -143,6 +143,9 @@ namespace buf
 
             uint16_t bitset = 0;
 
+            // TODO : Use a buffer in register memory (or shared memory)
+            //        to load the pixels of interest at once from global memory
+
             // First, check the pixels of the block
             // No check on the bottom-right pixel as it's never responsible for connections between blocks
             if (g_img[index]) // top-left
