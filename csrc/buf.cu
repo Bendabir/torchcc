@@ -2,8 +2,6 @@
 #include <buf.h>
 #include <cuda.h>
 
-#define BLOCK_ROWS 16
-#define BLOCK_COLS 16
 #define BITMASK_3x3 0x0777
 #define BITMASK_3x4R 0xEEEE // all but col 0
 #define BITMASK_2x4L 0x3333 // only col O and 1
