@@ -156,6 +156,14 @@ poetry run mypy src tests *.py
 
 ### Tests
 
+Tests use a subset of the datasets from the [YACCLAB](https://github.com/prittt/YACCLAB) project [2]. These can be downloaded with the scripts in the [`datasets`](./datasets) directory.
+
+```bash
+cd datasets
+./2d.sh # Download and extract the 2D data
+./3d.sh # Download and extract the 3D data
+```
+
 PyTest is used to run unit tests. Only the GPU code is tested (after build). CPU code is assumed correct as it lies on third-party libraries.
 
 ```bash

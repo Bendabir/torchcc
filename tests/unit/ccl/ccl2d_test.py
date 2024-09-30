@@ -4,38 +4,40 @@ from typing import Literal
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 import pytest
 import torch
 
 from torchcc import ccl2d
 
 
-# NOTE : Replace with manually generated tests (so we can also check CPU) ?
+def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
+    ids: dict[int, int] = {
+        id_: i for i, id_ in enumerate(sorted(np.unique(labels).tolist())) if id_ > 0
+    }
+    new_labels = np.zeros_like(labels)
+
+    for id_, i in ids.items():
+        mask = labels == id_
+        new_labels[mask] = i
+
+    return new_labels
+
+
 @pytest.mark.parametrize(
-    "size",
+    "path",
     [
-        (1024, 1024),
-        (8, 1024, 1024),
-        (1024, 2048),
-        (8, 1024, 2048),
-        (1024, 1023),
-        (7, 1024, 1023),
-        (1023, 1024),
-        (7, 1023, 1024),
-        (1023, 1023),
-        (7, 1023, 1023),
-    ],
-    ids=[
-        "square",
-        "square-batch",
-        "rectangle",
-        "rectangle-batch",
-        "odd-height",
-        "odd-height-batch",
-        "odd-width",
-        "odd-width-batch",
-        "odd",
-        "odd-batch",
+        # Randomly selected from glob + random.sample (seed = 1234, k = 10)
+        "datasets/2d/mirflickr/im20425.png",
+        "datasets/2d/random/granularity/1004709.png",
+        "datasets/2d/random/granularity/0703705.png",
+        "datasets/2d/random/granularity/0903203.png",
+        "datasets/2d/random/granularity/0604302.png",
+        "datasets/2d/mirflickr/im5004.png",
+        "datasets/2d/random/granularity/0504804.png",
+        "datasets/2d/mirflickr/im13926.png",
+        "datasets/2d/3dpes/Set_1_ID_05_Camera_1_Seq_1_video0847.png",
+        "datasets/2d/random/granularity/1404106.png",
     ],
 )
 @pytest.mark.parametrize(
@@ -49,36 +51,28 @@ from torchcc import ccl2d
     reason="CUDA is not available.",
 )
 def test_cc2d(
-    generator: torch.Generator,
+    path: str,
     device: torch.device,
-    size: tuple[int, ...],
     contiguous: bool,  # noqa: FBT001
     connectivity: Literal[4, 8],
 ) -> None:
-    x = torch.randint(
-        low=0,
-        high=2,
-        size=size,
-        generator=generator,
-        dtype=torch.uint8,
-        device=device,
-    )
+    if connectivity == 4:
+        pytest.skip("4-connectivity is not yet supported.")
+
+    image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    x = torch.from_numpy(image).to(device)
 
     if not contiguous:
         x = x.transpose(-2, -1).contiguous().transpose(-2, -1)
 
     labels = ccl2d(x, connectivity=connectivity)
-    _x = x.cpu().numpy()
-    _labels = labels.cpu().numpy()
-    expected = np.zeros(size, dtype=np.uint8)
 
     # Compare to what OpenCV would produce
-    if len(size) == 2:
-        _, expected = cv2.connectedComponents(_x, connectivity=connectivity)
-
-    if len(size) == 3:
-        for i in range(len(_x)):
-            _, expected[i] = cv2.connectedComponents(_x[i], connectivity=connectivity)
+    _, expected = cv2.connectedComponents(image, connectivity=connectivity)
 
     # Use NumPy for better explainability
-    np.testing.assert_array_equal(_labels, expected, strict=True)
+    np.testing.assert_array_equal(
+        consecutivize(labels.cpu().numpy()),
+        expected,
+        strict=True,
+    )
