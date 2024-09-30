@@ -52,7 +52,7 @@ namespace torchcc
                 ((w + 1) / 2 + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
                 ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
                 // on each image
-                (n + 1) / BUF_2D_BLOCK_DEPTH);
+                ((n + 1) + BUF_2D_BLOCK_DEPTH - 1) / BUF_2D_BLOCK_DEPTH);
             const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS, BUF_2D_BLOCK_DEPTH);
 
             // Start with BUF algorithm because it's easier to implement
