@@ -16,6 +16,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     Note
     ----
     On CPU, computation is delegated to OpenCV if installed.
+    On GPU, contiguous data is required.
 
     Parameters
     ----------
@@ -36,7 +37,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
         The labeled Connected Components.
     """
     if x.is_cuda:
-        return _cuda.ccl2d(x, connectivity)
+        return _cuda.ccl2d(x.contiguous(), connectivity)
 
     return _cpu.ccl2d(x, connectivity)  # pragma: no cover
 
