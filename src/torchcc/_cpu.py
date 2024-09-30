@@ -27,7 +27,7 @@ def ccl2d(  # pragma: no cover
     x: torch.Tensor,
     connectivity: Literal[4, 8],
 ) -> torch.Tensor:
-    """Run Connected Components Labeling on 2D images (or batches) on CPU.
+    """Run Connected Components Labeling on 2D batches of images on CPU.
 
     Note
     ----
@@ -37,7 +37,7 @@ def ccl2d(  # pragma: no cover
     ----------
     x : torch.Tensor
         Data to perform CCL on.
-        It must be an image (H, W) or a batch of images (N, H, W).
+        It must be a batch of images (N, H, W).
         Only uint8 data is supported.
     connectivity : {4, 8}
         Define how to perform CCL.
@@ -55,7 +55,7 @@ def ccl2d(  # pragma: no cover
     RuntimeError
         If the data is not CPU and OpenCV is not installed.
     ValueError
-        If the provided data is not an image or a batch of images.
+        If the provided data is not a batch of images.
     """
     if CV2_INSTALLED:
         warnings.warn(
@@ -65,24 +65,21 @@ def ccl2d(  # pragma: no cover
             stacklevel=2,
         )
 
-        if x.ndim == 2:  # noqa: PLR2004
-            _, labels = cv2.connectedComponents(x.numpy(), connectivity=connectivity)
+        if x.ndim != 3:  # noqa: PLR2004
+            raise ValueError("Input must be a batch of images [N, H, W].")
 
-            return torch.from_numpy(labels)
+        data = x.numpy()
+        labels = np.zeros(data.shape, dtype=np.uint8)
 
-        if x.ndim == 3:  # noqa: PLR2004
-            data = x.numpy()
-            labels = np.zeros(data.shape, dtype=np.uint8)
+        # NOTE : Use a threadpool to parallelize as much as possible ?
+        #        OpenCV should release the GIL, so it could really improve performances.
+        for i in range(len(data)):
+            _, labels[i] = cv2.connectedComponents(
+                data[i],
+                connectivity=connectivity,
+            )
 
-            for i in range(len(data)):
-                _, labels[i] = cv2.connectedComponents(
-                    data[i],
-                    connectivity=connectivity,
-                )
-
-            return torch.from_numpy(labels)
-
-        raise ValueError("Input must be an image [H, W] or a batch [N, H, W].")
+        return torch.from_numpy(labels)
 
     raise RuntimeError(
         "2D CCL on CPU is not natively supported. "
@@ -94,7 +91,7 @@ def ccl3d(  # pragma: no cover
     x: torch.Tensor,
     connectivity: Literal[6, 18, 26],
 ) -> torch.Tensor:
-    """Run Connected Components Labeling on 3D volumes (or batches) on CPU.
+    """Run Connected Components Labeling on 3D batches of volumes on CPU.
 
     Note
     ----
@@ -104,7 +101,7 @@ def ccl3d(  # pragma: no cover
     ----------
     x : torch.Tensor
         Data to perform CCL on.
-        It must be an image (H, W, D) or a batch of images (N, H, W, D).
+        It must be a batch of volumes (N, H, W, D).
         Only uint8 data is supported.
     connectivity : {6, 18, 26}
         Define how to perform CCL.
@@ -124,7 +121,7 @@ def ccl3d(  # pragma: no cover
     RuntimeError
         If the data is not CPU and ConnectedComponents3D is not installed.
     ValueError
-        If the provided data is not a volume or a batch of volumes.
+        If the provided data is not a batch of volumes.
     """
     if CC3D_INSTALLED:
         warnings.warn(
@@ -134,24 +131,20 @@ def ccl3d(  # pragma: no cover
             stacklevel=2,
         )
 
-        if x.ndim == 3:  # noqa: PLR2004
-            labels = cpucc3d.connected_components(x.numpy(), connectivity=connectivity)
+        if x.ndim != 4:  # noqa: PLR2004
+            raise ValueError("Input must be a batch of volumes [N, H, W, D].")
 
-            return torch.from_numpy(labels)
+        data = x.numpy()
+        labels = np.zeros(data.shape, dtype=np.uint8)
 
-        if x.ndim == 4:  # noqa: PLR2004
-            data = x.numpy()
-            labels = np.zeros(data.shape, dtype=np.uint8)
+        # NOTE : We need to investigate parallelization here.
+        for i in range(len(data)):
+            labels[i] = cpucc3d.connected_components(
+                data[i],
+                connectivity=connectivity,
+            )
 
-            for i in range(len(data)):
-                labels[i] = cpucc3d.connected_components(
-                    data[i],
-                    connectivity=connectivity,
-                )
-
-            return torch.from_numpy(labels)
-
-        raise ValueError("Input must be a volume [H, W, D] or a batch [N, H, W, D].")
+        return torch.from_numpy(labels)
 
     raise RuntimeError(
         "3D CCL on CPU is not natively supported. "

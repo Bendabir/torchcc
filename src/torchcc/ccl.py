@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
-    """Run Connected Components Labeling on 2D images (or batches).
+    """Run Connected Components Labeling on 2D batches of images.
 
     Note
     ----
@@ -22,7 +22,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     ----------
     x : torch.Tensor
         Data to perform CCL on.
-        It must be an image (H, W) or a batch of images (N, H, W).
+        It must be a batch of images (N, H, W).
         Only uint8 data is supported.
     connectivity : {4, 8}, optional
         Define how to perform CCL.
@@ -43,7 +43,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
 
 
 def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tensor:
-    """Run Connected Components Labeling on 3D volumes (or batches).
+    """Run Connected Components Labeling on 3D batches of volumes.
 
     Note
     ----
@@ -53,7 +53,7 @@ def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tenso
     ----------
     x : torch.Tensor
         Data to perform CCL on.
-        It must be an image (H, W, D) or a batch of images (N, H, W, D).
+        It must be a batch of volumes (N, H, W, D).
         Only uint8 data is supported.
     connectivity : {6, 18, 26}, optional
         Define how to perform CCL.
