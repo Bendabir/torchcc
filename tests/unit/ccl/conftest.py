@@ -5,9 +5,9 @@ import torch
 
 
 @pytest.fixture(scope="session")
-def generator(device: torch.device) -> torch.Generator:
+def generator(device: torch.device, seed: int) -> torch.Generator:
     g = torch.Generator(device)
 
-    g.manual_seed(123456789)
+    g.manual_seed(seed)
 
     return g
