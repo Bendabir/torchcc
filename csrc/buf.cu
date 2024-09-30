@@ -43,6 +43,8 @@
 //     P P Q Q R R
 //     S S X X
 //     S S X X
+//
+// As all images in a batch are independant, it's pretty straight forward to work on batches on the Z dimension
 
 namespace buf
 {
@@ -107,29 +109,42 @@ namespace buf
         }
 
         // --- KERNELS ---
-        __global__ void init(const uint8_t *const g_img, int32_t *const g_labels, const uint32_t w, const uint32_t h)
+        __global__ void init(
+            const uint8_t *const g_img,
+            int32_t *const g_labels,
+            const uint32_t w,
+            const uint32_t h,
+            const uint32_t n)
         {
             // Each thread basically work on the top-left pixel
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t index = row * w + col;
+            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t label = row * w + col;
+            const uint32_t index = offset * w * h + row * w + col;
 
-            // Assign each block to the raster index of the top-left pixel
-            if ((row >= h) || (col >= w))
+            if ((row >= h) || (col >= w) || (offset >= n))
             {
                 return;
             }
 
-            g_labels[index] = index;
+            // Assign each block to the raster index of the top-left pixel
+            g_labels[index] = label;
         }
 
-        __global__ void merge(const uint8_t *const g_img, int32_t *const g_labels, const uint32_t w, const uint32_t h)
+        __global__ void merge(
+            const uint8_t *const g_img,
+            int32_t *const g_labels,
+            const uint32_t w,
+            const uint32_t h,
+            const uint32_t n)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t index = row * w + col; // Basically pixel 5
+            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t index = offset * w * h + row * w + col; // Basically pixel 5 (see paper)
 
-            if ((row >= h) || (col >= w))
+            if ((row >= h) || (col >= w) || (offset >= n))
             {
                 return;
             }
@@ -247,13 +262,14 @@ namespace buf
             }
         }
 
-        __global__ void compress(int32_t *const g_labels, const uint32_t w, const uint32_t h)
+        __global__ void compress(int32_t *const g_labels, const uint32_t w, const uint32_t h, const uint32_t n)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t index = row * w + col;
+            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t index = offset * w * h + row * w + col;
 
-            if ((row >= h) || (col >= w))
+            if ((row >= h) || (col >= w) || (offset >= n))
             {
                 return;
             }
@@ -265,13 +281,15 @@ namespace buf
             const uint8_t *const g_img,
             int32_t *const g_labels,
             const uint32_t w,
-            const uint32_t h)
+            const uint32_t h,
+            const uint32_t n)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t index = row * w + col;
+            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t index = offset * w * h + row * w + col;
 
-            if ((row >= h) || (col >= w))
+            if ((row >= h) || (col >= w) || (offset >= n))
             {
                 return;
             }

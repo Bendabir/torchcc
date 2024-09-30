@@ -7,6 +7,7 @@
 
 #define BUF_2D_BLOCK_ROWS 16
 #define BUF_2D_BLOCK_COLS 16
+#define BUF_2D_BLOCK_DEPTH 4 // 4 * 16 * 16 = 1024 (threads in a block)
 
 namespace torchcc
 {
@@ -20,9 +21,10 @@ namespace torchcc
         const size_t ndim = x.ndimension();
 
         TORCH_CHECK_VALUE(x.is_cuda(), "Input must be a CUDA tensor.");
-        TORCH_CHECK_VALUE((ndim == 2) || (ndim == 3), "Input must be an image [H, W] or a batch [N, H, W].");
+        TORCH_CHECK_VALUE(ndim == 3, "Input must be a batch of images [N, H, W].");
         TORCH_CHECK_TYPE(x.scalar_type() == torch::kUInt8, "Input must be uint8 data.");
 
+        const uint32_t n = x.size(0);
         const uint32_t w = x.size(-1);
         const uint32_t h = x.size(-2);
 
@@ -46,19 +48,21 @@ namespace torchcc
         if ((ndim == 2) && (connectivity == 8))
         {
             const dim3 grid = dim3(
+                // Working on block of 2x2 pixels
                 ((w + 1) / 2 + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
                 ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
-                1);
-            const dim3 blocks = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS, 1);
+                // on each image
+                (n + 1) / BUF_2D_BLOCK_DEPTH);
+            const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS, BUF_2D_BLOCK_DEPTH);
 
             // Start with BUF algorithm because it's easier to implement
             // but we should move to BKE at some point because it's more efficient.
             // We need to split the algorithm in multiple kernels
             // as we need to store intermediate results to global memory for synchronization.
-            buf::ccl2d::init<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
-            buf::ccl2d::merge<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
-            buf::ccl2d::compress<<<grid, blocks, 0, stream>>>(labels_ptr, w, h);
-            buf::ccl2d::finalize<<<grid, blocks, 0, stream>>>(x_ptr, labels_ptr, w, h);
+            buf::ccl2d::init<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
+            buf::ccl2d::merge<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
+            buf::ccl2d::compress<<<grid, block, 0, stream>>>(labels_ptr, w, h, n);
+            buf::ccl2d::finalize<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
         }
 
         return labels;
@@ -76,7 +80,7 @@ namespace torchcc
         const size_t ndim = x.ndimension();
 
         TORCH_CHECK_VALUE(x.is_cuda(), "Input must be a CUDA tensor.");
-        TORCH_CHECK_VALUE((ndim == 3) || (ndim == 4), "Input must be a volume [H, W, D] or a batch [N, H, W, D].");
+        TORCH_CHECK_VALUE(ndim == 4, "Input must be a batch of volumes [N, H, W, D].");
         TORCH_CHECK_TYPE(x.scalar_type() == torch::kUInt8, "Input must be uint8 data.");
 
         const torch::TensorOptions options = torch::TensorOptions(torch::kInt32);
