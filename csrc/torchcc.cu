@@ -45,7 +45,7 @@ namespace torchcc
         const uint8_t *const x_ptr = x.data_ptr<uint8_t>();
         int32_t *const labels_ptr = labels.data_ptr<int32_t>();
 
-        if ((ndim == 2) && (connectivity == 8))
+        if (connectivity == 8)
         {
             const dim3 grid = dim3(
                 // Working on block of 2x2 pixels

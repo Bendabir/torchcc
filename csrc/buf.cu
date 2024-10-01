@@ -119,11 +119,11 @@ namespace buf
             // Each thread basically work on the top-left pixel
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t depth = blockIdx.z * blockDim.z + threadIdx.z;
             const uint32_t label = row * w + col;
-            const uint32_t index = offset * w * h + row * w + col;
+            const uint32_t index = depth * w * h + label;
 
-            if ((row >= h) || (col >= w) || (offset >= n))
+            if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
@@ -141,10 +141,10 @@ namespace buf
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
-            const uint32_t index = offset * w * h + row * w + col; // Basically pixel 5 (see paper)
+            const uint32_t depth = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t index = depth * w * h + row * w + col; // Basically pixel 5 (see paper)
 
-            if ((row >= h) || (col >= w) || (offset >= n))
+            if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
@@ -266,10 +266,10 @@ namespace buf
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
-            const uint32_t index = offset * w * h + row * w + col;
+            const uint32_t depth = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t index = depth * w * h + row * w + col;
 
-            if ((row >= h) || (col >= w) || (offset >= n))
+            if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
@@ -286,10 +286,10 @@ namespace buf
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
-            const uint32_t offset = blockIdx.z * blockDim.z + threadIdx.z;
-            const uint32_t index = offset * w * h + row * w + col;
+            const uint32_t depth = blockIdx.z * blockDim.z + threadIdx.z;
+            const uint32_t index = depth * w * h + row * w + col;
 
-            if ((row >= h) || (col >= w) || (offset >= n))
+            if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
