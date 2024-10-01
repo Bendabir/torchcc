@@ -60,7 +60,7 @@ def test_cc2d(
         pytest.skip("4-connectivity is not yet supported.")
 
     image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-    x = torch.from_numpy(image).to(device)
+    x = torch.from_numpy(image).unsqueeze_(0).to(device)
 
     if not contiguous:
         x = x.transpose(-2, -1).contiguous().transpose(-2, -1)
@@ -73,6 +73,6 @@ def test_cc2d(
     # Use NumPy for better explainability
     np.testing.assert_array_equal(
         consecutivize(labels.cpu().numpy()),
-        expected,
+        np.expand_dims(expected, 0),
         strict=True,
     )
