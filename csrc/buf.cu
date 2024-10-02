@@ -57,8 +57,10 @@ namespace buf
             return (mask >> pos) & 1;
         }
 
-        __device__ uint32_t find(const int32_t *const g_labels, uint32_t n)
+        __device__ uint32_t find(const int32_t *const g_labels, const uint32_t index)
         {
+            uint32_t n = index;
+
             while (g_labels[n] != n)
             {
                 n = g_labels[n];
@@ -67,14 +69,14 @@ namespace buf
             return n;
         }
 
-        __device__ uint32_t findAndCompress(int32_t *const g_labels, uint32_t n)
+        __device__ uint32_t findAndCompress(int32_t *const g_labels, const uint32_t index)
         {
-            const uint32_t id = n;
+            uint32_t n = index;
 
             while (g_labels[n] != n)
             {
                 n = g_labels[n];
-                g_labels[id] = n;
+                g_labels[index] = n;
             }
 
             return n;
@@ -86,7 +88,6 @@ namespace buf
 
             do
             {
-
                 a = find(g_labels, a);
                 b = find(g_labels, b);
 
@@ -106,7 +107,6 @@ namespace buf
                 {
                     done = true;
                 }
-
             } while (!done);
         }
 
