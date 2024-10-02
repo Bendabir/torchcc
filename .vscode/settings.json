@@ -117,5 +117,9 @@
         "**/dist": true,
         "**/datasets": true
     },
-    "C_Cpp.exclusionPolicy": "checkFilesAndFolders"
+    "C_Cpp.exclusionPolicy": "checkFilesAndFolders",
+    "C_Cpp.inlayHints.parameterNames.enabled": true,
+    "C_Cpp.inlayHints.referenceOperator.enabled": true,
+    "C_Cpp.inlayHints.autoDeclarationTypes.enabled": true,
+    "C_Cpp.inlayHints.autoDeclarationTypes.showOnLeft": true
 }
