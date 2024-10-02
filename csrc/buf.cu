@@ -150,43 +150,24 @@ namespace buf
             }
 
             uint16_t mask = 0;
-            uint8_t pixels[4] = {0, 0, 0, 0};
 
             // NOTE : This might be suboptimal.
-            //        Perhaps we can leverage some casting to transfer the 4 bytes directly.
-            //        Loop is unrolled to avoid usage of %, which is slow.
-            //        Not sure this is more efficient though.
             //        Perhaps we should copy all the image data we need in the thread at once (if possible).
-            pixels[0] = g_img[index]; // top-left
-
-            if (col + 1 <= w)
-            {
-                pixels[1] = g_img[index + 1]; // top-right
-            }
-
-            if (row + 1 <= h)
-            {
-                pixels[2] = g_img[index + w]; // bottom-left
-            }
-
-            if ((col + 1 <= w) && (row + 1 <= h))
-            {
-                pixels[3] = g_img[index + w + 1]; // bottom-right
-            }
+            //        So we work either from the registers or shared memory.
 
             // First, check the pixels of the block, so we build a "pixels-to-check" mask for foreground pixels.
             // No check on the bottom-right pixel as it's never responsible for connections between blocks.
-            if (pixels[0])
+            if (g_img[index]) // top-left pixel
             {
                 mask |= BITMASK_3x3;
             }
 
-            if (pixels[1])
+            if ((col + 1 <= w) && g_img[index + 1]) // top-right pixel
             {
                 mask |= BITMASK_3x3 << 1;
             }
 
-            if (pixels[2])
+            if ((row + 1 <= h) && g_img[index + w]) // bottom-left pixel
             {
                 mask |= BITMASK_3x3 << 4;
             }
