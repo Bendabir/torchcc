@@ -93,7 +93,8 @@
         "**/.ruff_cache": true,
         "**/.ruff_cache_vscode": true,
         "**/.pytest_cache": true,
-        "**/.pytest_cache_vscode": true
+        "**/.pytest_cache_vscode": true,
+        "**/datasets": true
     },
     "search.exclude": {
         "**/.git": true,
@@ -107,5 +108,14 @@
         "**/.ruff_cache_vscode": true,
         "**/.pytest_cache": true,
         "**/.pytest_cache_vscode": true
-    }
+    },
+    "C_Cpp.files.exclude": {
+        "**/.vscode": true,
+        "**/.vs": true,
+        "**/.git": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/datasets": true
+    },
+    "C_Cpp.exclusionPolicy": "checkFilesAndFolders"
 }
