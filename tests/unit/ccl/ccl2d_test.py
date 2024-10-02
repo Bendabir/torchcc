@@ -50,7 +50,7 @@ def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
     not torch.cuda.is_available(),
     reason="CUDA is not available.",
 )
-def test_cc2d(
+def test_ccl2d(
     path: str,
     device: torch.device,
     contiguous: bool,  # noqa: FBT001
