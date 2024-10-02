@@ -164,12 +164,12 @@ namespace buf
                 mask |= BITMASK_3x3;
             }
 
-            if ((col + 1 <= w) && g_img[index + 1]) // top-right pixel
+            if ((col + 1 < w) && g_img[index + 1]) // top-right pixel
             {
                 mask |= BITMASK_3x3 << 1;
             }
 
-            if ((row + 1 <= h) && g_img[index + w]) // bottom-left pixel
+            if ((row + 1 < h) && g_img[index + w]) // bottom-left pixel
             {
                 mask |= BITMASK_3x3 << 4;
             }
