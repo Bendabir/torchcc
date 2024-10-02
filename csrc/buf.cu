@@ -151,6 +151,7 @@ namespace buf
                 return;
             }
 
+            // NOTE : As we're only using bit 0, 1, 2, 3, 4 and 8, this could technically fits on a byte
             uint16_t mask = 0;
 
             // NOTE : This might be suboptimal.
