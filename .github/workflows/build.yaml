@@ -72,8 +72,6 @@ jobs:
             python-version: "3.11"
           - cuda-version: "12.4"
             python-version: "3.12"
-    env:
-      POETRY_VERSION: "1.8.3"
     container:
       image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
     steps:
@@ -83,15 +81,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: install-poetry
-        run: python -m pip install "poetry==${{ env.POETRY_VERSION }}" "poetry-plugin-export<2" wheel
+      - name: prepare-env
+        run: |
+          python -m pip install "poetry-core==1.9.0" "ninja==1.11.1.1" "wheel==0.44.0"
+          python -m pip check
       - name: install-torch
         env:
           CUDA_VERSION: ${{ matrix.cuda-version }}
         shell: bash
-        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cu${CUDA_VERSION//\./}
-      - name: prepare-env
-        run: python -m pip install poetry-core ninja
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cu${CUDA_VERSION//\./}
+          python -m pip check
       - name: generate-setup
         run: python poetry2setup.py
       - name: build
