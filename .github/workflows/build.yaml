@@ -75,6 +75,9 @@ jobs:
           #   python-version: "3.12"
     container:
       image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
+    env:
+      # Avoid an issue with Python includes not linked correctly
+      AGENT_TOOLSDIRECTORY: "/opt/hostedtoolcache"
     steps:
       - name: sync-code
         uses: actions/checkout@v4
