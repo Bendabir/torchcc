@@ -84,7 +84,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: install-poetry
-        run: python -m pip install "poetry==${{ env.POETRY_VERSION }}" "poetry-plugin-export<2"
+        run: python -m pip install "poetry==${{ env.POETRY_VERSION }}" "poetry-plugin-export<2" wheel
       - name: install-torch
         env:
           CUDA_VERSION: ${{ matrix.cuda-version }}
