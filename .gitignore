@@ -15,5 +15,6 @@ poetry.lock
 .coverage
 **/datasets/2d
 **/datasets/3d
+**/benchmarks
 setup.py
 **/lib/**
