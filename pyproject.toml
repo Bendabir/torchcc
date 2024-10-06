@@ -48,6 +48,15 @@ cyclopts = "^2.9.9"
 pandas = "^2.2.3"
 pandas-stubs = "^2.2.2.240807"
 
+[tool.poetry.group.benchmarks]
+optional = true
+
+[tool.poetry.group.benchmarks.dependencies]
+plotly = "^5.24.1"
+cyclopts = "^2.9.9"
+pandas = "^2.2.3"
+pandas-stubs = "^2.2.2.240807"
+
 [tool.poetry.group.build]
 optional = true
 
