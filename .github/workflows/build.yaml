@@ -1,7 +1,8 @@
 name: Build
 on:
   push:
-    branches: [main]
+    tags:
+      - "*.*.*"
 jobs:
   release:
     name: publish-release
