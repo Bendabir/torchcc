@@ -37,8 +37,8 @@ jobs:
           # # CUDA 11.6
           # - cuda-version: "11.6"
           #   python-version: "3.9"
-          # - cuda-version: "11.6"
-          #   python-version: "3.10"
+          - cuda-version: "11.6"
+            python-version: "3.10"
           # # CUDA 11.7
           # - cuda-version: "11.7"
           #   python-version: "3.9"
@@ -67,8 +67,8 @@ jobs:
           # # CUDA 12.4
           # - cuda-version: "12.4"
           #   python-version: "3.9"
-          - cuda-version: "12.4"
-            python-version: "3.10"
+          # - cuda-version: "12.4"
+          #   python-version: "3.10"
           # - cuda-version: "12.4"
           #   python-version: "3.11"
           # - cuda-version: "12.4"
