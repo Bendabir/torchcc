@@ -16,10 +16,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          draft: true
+          draft: false
           prerelease: false
-          release_name: test
-          tag_name: test
+          release_name: TorchCC ${{ github.ref }}
+          tag_name: ${{ github.ref }}
           body_path: CHANGELOG.md
   build:
     name: build-library
