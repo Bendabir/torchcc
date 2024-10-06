@@ -78,6 +78,17 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
     return extra_compile_args
 
 
+def _cxx_extra_compile_args(*, debug_mode: bool) -> list[str]:
+    extra_compile_args = [
+        "-O0" if debug_mode else "-O3",
+    ]
+
+    if debug_mode:
+        extra_compile_args.append("-g")
+
+    return extra_compile_args
+
+
 def _extra_link_args(*, debug_mode: bool) -> list[str]:
     if debug_mode:
         return ["-O0", "-g"]
@@ -106,6 +117,7 @@ def build(setup_kwargs: dict[str, Any]) -> None:
                         os.path.abspath("include"),
                     ],
                     extra_compile_args={
+                        "cxx": _cxx_extra_compile_args(debug_mode=debug_mode),
                         "nvcc": _nvcc_extra_compile_args(debug_mode=debug_mode),
                     },
                     extra_link_args=_extra_link_args(debug_mode=debug_mode),
