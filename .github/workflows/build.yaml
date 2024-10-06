@@ -22,29 +22,29 @@ jobs:
           #   python-version: "3.9"
           # - cuda-version: "10.2"
           #   python-version: "3.10"
-          # # CUDA 11.0
-          # - cuda-version: "11.0"
-          #   python-version: "3.9"
-          # # CUDA 11.1
-          # - cuda-version: "11.1"
-          #   python-version: "3.9"
-          # # CUDA 11.3
-          # - cuda-version: "11.3"
-          #   python-version: "3.9"
-          # - cuda-version: "11.3"
-          #   python-version: "3.10"
-          # # CUDA 11.6
-          # - cuda-version: "11.6"
-          #   python-version: "3.9"
-          # - cuda-version: "11.6"
-          #   python-version: "3.10"
-          # # CUDA 11.7
-          # - cuda-version: "11.7"
-          #   python-version: "3.9"
-          # - cuda-version: "11.7"
-          #   python-version: "3.10"
-          # - cuda-version: "11.7"
-          #   python-version: "3.11"
+          # CUDA 11.0
+          - cuda-version: "11.0"
+            python-version: "3.9"
+          # CUDA 11.1
+          - cuda-version: "11.1"
+            python-version: "3.9"
+          # CUDA 11.3
+          - cuda-version: "11.3"
+            python-version: "3.9"
+          - cuda-version: "11.3"
+            python-version: "3.10"
+          # CUDA 11.6
+          - cuda-version: "11.6"
+            python-version: "3.9"
+          - cuda-version: "11.6"
+            python-version: "3.10"
+          # CUDA 11.7
+          - cuda-version: "11.7"
+            python-version: "3.9"
+          - cuda-version: "11.7"
+            python-version: "3.10"
+          - cuda-version: "11.7"
+            python-version: "3.11"
           # CUDA 11.8
           - cuda-version: "11.8"
             python-version: "3.9"
