@@ -70,7 +70,7 @@ def _get_versions(url: str) -> pd.DataFrame:
     return dataframe
 
 
-app = cyclopts.App()
+app = cyclopts.App(version_flags=None)
 
 
 @app.default

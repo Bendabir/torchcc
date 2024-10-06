@@ -13,7 +13,7 @@ def _version(v: str) -> tuple[int, ...]:
     return tuple(map(int, v.split(".")))
 
 
-app = cyclopts.App()
+app = cyclopts.App(version_flags=None)
 
 
 @app.default
