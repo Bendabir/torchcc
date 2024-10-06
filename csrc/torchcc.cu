@@ -30,7 +30,7 @@ namespace torchcc
 
         // As each block of 2x2 pixels will take the raster index of its top-left pixel,
         // we need to ensure we don't overflow
-        TORCH_CHECK_VALUE(w * h <= INT32_MAX, "Provided input is too big and will cause overflow on labels.");
+        TORCH_CHECK_VALUE(w * h * n <= INT32_MAX, "Provided input is too big and will cause overflow on labels.");
 
         const torch::TensorOptions options = torch::TensorOptions(torch::kInt32);
         torch::Tensor labels = torch::zeros_like(x, options);

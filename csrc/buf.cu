@@ -131,7 +131,17 @@ namespace buf
             }
 
             // Assign each block to the raster index of the top-left pixel
-            g_labels[index] = label;
+            // FIXME : Switch to the real raster index local to the image
+            //         in the batch instead of the pixel index.
+            //         With the current code, using the raster index causes
+            //         some issues with union computation as union is computed
+            //         accross images.
+            //         Possible solutions could be :
+            //           1. Force to constrain the union to the local image by checking bounds.
+            //           2. Use a depth of 1 ? This might affect performances, so to be checked.
+            //         The current solution works but does affect the maximum input size
+            //         as we need to ensure we don't overflow with labels.
+            g_labels[index] = index;
         }
 
         __global__ void merge(
