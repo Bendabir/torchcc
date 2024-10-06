@@ -43,8 +43,14 @@ if TORCH_CUDA_ARCH_LIST not in os.environ:
     if version >= (10, 0):
         archs.append("7.5")
 
+    if version >= (11, 0):
+        archs.append("8.0")
+
     if version >= (11, 1):
-        archs.extend(("8.0", "8.6", "8.7"))
+        archs.append("8.6")
+
+    if version >= (11, 5):
+        archs.append("8.7")
 
     if version >= (11, 8):
         archs.append("8.9")
