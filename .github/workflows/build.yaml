@@ -10,7 +10,8 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          # FIXME : Fix GLIBC issues on older systems
+          # FIXME : Fix issues with recent G++ versions.
+          #         See : https://stackoverflow.com/questions/6622454/cuda-incompatible-with-my-gcc-version
           # # CUDA 9.2
           # - cuda-version: "9.2"
           #   python-version: "3.9"
@@ -22,17 +23,17 @@ jobs:
           #   python-version: "3.9"
           # - cuda-version: "10.2"
           #   python-version: "3.10"
-          # CUDA 11.0
-          - cuda-version: "11.0"
-            python-version: "3.9"
-          # CUDA 11.1
-          - cuda-version: "11.1"
-            python-version: "3.9"
-          # CUDA 11.3
-          - cuda-version: "11.3"
-            python-version: "3.9"
-          - cuda-version: "11.3"
-            python-version: "3.10"
+          # # CUDA 11.0
+          # - cuda-version: "11.0"
+          #   python-version: "3.9"
+          # # CUDA 11.1
+          # - cuda-version: "11.1"
+          #   python-version: "3.9"
+          # # CUDA 11.3
+          # - cuda-version: "11.3"
+          #   python-version: "3.9"
+          # - cuda-version: "11.3"
+          #   python-version: "3.10"
           # CUDA 11.6
           - cuda-version: "11.6"
             python-version: "3.9"
