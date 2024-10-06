@@ -3,9 +3,22 @@ on:
   push:
     branches: [main]
 jobs:
+  release:
+    name: publish-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: release
+        uses: actions/create-release@v1
+        with:
+          draft: true
+          prerelease: false
+          release_name: test
+          tag_name: test
+          body_path: CHANGELOG.md
   build:
     name: build-library
     runs-on: ubuntu-latest
+    needs: release
     strategy:
       fail-fast: true
       matrix:
