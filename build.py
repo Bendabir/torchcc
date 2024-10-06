@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import glob
 import os
+import sys
 from typing import Any
 
 import torch
@@ -99,6 +100,26 @@ def _extra_link_args(*, debug_mode: bool) -> list[str]:
     return []
 
 
+def _include_dirs() -> list[str]:
+    include_dirs = [
+        # NOTE : Need to provide the full path.
+        #        Otherwise the compiler doesn't find our header files.
+        #        Other libs (Python, Torch, CUDA, etc.)
+        #        are automatically provided.
+        os.path.abspath("include"),
+    ]
+
+    # Dirty fix for GHA runners as it fails to properly inject appropriate paths
+    if python_location := os.getenv("pythonLocation"):  # noqa: SIM112
+        v = sys.version_info
+
+        include_dirs.append(
+            os.path.join(python_location, "include", f"python{v.major}.{v.minor}")
+        )
+
+    return include_dirs
+
+
 def build(setup_kwargs: dict[str, Any]) -> None:
     """Add specifications to build the CUDA extension."""
     debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"
@@ -112,13 +133,7 @@ def build(setup_kwargs: dict[str, Any]) -> None:
                         *glob.glob("csrc/**/*.cpp", recursive=True),
                         *glob.glob("csrc/**/*.cu", recursive=True),
                     ],
-                    include_dirs=[
-                        # NOTE : Need to provide the full path.
-                        #        Otherwise the compiler doesn't find our header files.
-                        #        Other libs (Python, Torch, CUDA, etc.)
-                        #        are automatically provided.
-                        os.path.abspath("include"),
-                    ],
+                    include_dirs=_include_dirs(),
                     extra_compile_args={
                         "cxx": _cxx_extra_compile_args(debug_mode=debug_mode),
                         "nvcc": _nvcc_extra_compile_args(debug_mode=debug_mode),
