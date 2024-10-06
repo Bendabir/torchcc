@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Literal
+import re
+from typing import TYPE_CHECKING, Any, Literal
 
 import cv2
 import numpy as np
@@ -9,6 +10,9 @@ import pytest
 import torch
 
 from torchcc import ccl2d
+
+if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
 
 
 def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
@@ -175,3 +179,134 @@ def test_ccl2d_batch(
         expected,
         strict=True,
     )
+
+
+@pytest.mark.parametrize("connectivity", [-1, 0, 1, 2, 6, 16])
+@pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="CUDA is not available.",
+)
+def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
+    images = torch.zeros((4, 16, 16), device=device, dtype=torch.uint8)
+
+    if connectivity >= 0:
+        raises: AbstractContextManager[Any] = pytest.raises(
+            ValueError,
+            match=re.escape("Only 4-connectivity and 8-connectivity are supported."),
+        )
+    else:
+        raises = pytest.raises(TypeError)
+
+    with raises:
+        ccl2d(images, connectivity=connectivity)  # type: ignore[arg-type]
+
+
+@pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="CUDA is not available.",
+)
+def test_ccl2d_4_connectivity(device: torch.device) -> None:
+    images = torch.zeros((4, 16, 16), device=device, dtype=torch.uint8)
+
+    with pytest.raises(NotImplementedError):
+        ccl2d(images, connectivity=4)
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [(1), (32, 32), (4, 8, 32, 32)],
+    ids=["dim-1", "dim-2", "dim-4"],
+)
+@pytest.mark.parametrize("connectivity", [4, 8])
+@pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="CUDA is not available.",
+)
+def test_ccl2d_input_shape(
+    device: torch.device,
+    shape: tuple[int, ...],
+    connectivity: Literal[4, 8],
+) -> None:
+    if connectivity == 4:
+        pytest.skip("4-connectivity is not yet supported.")
+
+    images = torch.zeros(shape, device=device, dtype=torch.uint8)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Input must be a batch of images [N, H, W]."),
+    ):
+        ccl2d(images, connectivity=connectivity)
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        torch.uint16,
+        torch.uint32,
+        torch.uint64,
+        torch.int8,
+        torch.int16,
+        torch.int32,
+        torch.int64,
+        torch.float16,
+        torch.float32,
+        torch.float64,
+        torch.bool,
+    ],
+    ids=[
+        "uint16",
+        "uint32",
+        "uint64",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "float16",
+        "float32",
+        "float64",
+        "bool",
+    ],
+)
+@pytest.mark.parametrize("connectivity", [4, 8])
+@pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="CUDA is not available.",
+)
+def test_ccl2d_input_type(
+    device: torch.device,
+    connectivity: Literal[4, 8],
+    dtype: torch.dtype,
+) -> None:
+    if connectivity == 4:
+        pytest.skip("4-connectivity is not yet supported.")
+
+    images = torch.zeros((4, 32, 32), device=device, dtype=dtype)
+
+    with pytest.raises(TypeError):
+        ccl2d(images, connectivity=connectivity)
+
+
+@pytest.mark.parametrize("connectivity", [4, 8])
+@pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="CUDA is not available.",
+)
+def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> None:
+    if connectivity == 4:
+        pytest.skip("4-connectivity is not yet supported.")
+
+    size = 1_300
+
+    # Check we have enough vRAM to run the test
+    # (otherwise, it's a non-issue)
+    if size**3 >= torch.cuda.get_device_properties(device).total_memory:
+        pytest.skip("Not enough vRAM to run the test.")
+
+    images = torch.zeros((size, size, size), device=device, dtype=torch.uint8)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Provided input is too big and will cause overflow on labels."),
+    ):
+        ccl2d(images, connectivity=connectivity)
