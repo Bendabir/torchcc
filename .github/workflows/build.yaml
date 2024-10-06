@@ -7,6 +7,8 @@ jobs:
     name: publish-release
     runs-on: ubuntu-latest
     steps:
+      - name: sync-code
+        uses: actions/checkout@v4
       - name: release
         uses: actions/create-release@v1
         env:
