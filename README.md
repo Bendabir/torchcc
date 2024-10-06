@@ -1,5 +1,11 @@
 # Torch Connected Components
 
+TorchCC is a library that brings efficient CUDA implementations of Connected Components related algorithms (such as Connection Components Labeling).
+CPU support is delegated to external libraries such as OpenCV. It is built to support multiple CUDA and PyTorch versions.
+
+> [!NOTE]
+> This library is still an early prototype. It's definitely not suitable for production.
+
 ## Compatibility
 
 | Torch Version | CUDA 9.2 | CUDA 10.1 | CUDA 10.2 | CUDA 11.0 | CUDA 11.1 | CUDA 11.3 | CUDA 11.6 | CUDA 11.7 | CUDA 11.8 | CUDA 12.1 | CUDA 12.4 | Min. Python Version | Max. Python Version |
@@ -37,17 +43,21 @@
 
 More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
 
+## Install
+
+**TODO**
+
 ## Usage
 
-### Install
+All algorithms are implemented in a batch fashion for easy integration with PyTorch.
 
-**TODO**
+### 2D Connected Components Labeling
 
-### 2D Connected Components
+```python
+labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W]
+```
 
-**TODO**
-
-### 3D Connected Components
+### 3D Connected Components Labeling
 
 **TODO**
 
@@ -203,3 +213,12 @@ Deeper details on CUDA can be found here.
 - [CUDA Tutorial 2022 Part 1 : Introduction and CUDA Basics](https://cuda-tutorial.github.io/part1_22.pdf)
 - [CUDA Tutorial 2022 Part 2 : GPU Hardware Details](https://cuda-tutorial.github.io/part2_22.pdf)
 - [CUDA Cheatsheet](https://kdm.icm.edu.pl/Tutorials/GPU-intro/introduction.en)
+
+## TODOs
+
+Here is a list of possible improvements to investigate :
+
+- [ ] Proper benchmarking.
+- [ ] 2D 4-connectivity CCL.
+- [ ] 3D CCL.
+- [ ] Make IDs consecutive for 2D 8-connectivity CCL.
