@@ -56,6 +56,8 @@ plotly = "^5.24.1"
 cyclopts = "^2.9.9"
 pandas = "^2.2.3"
 pandas-stubs = "^2.2.2.240807"
+opencv-python-headless = "^4.10.0.84"
+connected-components-3d = "^3.18.0"
 
 [tool.poetry.group.build]
 optional = true
