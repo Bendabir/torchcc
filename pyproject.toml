@@ -51,6 +51,7 @@ pandas-stubs = "^2.2.2.240807"
 [tool.poetry.group.build]
 optional = true
 
+# For CI, most deps are installed manually (such as PyTorch)
 [tool.poetry.group.build.dependencies]
 poetry-core = "*"
 torch = "*"
