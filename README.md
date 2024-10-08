@@ -4,9 +4,43 @@ TorchCC is a library that brings efficient CUDA implementations of Connected Com
 CPU support is delegated to external libraries such as OpenCV. It is built to support multiple CUDA and PyTorch versions.
 
 > [!NOTE]
-> This library is still an early prototype. It's definitely not suitable for production.
+> This library is still an early prototype. It's definitely not suitable for production. Only Linux is supported at the moment. Windows could probably be supported with some extra efforts.
+
+## Install
+
+> [!NOTE]
+> This is a temporary solution. I plan to setup some custom PyPI indices in a PyTorch-fashion to select the CUDA version. I might also upload artifacts to PyPI, but it means that one version of CUDA needs to be selected. It's not optimal as I'd like to uncouple CUDA versions from the library version.
+
+1. Go the release page.
+2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
+3. Install it in your env. For example : `pip install torchcc-0.1.0+cu121-cp312-cp312-linux_x86_64.whl`
+
+## Usage
+
+All algorithms are implemented in a batch fashion for easy integration with PyTorch.
+
+### 2D Connected Components Labeling
+
+```python
+labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W]
+```
+
+### 3D Connected Components Labeling
+
+**TODO**
+
+### CPU support
+
+CPU support is delegated to third-party libraries. [OpenCV](https://github.com/opencv/opencv-python) is used for 2D Connected Components Labeling on CPU, while [ConnectedComponents3D](https://github.com/seung-lab/connected-components-3d) is used for 3D counterpart. Both libraries are optional. Install them for transparent CPU support.
+
+```bash
+pip install "opencv-python-headless>=4,<5" # 2D
+pip install "connected-components-3d>=3,<4" # 3D
+```
 
 ## Compatibility
+
+Below is the planned compatibility matrix for TorchCC. If possible, all PyTorch version after Python 3.9 will be supported. For various compatibility reasons, only PyTorch versions supporting at least CUDA 11.6 are supported.
 
 | Torch Version | CUDA 9.2 | CUDA 10.1 | CUDA 10.2 | CUDA 11.0 | CUDA 11.1 | CUDA 11.3 | CUDA 11.6 | CUDA 11.7 | CUDA 11.8 | CUDA 12.1 | CUDA 12.4 | Min. Python Version | Max. Python Version |
 | ------------- | -------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------------- | ------------------- |
@@ -42,33 +76,6 @@ CPU support is delegated to external libraries such as OpenCV. It is built to su
 - ❌ : Unsupported
 
 More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
-
-## Install
-
-**TODO**
-
-## Usage
-
-All algorithms are implemented in a batch fashion for easy integration with PyTorch.
-
-### 2D Connected Components Labeling
-
-```python
-labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W]
-```
-
-### 3D Connected Components Labeling
-
-**TODO**
-
-### CPU support
-
-CPU support is delegated to third-party libraries. [OpenCV](https://github.com/opencv/opencv-python) is used for 2D Connected Components Labeling on CPU, while [ConnectedComponents3D](https://github.com/seung-lab/connected-components-3d) is used for 3D counterpart. Both libraries are optional. Install them for transparent CPU support.
-
-```bash
-pip install "opencv-python-headless>=4,<5" # 2D
-pip install "connected-components-3d>=3,<4" # 3D
-```
 
 ## Development
 
