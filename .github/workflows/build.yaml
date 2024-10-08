@@ -4,34 +4,9 @@ on:
     tags:
       - "*.*.*"
 jobs:
-  release:
-    name: publish-release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      id: ${{ steps.release.outputs.id }}
-      upload_url: ${{ steps.release.outputs.upload_url }}
-    steps:
-      - name: sync-code
-        uses: actions/checkout@v4
-      - name: release
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          draft: false
-          prerelease: false
-          release_name: TorchCC ${{ github.ref }}
-          tag_name: ${{ github.ref }}
-          body_path: CHANGELOG.md
   build:
-    name: build-library
+    name: build
     runs-on: ubuntu-latest
-    needs: release
-    permissions:
-      contents: write
     strategy:
       fail-fast: true
       matrix:
@@ -128,14 +103,38 @@ jobs:
           CUDA_VERSION: ${{ matrix.cuda-version }}
         run: |
           cd dist
-          export WHEEL_NAME=$(ls | sed "s/\(torchcc-[^-]*\)/\1+cu${CUDA_VERSION//\./}/g")
-          echo "wheel-name=${WHEEL_NAME}" >> "$GITHUB_OUTPUT"
+
+          WHEEL_NAME=$(ls)
+          NEW_WHEEL_NAME=$(echo $WHEEL_NAME | sed "s/\(torchcc-[^-]*\)/\1+cu${CUDA_VERSION//\./}/g")
+
+          mv $WHEEL_NAME $NEW_WHEEL_NAME
+          echo "wheel-name=${NEW_WHEEL_NAME}" >> "$GITHUB_OUTPUT"
       - name: upload
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./dist/${{ steps.rename.outputs.wheel-name }}
-          asset_name: ${{ steps.rename.outputs.wheel-name }}
-          asset_content_type: application/octet-stream
+          name: ${{ steps.rename.outputs.wheel-name }}
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 1
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    permissions:
+      contents: write
+    steps:
+      # Sync code to get the changelog, we could go for auto-generation
+      # We will inject the full changelog every time, not for the best...
+      - name: sync-code
+        uses: actions/checkout@v4
+      - name: download
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: "*.whl"
+          merge-multiple: true # Send all artifacts to the same directory
+      - name: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create ${{ github.ref_name }} -F CHANGELOG.md -t "TorchCC ${{ github.ref_name }}" dist/*.whl
