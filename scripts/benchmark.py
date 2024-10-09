@@ -76,8 +76,7 @@ def _2d(  # noqa: PLR0914
     batch_size: int = 16,
 ) -> None:
     """Run a 2D benchmark to assess performances."""
-    if output.is_file():
-        output.parent.mkdir(parents=True, exist_ok=True)
+    output.parent.mkdir(parents=True, exist_ok=True)
 
     if device == "cpu":
         warnings.warn(
