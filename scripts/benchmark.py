@@ -137,7 +137,7 @@ def _2d(  # noqa: PLR0914
                 gpu_end.record()
                 torch.cuda.synchronize()
 
-                duration = 1_000 * gpu_start.elapsed_time(gpu_end)
+                duration = gpu_start.elapsed_time(gpu_end) / 1_000
 
             length = len(ps)
 
