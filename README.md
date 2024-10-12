@@ -8,8 +8,32 @@ CPU support is delegated to external libraries such as OpenCV. It is built to su
 
 ## Install
 
+### From Package Manager
+
+You can install TorchCC by using a custom PyPI index. There is one index per supported version of CUDA. This is still experimental though.
+
+#### pip
+
+```bash
+pip install --index-url https://bendabir.github.io/pypi/cu121 torchcc
+```
+
+#### Poetry
+
+```toml
+[[tool.poetry.source]]
+name = "bendabir-cu121"
+url = "https://bendabir.github.io/pypi/cu121"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+torchcc = { version = "^0.1.0", source = "bendabir-cu121" }
+```
+
+### Direct Install
+
 > [!NOTE]
-> This is a temporary solution. I plan to setup some custom PyPI indices in a PyTorch-fashion to select the CUDA version. I might also upload artifacts to PyPI, but it means that one version of CUDA needs to be selected. It's not optimal as I'd like to uncouple CUDA versions from the library version.
+> This is a temporary solution. I might also upload artifacts to PyPI, but it means that one version of CUDA needs to be selected. It's not optimal as I'd like to uncouple CUDA versions from the library version.
 
 1. Go the release page.
 2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
