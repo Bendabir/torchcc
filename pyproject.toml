@@ -60,6 +60,7 @@ opencv-python-headless = "^4.10.0.84"
 connected-components-3d = "^3.18.0"
 tqdm = "^4.66.5"
 types-tqdm = "^4.66.0.20240417"
+kornia = "^0.7.3"
 
 [tool.poetry.group.build]
 optional = true
