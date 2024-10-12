@@ -1,0 +1,90 @@
+name: Release
+on:
+  push:
+    branches:
+      - more-cuda
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          # Missing CUDA versions
+          # CUDA 11.0
+          - cuda-version: "11.0"
+            python-version: "3.9"
+          # CUDA 11.1
+          - cuda-version: "11.1"
+            python-version: "3.9"
+          # CUDA 11.3
+          - cuda-version: "11.3"
+            python-version: "3.9"
+          - cuda-version: "11.3"
+            python-version: "3.10"
+    container:
+      image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
+    env:
+      POETRY_CORE_VERSION: "1.9.0"
+    steps:
+      - name: sync-code
+        uses: actions/checkout@v4
+      - name: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # NOTE : Not running pip check because it causes some errors with Ninja
+      - name: prepare-env
+        run: python -m pip install "poetry-core==${{ env.POETRY_CORE_VERSION }}" ninja wheel
+      - name: install-torch
+        env:
+          CUDA_VERSION: ${{ matrix.cuda-version }}
+        shell: bash
+        run: python -m pip install torch numpy setuptools typing-extensions --index-url https://download.pytorch.org/whl/cu${CUDA_VERSION//\./}
+      - name: generate-setup
+        run: python poetry2setup.py
+      - name: build
+        run: python setup.py bdist_wheel
+      - name: rename
+        id: rename
+        env:
+          CUDA_VERSION: ${{ matrix.cuda-version }}
+        run: |
+          cd dist
+
+          WHEEL_NAME=$(ls)
+          NEW_WHEEL_NAME=$(echo $WHEEL_NAME | sed "s/\(torchcc-[^-]*\)/\1+cu${CUDA_VERSION//\./}/g")
+
+          mv $WHEEL_NAME $NEW_WHEEL_NAME
+          echo "wheel-name=${NEW_WHEEL_NAME}" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename.outputs.wheel-name }}
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 1
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    permissions:
+      contents: write
+    steps:
+      # Sync code to get the changelog, we could go for auto-generation
+      # We will inject the full changelog every time, not for the best...
+      - name: sync-code
+        uses: actions/checkout@v4
+      - name: download
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: "*.whl"
+          merge-multiple: true # Send all artifacts to the same directory
+      - name: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload 0.1.0 dist/*.whl
