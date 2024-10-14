@@ -1,7 +1,7 @@
 # --- poetry ---
 [tool.poetry]
 name = "torchcc"
-version = "0.1.0"
+version = "0.1.1"
 description = "Efficient Connected Components Labeling for PyTorch."
 license = "GPL-3.0-or-later"
 authors = ["Bendabir"]
