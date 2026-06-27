@@ -157,7 +157,13 @@ def test_ccl2d_batch(
     h = max(img.shape[0] for img in images)
     w = max(img.shape[1] for img in images)
     images = [
-        np.pad(img, ((0, h - img.shape[0]), (0, w - img.shape[1]))) for img in images
+        np.pad(
+            img,
+            ((0, h - img.shape[0]), (0, w - img.shape[1])),
+            # Pad with a "pad" value, so we avoid useless computations
+            constant_values=255,
+        )
+        for img in images
     ]
     batch = np.stack(images)
 
