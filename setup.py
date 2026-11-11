@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import glob
 import os
-import sys
 
 import torch
 import torch.version
@@ -96,23 +95,13 @@ def _extra_link_args(*, debug_mode: bool) -> list[str]:
 
 
 def _include_dirs() -> list[str]:
-    include_dirs = [
+    return [
         # NOTE : Need to provide the full path.
         #        Otherwise the compiler doesn't find our header files.
         #        Other libs (Python, Torch, CUDA, etc.)
         #        are automatically provided.
         os.path.abspath("include"),
     ]
-
-    # Dirty fix for GHA runners as it fails to properly inject appropriate paths
-    if python_location := os.getenv("pythonLocation"):  # noqa: SIM112
-        v = sys.version_info
-
-        include_dirs.append(
-            os.path.join(python_location, "include", f"python{v.major}.{v.minor}")
-        )
-
-    return include_dirs
 
 
 debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"

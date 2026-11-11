@@ -38,6 +38,8 @@ matrix = [
     "pandas>=2.2.3,<3",              # TODO : Update
     "pandas-stubs>=2.2.2.240807,<3",
 ]
+# Needed to build the extension without build isolation (CI)
+build = ["setuptools>=77", "ninja>=1,<2"]
 # One group per CUDA version to build against (and test locally). They are not published.
 cu126 = ["torch>=2.10,<2.15", "nvidia-cuda-runtime-cu12==12.6.*"]
 cu128 = ["torch>=2.10,<2.12", "nvidia-cuda-runtime-cu12==12.8.*"]
