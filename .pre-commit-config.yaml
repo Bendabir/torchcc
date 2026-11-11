@@ -46,10 +46,10 @@ repos:
         priority: 0
   - repo: local
     hooks:
-      - id: black
-        name: black
-        entry: uv run --only-group dev black
-        args: ["--check"]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --only-group dev ruff format
+        args: ["--check", "--force-exclude"]
         language: system
         types_or: [python, pyi]
         require_serial: true

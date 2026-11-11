@@ -1,4 +1,5 @@
 """Copyright (c) 2026 Bendabir."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

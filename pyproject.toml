@@ -26,7 +26,6 @@ dev = [
     "prek>=0.5,<1",
     "ty>=0.0,<0.1",
     "ruff>=0.15,<1",
-    "black>=24.8,<25",         # TODO : Move to Ruff
     "pytest>=9.0,<10",
     "pytest-cov>=7.0,<8",
     "pytest-randomly>=5.1,<6",
@@ -108,12 +107,6 @@ name = "pytorch-cu134"
 url = "https://download.pytorch.org/whl/cu134"
 explicit = true
 
-# --- black ---
-[tool.black]
-line-length = 88
-target-version = ["py311"]
-preview = false
-
 # --- ty ---
 [tool.ty.environment]
 python-version = "3.11"
@@ -136,6 +129,9 @@ include = [
     "setup.py",
     "scripts/**/*.py",
 ]
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.ruff.lint]
 task-tags = ["TODO", "FIXME", "NOTE"]

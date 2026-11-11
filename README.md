@@ -119,10 +119,10 @@ The library can be built with debug mode by defined the `DEBUG_MODE=true` env va
 
 ### Quality
 
-Code quality is ensured by several tools (`ruff`, `ty` & `black`).
+Code quality is ensured by several tools (`ruff` & `ty`).
 
 ```bash
-uv run black src tests *.py
+uv run ruff format src tests *.py
 uv run ruff check --fix src tests *.py
 uv run ty check
 ```

@@ -6,9 +6,7 @@
     "mypy-type-checker.args": ["--cache-dir=.mypy_cache_vscode"],
     // The daemon doesn't seem to work properly, errors don't show, so better to disable it for now
     "mypy-type-checker.preferDaemon": false,
-    "ruff.lint.args": ["--cache-dir=.ruff_cache_vscode"],
     "ruff.importStrategy": "fromEnvironment",
-    "black-formatter.importStrategy": "fromEnvironment",
     "python.languageServer": "Pylance",
     "python.testing.pytestArgs": ["tests"],
     "python.testing.unittestEnabled": false,
@@ -21,7 +19,7 @@
         "editor.rulers": [88],
         "editor.tabSize": 4,
         "editor.insertSpaces": true,
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
             "source.organizeImports": "never",
