@@ -12,6 +12,13 @@ import torch
 from torchcc import ccl2d
 
 
+def imread(path: str) -> npt.NDArray[np.uint8]:
+    image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    assert image is not None, f"Cannot read {path}."
+
+    return np.asarray(image, dtype=np.uint8)
+
+
 def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
     ids: dict[int, int] = {
         id_: i for i, id_ in enumerate(sorted(np.unique(labels).tolist())) if id_ > 0
@@ -60,7 +67,7 @@ def test_ccl2d(
     if connectivity == 4:
         pytest.skip("4-connectivity is not yet supported.")
 
-    image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    image = imread(path)
     x = torch.from_numpy(image).unsqueeze_(0).to(device)
 
     if not contiguous:
@@ -151,9 +158,7 @@ def test_ccl2d_batch(
 
     # Use some padding so batches have the same size.
     # Not really an issue for CCL.
-    images: list[npt.NDArray[np.uint8]] = [
-        cv2.imread(p, cv2.IMREAD_GRAYSCALE) for p in paths
-    ]
+    images = [imread(p) for p in paths]
     h = max(img.shape[0] for img in images)
     w = max(img.shape[1] for img in images)
     images = [

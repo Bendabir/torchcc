@@ -49,7 +49,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-torchcc = ["py.typed"]
+torchcc = ["py.typed", "_C.pyi"]
 
 # --- uv ---
 [tool.uv]
@@ -143,6 +143,7 @@ ignore = [
 unfixable = ["commented-out-code"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/**/*.pyi" = ["missing-copyright-notice"]
 "tests/**/*.py" = [
     "assert",
     "boolean-type-hint-positional-argument",
