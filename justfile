@@ -32,13 +32,13 @@ update:
 # Remove caches and build artifacts.
 [group('setup')]
 clean:
-    rm -rf build dist .ruff_cache .pytest_cache .coverage
+    rm -rf build dist .build .ruff_cache .pytest_cache .coverage
 
 # Build a wheel for a CUDA version (as CI does). Honors TORCH_CUDA_ARCH_LIST, MAX_JOBS and DEBUG_MODE.
 [group('build')]
 build CUDA=cuda126:
-    nix develop .#{{ CUDA }} -c uv sync --no-default-groups --group dev --group build --group {{ CUDA }} --no-install-project
-    nix develop .#{{ CUDA }} -c uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
+    UV_PROJECT_ENVIRONMENT=.build nix develop .#{{ CUDA }} -c uv sync --no-default-groups --group dev --group build --group {{ CUDA }} --no-install-project
+    nix develop .#{{ CUDA }} -c uv build --wheel --no-build-isolation --no-config --python .build/bin/python
 
 # Format the Python code.
 [group('quality')]

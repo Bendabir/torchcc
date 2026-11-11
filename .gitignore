@@ -13,3 +13,4 @@
 **/datasets/3d
 **/lib/**
 **/.venv
+**/.build

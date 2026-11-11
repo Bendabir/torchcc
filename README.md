@@ -160,8 +160,8 @@ just build cu126
 This runs the following commands.
 
 ```bash
-nix develop .#cu126 -c uv sync --no-default-groups --group dev --group build --group cu126 --no-install-project
-nix develop .#cu126 -c uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
+UV_PROJECT_ENVIRONMENT=.build nix develop .#cu126 -c uv sync --no-default-groups --group dev --group build --group cu126 --no-install-project
+nix develop .#cu126 -c uv build --wheel --no-build-isolation --no-config --python .build/bin/python
 ```
 
 One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults if not provided.
