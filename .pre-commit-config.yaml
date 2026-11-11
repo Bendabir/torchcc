@@ -3,7 +3,7 @@
 minimum_pre_commit_version: 3.7.0
 fail_fast: true
 default_language_version:
-  python: python3.9
+  python: python3.11
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -34,23 +34,23 @@ repos:
     hooks:
       - id: black
         name: black
-        entry: poetry run black
+        entry: uv run --only-group dev black
         args: ["--check"]
-        language: python
+        language: system
         types_or: [python, pyi]
         require_serial: true
       - id: ruff
         name: ruff
-        entry: poetry run ruff check
+        entry: uv run --only-group dev ruff check
         args: ["--force-exclude"]
-        language: python
+        language: system
         types_or: [python, pyi]
         require_serial: true
       - id: mypy
         name: mypy
-        entry: poetry run mypy
+        entry: uv run --no-install-project mypy
         args: ["--ignore-missing-imports", "--scripts-are-modules"]
-        language: python
+        language: system
         types_or: [python, pyi]
         require_serial: true
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -61,15 +61,10 @@ repos:
         name: prettier (JSON, Markdown & YAML)
         entry: prettier --check --ignore-unknown
         files: "\\.(json|md|yaml|yml)$"
-  - repo: https://github.com/python-poetry/poetry
-    rev: 1.8.3
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.7
     hooks:
-      - id: poetry-install
-        name: poetry install
-        args:
-          - --with
-          - dev
-          - --sync
+      - id: uv-lock
   - repo: local
     hooks:
       - id: forbid-yml-file
