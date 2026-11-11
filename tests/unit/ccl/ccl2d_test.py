@@ -276,6 +276,33 @@ def test_ccl2d_channel_slice(device: torch.device, seed: int) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("rows", "cols"),
+    [
+        pytest.param(slice(None), slice(3, 50), id="columns"),
+        pytest.param(slice(5, 60), slice(None), id="rows"),
+        pytest.param(slice(5, 60), slice(3, 50), id="both"),
+    ],
+)
+@REQUIRES_CUDA
+def test_ccl2d_crop(device: torch.device, seed: int, rows: slice, cols: slice) -> None:
+    # A crop keeps the last dimension contiguous, but the row stride is not the width.
+    rng = np.random.default_rng(seed)
+    masks = (rng.random((3, 67, 91)) < 0.5).astype(np.uint8)
+
+    labels = ccl2d(torch.from_numpy(masks).to(device)[:, rows, cols], connectivity=8)
+    expected = np.stack([
+        cv2.connectedComponents(np.ascontiguousarray(img), connectivity=8)[1]
+        for img in masks[:, rows, cols]
+    ])
+
+    np.testing.assert_array_equal(
+        np.stack([consecutivize(lbl) for lbl in labels.cpu().numpy()]),
+        expected,
+        strict=True,
+    )
+
+
 @pytest.mark.parametrize("connectivity", [-1, 0, 1, 2, 6, 16])
 @REQUIRES_CUDA
 def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:

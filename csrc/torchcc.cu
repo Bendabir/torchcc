@@ -30,8 +30,6 @@ namespace torchcc
         STD_TORCH_CHECK(ndim == 3, "Input must be a batch of images [N, H, W].");
         STD_TORCH_CHECK(x.scalar_type() == torch::headeronly::ScalarType::Byte, "Input must be uint8 data.");
 
-        // TODO : Dedicated kernel for non-contiguous inputs ?
-        STD_TORCH_CHECK(x.is_contiguous(), "Input must be contiguous.");
 
         // As each block of 2x2 pixels will take the raster index (in its image) of its top-left pixel,
         // we need to ensure we don't overflow (int64_t, so the check itself cannot overflow)
@@ -60,9 +58,12 @@ namespace torchcc
         TORCH_ERROR_CODE_CHECK(aoti_torch_get_current_cuda_stream(x.get_device_index(), &stream_ptr));
         const cudaStream_t stream = static_cast<cudaStream_t>(stream_ptr);
 
-        // NOTE : The current implementation of the BUF algorithm requires contiguous data
-        //        but we could probably deal with non-contiguous data if thinking a bit.
-        const uint8_t *const x_ptr = x.const_data_ptr<uint8_t>();
+        // Kernels read the image with its batch and row strides, so a slice of a bigger tensor
+        // (e.g. x[:, c] from [N, C, H, W]) needs no copy. Only the pixels of a row must be contiguous.
+        const torch::stable::Tensor img = x.stride(2) == 1 ? x : torch::stable::contiguous(x);
+        const int64_t sn = img.stride(0);
+        const int64_t sh = img.stride(1);
+        const uint8_t *const x_ptr = img.const_data_ptr<uint8_t>();
         int32_t *const labels_ptr = labels.mutable_data_ptr<int32_t>();
 
         if (connectivity == 8)
@@ -100,17 +101,17 @@ namespace torchcc
                     (bw + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
                     (bh + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
                     count);
-                const uint8_t *const chunk_x = x_ptr + static_cast<int64_t>(first) * image;
+                const uint8_t *const chunk_x = x_ptr + first * sn;
                 int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
                 int32_t *const chunk_labels = labels_ptr + static_cast<int64_t>(first) * image;
 
                 buf::ccl2d::init<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, chunk_blocks, w, h, count);
+                buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
                 buf::ccl2d::compress<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, chunk_blocks, chunk_labels, w, h, count);
+                buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, chunk_labels, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
             }
         }
