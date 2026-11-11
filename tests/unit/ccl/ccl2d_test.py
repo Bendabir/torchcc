@@ -222,6 +222,26 @@ def test_ccl2d_random(
     )
 
 
+@REQUIRES_CUDA
+def test_ccl2d_large_batch(device: torch.device, seed: int) -> None:
+    # More images than the grid can hold at once (65535), so the batch runs in chunks.
+    size = 65_535 + 7
+    checked = 16
+    rng = np.random.default_rng(seed)
+    batch = (rng.random((size, 3, 5)) < 0.5).astype(np.uint8)
+
+    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=8)[-checked:]
+    expected = np.stack([
+        cv2.connectedComponents(img, connectivity=8)[1] for img in batch[-checked:]
+    ])
+
+    np.testing.assert_array_equal(
+        np.stack([consecutivize(lbl) for lbl in labels.cpu().numpy()]),
+        expected,
+        strict=True,
+    )
+
+
 @pytest.mark.parametrize(
     "shape",
     [(0, 8, 8), (2, 0, 5), (2, 5, 0)],

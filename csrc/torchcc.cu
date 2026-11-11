@@ -6,13 +6,14 @@
 #include <torch/headeronly/core/ScalarType.h>
 #include <torch/headeronly/util/Exception.h>
 #include <cuda_runtime.h>
+#include <algorithm>
 #include <torchcc.h>
 #include <buf.h>
 
 // Use constants so it's typed (instead of using text substitution)
-constexpr uint32_t BUF_2D_BLOCK_ROWS = 16;
-constexpr uint32_t BUF_2D_BLOCK_COLS = 16;
-constexpr uint32_t BUF_2D_BLOCK_DEPTH = 4; // 4 * 16 * 16 = 1024 (threads in a block)
+constexpr uint32_t BUF_2D_BLOCK_COLS = 32; // a warp reads 32 consecutive 2x2 blocks of a row
+constexpr uint32_t BUF_2D_BLOCK_ROWS = 8;
+constexpr uint32_t MAX_GRID_Z = 65535;
 
 namespace torchcc
 {
@@ -63,26 +64,35 @@ namespace torchcc
 
         if (connectivity == 8)
         {
-            const dim3 grid = dim3(
-                // Working on block of 2x2 pixels
-                ((w + 1) / 2 + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
-                ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
-                // on each image
-                ((n + 1) + BUF_2D_BLOCK_DEPTH - 1) / BUF_2D_BLOCK_DEPTH);
-            const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS, BUF_2D_BLOCK_DEPTH);
+            // One thread per 2x2 block, in tiles of 32x8 blocks : warps are coalesced on a row,
+            // tiles keep vertical neighbours in the same thread block. One image per grid z.
+            const uint32_t image = h * w;
+            const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
 
             // Start with BUF algorithm because it's easier to implement
             // but we should move to BKE at some point because it's more efficient.
             // We need to split the algorithm in multiple kernels
             // as we need to store intermediate results to global memory for synchronization.
-            buf::ccl2d::init<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
-            STD_CUDA_KERNEL_LAUNCH_CHECK();
-            buf::ccl2d::merge<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
-            STD_CUDA_KERNEL_LAUNCH_CHECK();
-            buf::ccl2d::compress<<<grid, block, 0, stream>>>(labels_ptr, w, h, n);
-            STD_CUDA_KERNEL_LAUNCH_CHECK();
-            buf::ccl2d::finalize<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
-            STD_CUDA_KERNEL_LAUNCH_CHECK();
+            // gridDim.z is limited, so launch the batch in chunks of images.
+            for (uint32_t first = 0; first < n; first += MAX_GRID_Z)
+            {
+                const uint32_t count = std::min(n - first, MAX_GRID_Z);
+                const dim3 grid = dim3(
+                    ((w + 1) / 2 + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
+                    ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
+                    count);
+                const uint8_t *const chunk_x = x_ptr + static_cast<int64_t>(first) * image;
+                int32_t *const chunk_labels = labels_ptr + static_cast<int64_t>(first) * image;
+
+                buf::ccl2d::init<<<grid, block, 0, stream>>>(chunk_x, chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+                buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+                buf::ccl2d::compress<<<grid, block, 0, stream>>>(chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+                buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+            }
         }
 
         return labels;
