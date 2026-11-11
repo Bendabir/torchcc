@@ -137,6 +137,8 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
         "-D__CUDA_NO_HALF_OPERATORS__",
         "-D__CUDA_NO_HALF_CONVERSIONS__",
         "-D__CUDA_NO_HALF2_OPERATORS__",
+        # Exposes aoti_torch_get_current_cuda_stream in the stable shim
+        "-DUSE_CUDA",
         f"-DTORCH_TARGET_VERSION={TORCH_TARGET_VERSION}",
         "-O0" if debug_mode else "-O3",
     ]
