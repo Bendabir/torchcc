@@ -37,8 +37,8 @@ clean:
 # Build a wheel for a CUDA version (as CI does). Honors TORCH_CUDA_ARCH_LIST, MAX_JOBS and DEBUG_MODE.
 [group('build')]
 build CUDA=cuda126:
-    nix develop .#{{ CUDA }}-ci -c uv sync --no-default-groups --group dev --group build --group {{ CUDA }} --no-install-project
-    nix develop .#{{ CUDA }}-ci -c uv build --wheel --no-build-isolation --python .venv/bin/python
+    nix develop .#{{ CUDA }} -c uv sync --no-default-groups --group dev --group build --group {{ CUDA }} --no-install-project
+    nix develop .#{{ CUDA }} -c uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
 
 # Format the Python code.
 [group('quality')]

@@ -32,7 +32,7 @@ jobs:
       - name: build
         run: >
           nix develop .#${{ matrix.cuda }}-ci -c
-          uv build --wheel --no-build-isolation --python .venv/bin/python
+          uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
       # The extension must not depend on anything from the Nix store
       - name: check
         shell: bash
