@@ -3,11 +3,8 @@
 *.o
 *.so
 **/.mypy_cache
-**/.mypy_cache_vscode
 **/.ruff_cache
-**/.ruff_cache_vscode
 **/.pytest_cache
-**/.pytest_cache_vscode
 **/dist
 **/build
 **/*.egg-info
@@ -15,3 +12,4 @@
 **/datasets/2d
 **/datasets/3d
 **/lib/**
+**/.venv
