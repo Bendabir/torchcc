@@ -127,6 +127,13 @@ uv run ruff check --fix src tests *.py
 uv run mypy src tests *.py
 ```
 
+These checks (and the Nix ones : `nixfmt`, `deadnix` & `statix`) also run as git hooks with [prek](https://prek.j178.dev). Install the hooks once, then run them on demand.
+
+```bash
+uv run prek install
+uv run prek run --all-files
+```
+
 ### Tests
 
 Tests use a subset of the datasets from the [YACCLAB](https://github.com/prittt/YACCLAB) project [2]. These can be downloaded with the scripts in the [`datasets`](./datasets) directory.
