@@ -48,7 +48,7 @@ cu132 = ["torch>=2.12,<3", "nvidia-cuda-runtime==13.2.*"]
 cu134 = ["torch>=2.15,<3", "nvidia-cuda-runtime==13.4.*"]
 
 [build-system]
-requires = ["setuptools>=77", "ninja", "torch>=2.10,<3"]
+requires = ["setuptools>=77", "ninja>=1,<2", "torch>=2.10,<3"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
