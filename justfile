@@ -2,8 +2,8 @@
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# NixOS only : nix-ld exposes its libraries in NIX_LD_LIBRARY_PATH. Elsewhere this keeps the current value.
-export LD_LIBRARY_PATH := env('NIX_LD_LIBRARY_PATH', env('LD_LIBRARY_PATH', ''))
+# NixOS only : nix-ld exposes its libraries in NIX_LD_LIBRARY_PATH. It is prepended to any existing LD_LIBRARY_PATH.
+export LD_LIBRARY_PATH := trim_start_match(trim_end_match(env('NIX_LD_LIBRARY_PATH', '') + ':' + env('LD_LIBRARY_PATH', ''), ':'), ':')
 
 # Avoid uv to rebuild everything unnecessarily.
 export UV_NO_SYNC := "1"
