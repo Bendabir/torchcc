@@ -4,13 +4,14 @@
 
 // TODO : Adapt this to switch to BKE which is SotA (thus a bit more efficient)
 
-#define BITMASK_3x3 0x0777
-#define BITMASK_3x4R 0xEEEE // all but col 0
-#define BITMASK_2x4L 0x3333 // only col O and 1
-#define BITMASK_3x4L 0x7777 // all but col 3
-#define BITMASK_4x3B 0xFFF0 // all but row 0
-#define BITMASK_4x2T 0x00FF // only row O and 1
-#define BITMASK_4x3T 0x0FFF // all but row 3
+// Use constants so it's typed (instead of using text substitution)
+constexpr uint16_t BITMASK_3x3 = 0x0777;
+constexpr uint16_t BITMASK_3x4R = 0xEEEE; // all but col 0
+constexpr uint16_t BITMASK_2x4L = 0x3333; // only col O and 1
+constexpr uint16_t BITMASK_3x4L = 0x7777; // all but col 3
+constexpr uint16_t BITMASK_4x3B = 0xFFF0; // all but row 0
+constexpr uint16_t BITMASK_4x2T = 0x00FF; // only row O and 1
+constexpr uint16_t BITMASK_4x3T = 0x0FFF; // all but row 3
 
 // The 3x3 bitmask correspond to the neigbours of the top-left internal pixel
 // (centered on the X block).
@@ -112,8 +113,8 @@ namespace buf
 
         // --- KERNELS ---
         __global__ void init(
-            const uint8_t *const g_img,
-            int32_t *const g_labels,
+            const uint8_t *__restrict__ const g_img,
+            int32_t *__restrict__ const g_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
@@ -145,8 +146,8 @@ namespace buf
         }
 
         __global__ void merge(
-            const uint8_t *const g_img,
-            int32_t *const g_labels,
+            const uint8_t *__restrict__ const g_img,
+            int32_t *__restrict__ const g_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
@@ -256,7 +257,7 @@ namespace buf
             }
         }
 
-        __global__ void compress(int32_t *const g_labels, const uint32_t w, const uint32_t h, const uint32_t n)
+        __global__ void compress(int32_t *__restrict__ const g_labels, const uint32_t w, const uint32_t h, const uint32_t n)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
@@ -272,8 +273,8 @@ namespace buf
         }
 
         __global__ void finalize(
-            const uint8_t *const g_img,
-            int32_t *const g_labels,
+            const uint8_t *__restrict__ const g_img,
+            int32_t *__restrict__ const g_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)

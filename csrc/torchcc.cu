@@ -1,5 +1,6 @@
 // Copyright (c) 2024 Bendabir.
 #include <torch/csrc/stable/accelerator.h>
+#include <torch/csrc/stable/macros.h>
 #include <torch/csrc/stable/ops.h>
 #include <torch/csrc/stable/tensor.h>
 #include <torch/headeronly/core/ScalarType.h>
@@ -8,9 +9,10 @@
 #include <torchcc.h>
 #include <buf.h>
 
-#define BUF_2D_BLOCK_ROWS 16
-#define BUF_2D_BLOCK_COLS 16
-#define BUF_2D_BLOCK_DEPTH 4 // 4 * 16 * 16 = 1024 (threads in a block)
+// Use constants so it's typed (instead of using text substitution)
+constexpr uint32_t BUF_2D_BLOCK_ROWS = 16;
+constexpr uint32_t BUF_2D_BLOCK_COLS = 16;
+constexpr uint32_t BUF_2D_BLOCK_DEPTH = 4; // 4 * 16 * 16 = 1024 (threads in a block)
 
 namespace torchcc
 {
@@ -27,13 +29,16 @@ namespace torchcc
         STD_TORCH_CHECK(ndim == 3, "Input must be a batch of images [N, H, W].");
         STD_TORCH_CHECK(x.scalar_type() == torch::headeronly::ScalarType::Byte, "Input must be uint8 data.");
 
+        // TODO : Dedicated kernel for non-contiguous inputs ?
+        STD_TORCH_CHECK(x.is_contiguous(), "Input must be contiguous.");
+
+        // As each block of 2x2 pixels will take the raster index of its top-left pixel,
+        // we need to ensure we don't overflow (int64_t, so the check itself cannot overflow)
+        STD_TORCH_CHECK(x.numel() <= INT32_MAX, "Provided input is too big and will cause overflow on labels.");
+
         const uint32_t n = x.size(0);
         const uint32_t w = x.size(-1);
         const uint32_t h = x.size(-2);
-
-        // As each block of 2x2 pixels will take the raster index of its top-left pixel,
-        // we need to ensure we don't overflow
-        STD_TORCH_CHECK(w * h * n <= INT32_MAX, "Provided input is too big and will cause overflow on labels.");
 
         // Run on the device of the input
         const torch::stable::accelerator::DeviceGuard guard(x.get_device_index());
@@ -70,9 +75,13 @@ namespace torchcc
             // We need to split the algorithm in multiple kernels
             // as we need to store intermediate results to global memory for synchronization.
             buf::ccl2d::init<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
             buf::ccl2d::merge<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
             buf::ccl2d::compress<<<grid, block, 0, stream>>>(labels_ptr, w, h, n);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
             buf::ccl2d::finalize<<<grid, block, 0, stream>>>(x_ptr, labels_ptr, w, h, n);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
         }
 
         return labels;
