@@ -2,12 +2,14 @@
 #ifndef TORCHCC_H
 #define TORCHCC_H
 
-#include <torch/torch.h>
+// NOTE : Only use headers from torch/csrc/stable and torch/headeronly
+//        to keep the binary compatible across PyTorch versions (stable ABI).
+#include <torch/csrc/stable/tensor.h>
 
 namespace torchcc
 {
-    torch::Tensor ccl2d(const torch::Tensor &input, const uint8_t connectivity);
-    torch::Tensor ccl3d(const torch::Tensor &input, const uint8_t connectivity);
+    torch::stable::Tensor ccl2d(const torch::stable::Tensor &input, const int64_t connectivity);
+    torch::stable::Tensor ccl3d(const torch::stable::Tensor &input, const int64_t connectivity);
 }
 
 #endif // TORCHCC_H
