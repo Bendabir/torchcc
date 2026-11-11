@@ -124,7 +124,7 @@ just build cu126
 This runs the following commands.
 
 ```bash
-nix develop .#cu126-ci -c uv sync --no-default-groups --group build --group cu126 --no-install-project
+nix develop .#cu126-ci -c uv sync --no-default-groups --group dev --group build --group cu126 --no-install-project
 nix develop .#cu126-ci -c uv build --wheel --no-build-isolation --python .venv/bin/python
 ```
 
