@@ -11,6 +11,11 @@ import torch
 
 from torchcc import ccl2d
 
+REQUIRES_CUDA = pytest.mark.skipif(
+    not torch.cuda.is_available(),
+    reason="CUDA is not available.",
+)
+
 
 def imread(path: str) -> npt.NDArray[np.uint8]:
     image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
@@ -20,9 +25,9 @@ def imread(path: str) -> npt.NDArray[np.uint8]:
 
 
 def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
-    ids: dict[int, int] = {
-        id_: i for i, id_ in enumerate(sorted(np.unique(labels).tolist())) if id_ > 0
-    }
+    # Start at 1 : an image without background must not map its first label to 0.
+    foreground = sorted(id_ for id_ in np.unique(labels).tolist() if id_ > 0)
+    ids: dict[int, int] = {id_: i for i, id_ in enumerate(foreground, start=1)}
     new_labels = np.zeros_like(labels)
 
     for id_, i in ids.items():
@@ -54,10 +59,7 @@ def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
     ids=["contiguous", "non-contiguous"],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
-)
+@REQUIRES_CUDA
 def test_ccl2d(
     path: str,
     device: torch.device,
@@ -143,10 +145,7 @@ def test_ccl2d(
     ids=["contiguous", "non-contiguous"],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
-)
+@REQUIRES_CUDA
 def test_ccl2d_batch(
     paths: list[str],
     device: torch.device,
@@ -186,11 +185,79 @@ def test_ccl2d_batch(
     )
 
 
-@pytest.mark.parametrize("connectivity", [-1, 0, 1, 2, 6, 16])
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
+@pytest.mark.parametrize(
+    "shape",
+    [
+        pytest.param((1, 1, 1), id="1x1"),
+        pytest.param((1, 1, 37), id="single-row"),
+        pytest.param((1, 37, 1), id="single-column"),
+        pytest.param((1, 2, 2), id="single-block"),
+        pytest.param((1, 33, 47), id="odd-odd"),
+        pytest.param((1, 34, 47), id="even-odd"),
+        pytest.param((1, 33, 46), id="odd-even"),
+        pytest.param((5, 65, 129), id="batch-odd"),
+        pytest.param((3, 256, 256), id="batch-even"),
+    ],
 )
+@pytest.mark.parametrize("density", [0.1, 0.5, 0.9])
+@REQUIRES_CUDA
+def test_ccl2d_random(
+    device: torch.device,
+    seed: int,
+    shape: tuple[int, int, int],
+    density: float,
+) -> None:
+    rng = np.random.default_rng(seed)
+    batch = (rng.random(shape) < density).astype(np.uint8)
+
+    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=8)
+    expected = np.stack([
+        cv2.connectedComponents(img, connectivity=8)[1] for img in batch
+    ])
+
+    np.testing.assert_array_equal(
+        np.stack([consecutivize(lbl) for lbl in labels.cpu().numpy()]),
+        expected,
+        strict=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [(0, 8, 8), (2, 0, 5), (2, 5, 0)],
+    ids=["no-image", "no-row", "no-column"],
+)
+@REQUIRES_CUDA
+def test_ccl2d_empty(device: torch.device, shape: tuple[int, int, int]) -> None:
+    labels = ccl2d(torch.zeros(shape, device=device, dtype=torch.uint8))
+
+    assert labels.shape == shape
+    assert labels.dtype == torch.int32
+
+
+@REQUIRES_CUDA
+def test_ccl2d_channel_slice(device: torch.device, seed: int) -> None:
+    # Typical model output [N, C, H, W]: the slice has a contiguous last dimension
+    # but non-contiguous outer strides.
+    rng = np.random.default_rng(seed)
+    masks = (rng.random((4, 3, 67, 91)) < 0.5).astype(np.uint8)
+    channel = 1
+
+    labels = ccl2d(torch.from_numpy(masks).to(device)[:, channel], connectivity=8)
+    expected = np.stack([
+        cv2.connectedComponents(np.ascontiguousarray(img), connectivity=8)[1]
+        for img in masks[:, channel]
+    ])
+
+    np.testing.assert_array_equal(
+        np.stack([consecutivize(lbl) for lbl in labels.cpu().numpy()]),
+        expected,
+        strict=True,
+    )
+
+
+@pytest.mark.parametrize("connectivity", [-1, 0, 1, 2, 6, 16])
+@REQUIRES_CUDA
 def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
     images = torch.zeros((4, 16, 16), device=device, dtype=torch.uint8)
 
@@ -201,10 +268,7 @@ def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
         _ = ccl2d(images, connectivity=connectivity)  # ty: ignore[invalid-argument-type]
 
 
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
-)
+@REQUIRES_CUDA
 def test_ccl2d_4_connectivity(device: torch.device) -> None:
     images = torch.zeros((4, 16, 16), device=device, dtype=torch.uint8)
 
@@ -218,10 +282,7 @@ def test_ccl2d_4_connectivity(device: torch.device) -> None:
     ids=["dim-1", "dim-2", "dim-4"],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
-)
+@REQUIRES_CUDA
 def test_ccl2d_input_shape(
     device: torch.device,
     shape: tuple[int, ...],
@@ -269,10 +330,7 @@ def test_ccl2d_input_shape(
     ],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
-)
+@REQUIRES_CUDA
 def test_ccl2d_input_type(
     device: torch.device,
     connectivity: Literal[4, 8],
@@ -288,10 +346,7 @@ def test_ccl2d_input_type(
 
 
 @pytest.mark.parametrize("connectivity", [4, 8])
-@pytest.mark.skipif(
-    not torch.cuda.is_available(),
-    reason="CUDA is not available.",
-)
+@REQUIRES_CUDA
 def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> None:
     if connectivity == 4:
         pytest.skip("4-connectivity is not yet supported.")
