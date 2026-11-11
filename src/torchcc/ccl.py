@@ -35,6 +35,16 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     -------
     torch.Tensor
         The labeled Connected Components.
+
+    Raises
+    ------
+    ValueError
+        If the connectivity is not supported, if the data is not a batch of images
+        or if the data is too big.
+    TypeError
+        If the data is not uint8.
+    NotImplementedError
+        If the connectivity is not yet implemented.
     """
     if x.is_cuda:
         # The stable ABI only raises RuntimeError, so validate here
@@ -88,6 +98,13 @@ def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tenso
     -------
     torch.Tensor
         The labeled Connected Components.
+
+    Raises
+    ------
+    ValueError
+        If the connectivity is not supported.
+    NotImplementedError
+        If 3D CCL is used on GPU (not yet implemented).
     """
     if x.is_cuda:
         if connectivity not in {6, 18, 26}:
@@ -96,7 +113,7 @@ def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tenso
                 "are supported."
             )
 
-        # TODO : Call torch.ops.torchcc.ccl3d once it is implemented.
+        # NOTE : Call torch.ops.torchcc.ccl3d once it is implemented.
         raise NotImplementedError(
             f"3D CCL {connectivity}-connectivity is not yet supported."
         )
