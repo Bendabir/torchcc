@@ -134,6 +134,6 @@ namespace torchcc
         STD_TORCH_CHECK(ndim == 4, "Input must be a batch of volumes [N, H, W, D].");
         STD_TORCH_CHECK(x.scalar_type() == torch::headeronly::ScalarType::Byte, "Input must be uint8 data.");
 
-        return torch::stable::new_zeros(x, x.sizes(), torch::headeronly::ScalarType::Int); // TODO
+        return torch::stable::new_zeros(x, x.sizes(), torch::headeronly::ScalarType::Int);
     }
 }
