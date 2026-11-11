@@ -15,7 +15,9 @@ extern "C"
 
 STABLE_TORCH_LIBRARY(torchcc, m)
 {
+    // Compute Connected Components Labeling of a 2D image (or a batch of 2D images).
     m.def("ccl2d(Tensor x, int connectivity) -> Tensor");
+    // Compute Connected Components Labeling of a 3D volume (or a batch of 3D volumes).
     m.def("ccl3d(Tensor x, int connectivity) -> Tensor");
 }
 

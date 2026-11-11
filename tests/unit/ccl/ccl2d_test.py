@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Literal
 
 import cv2
 import numpy as np
@@ -10,9 +10,6 @@ import pytest
 import torch
 
 from torchcc import ccl2d
-
-if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
 
 
 def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
@@ -189,15 +186,10 @@ def test_ccl2d_batch(
 def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
     images = torch.zeros((4, 16, 16), device=device, dtype=torch.uint8)
 
-    if connectivity >= 0:
-        raises: AbstractContextManager[Any] = pytest.raises(
-            ValueError,
-            match=re.escape("Only 4-connectivity and 8-connectivity are supported."),
-        )
-    else:
-        raises = pytest.raises(TypeError)
-
-    with raises:
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Only 4-connectivity and 8-connectivity are supported."),
+    ):
         ccl2d(images, connectivity=connectivity)  # type: ignore[arg-type]
 
 
