@@ -62,13 +62,12 @@ repos:
         types_or: [python, pyi]
         require_serial: true
         priority: 0
-      - id: mypy
-        name: mypy
-        entry: uv run --no-install-project mypy
-        args: ["--ignore-missing-imports", "--scripts-are-modules"]
+      - id: ty
+        name: ty
+        entry: uv run --no-sync ty check
         language: system
         types_or: [python, pyi]
-        require_serial: true
+        pass_filenames: false
         priority: 0
       - id: uv-lock
         name: uv-lock

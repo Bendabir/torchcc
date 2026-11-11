@@ -24,7 +24,7 @@ cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
 [dependency-groups]
 dev = [
     "prek>=0.5,<1",
-    "mypy>=1.11,<2",           # TODO : Move to ty
+    "ty>=0.0,<0.1",
     "ruff>=0.6,<0.7",          # TODO : Update
     "black>=24.8,<25",         # TODO : Move to Ruff
     "pytest>=9.0,<10",
@@ -113,44 +113,13 @@ line-length = 88
 target-version = ["py311"]
 preview = false
 
-# --- mypy ---
-[tool.mypy]
-local_partial_types = true
-python_version = "3.11"
-mypy_path = "src/,tests/"
-files = "**/src/**/*.py,**/tests/**/*.py"
-scripts_are_modules = true
-ignore_missing_imports = true
-namespace_packages = true
-explicit_package_bases = true
-show_error_codes = true
-disallow_any_generics = true
-disallow_any_unimported = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_decorators = true
-disallow_untyped_defs = true
-implicit_optional = false
-strict_equality = true
-strict_optional = true
-warn_incomplete_stub = true
-warn_no_return = true
-warn_redundant_casts = true
-warn_return_any = true
-warn_unreachable = true
-warn_unused_ignores = true
-warn_unused_configs = true
-check_untyped_defs = true
-enable_error_code = [
-    "explicit-override",
-    "ignore-without-code",
-    "possibly-undefined",
-    "redundant-expr",
-    "redundant-self",
-    "truthy-bool",
-    "truthy-iterable",
-    "unused-awaitable",
-]
+# --- ty ---
+[tool.ty.environment]
+python-version = "3.11"
+root = ["src", "tests"]
+
+[tool.ty.src]
+include = ["src", "tests", "scripts"]
 
 # --- ruff ---
 [tool.ruff]

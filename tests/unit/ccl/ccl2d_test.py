@@ -69,7 +69,10 @@ def test_ccl2d(
     labels = ccl2d(x, connectivity=connectivity)
 
     # Compare to what OpenCV would produce
-    _, expected = cv2.connectedComponents(image, connectivity=connectivity)
+    _, expected = cv2.connectedComponents(
+        image,
+        connectivity=connectivity,
+    )
 
     # Use NumPy for better explainability
     np.testing.assert_array_equal(
@@ -190,7 +193,7 @@ def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
         ValueError,
         match=re.escape("Only 4-connectivity and 8-connectivity are supported."),
     ):
-        ccl2d(images, connectivity=connectivity)  # type: ignore[arg-type]
+        _ = ccl2d(images, connectivity=connectivity)  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.skipif(
