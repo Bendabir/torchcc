@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise the minimum Python version to 3.11.
 - Raise `ValueError` for negative connectivity on CUDA (it was a `TypeError`).
 
+### Fixed
+
+- Return an empty result for empty 2D input on CUDA, instead of leaving a CUDA error that made the next CUDA operation fail.
+
 ### Removed
 
 - Wheels for older PyTorch and CUDA versions (CUDA < 12).

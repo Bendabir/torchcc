@@ -40,6 +40,12 @@ namespace torchcc
 
         torch::stable::Tensor labels = torch::stable::new_zeros(x, x.sizes(), torch::headeronly::ScalarType::Int);
 
+        // A grid dimension of 0 fails the launch
+        if (x.numel() == 0)
+        {
+            return labels;
+        }
+
         void *stream_ptr = nullptr;
         TORCH_ERROR_CODE_CHECK(aoti_torch_get_current_cuda_stream(x.get_device_index(), &stream_ptr));
         const cudaStream_t stream = static_cast<cudaStream_t>(stream_ptr);
