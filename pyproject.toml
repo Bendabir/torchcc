@@ -18,7 +18,7 @@ Documentation = "https://github.com/Bendabir/torchcc/README.md"
 
 [project.optional-dependencies]
 opencv = ["opencv-python>=4.0,<5"]
-opencv-headless = ["opencv-python-headless>=4.0,<5"]
+opencv-headless = ["opencv-python-headless>=4.0,<5"] # TODO : Update ?
 cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
 
 [dependency-groups]
@@ -29,14 +29,8 @@ dev = [
     "pytest>=9.0,<10",
     "pytest-cov>=7.0,<8",
     "pytest-randomly>=5.0,<6",
-]
-matrix = [
-    # TODO : Move to self-contained scripts ?
-    "httpx2>=2.16,<3",
-    "beautifulsoup4>=4.12,<5",
-    "cyclopts>=5.0,<6",
-    "pandas>=3.0,<4",
-    "pandas-stubs>=3.0,<4",
+    "opencv-python-headless>=4.0,<5",
+    "connected-components-3d>=3.0,<4",
 ]
 # Needed to build the extension without build isolation (CI)
 build = ["setuptools>=77", "ninja>=1.0,<2"]
@@ -55,7 +49,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-torchcc = ["py.typed"]
+torchcc = ["py.typed", "_cuda.pyi"]
 
 # --- uv ---
 [tool.uv]
@@ -115,7 +109,7 @@ python-version = "3.11"
 root = ["src", "tests"]
 
 [tool.ty.src]
-include = ["src", "tests", "scripts"]
+include = ["src", "tests"]
 
 # --- ruff ---
 [tool.ruff]
@@ -124,13 +118,7 @@ target-version = "py311"
 indent-width = 4
 preview = true
 namespace-packages = ["src/torchcc"]
-include = [
-    "src/**/*.py",
-    "tests/**/*.py",
-    "pyproject.toml",
-    "setup.py",
-    "scripts/**/*.py",
-]
+include = ["src/**/*.py", "tests/**/*.py", "pyproject.toml", "setup.py"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -155,6 +143,7 @@ ignore = [
 unfixable = ["commented-out-code"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/**/*.pyi" = ["missing-copyright-notice"]
 "tests/**/*.py" = [
     "assert",
     "boolean-type-hint-positional-argument",
@@ -167,7 +156,6 @@ unfixable = ["commented-out-code"]
     "undocumented-public-function",
     "undocumented-public-method",
 ]
-"scripts/*.py" = ["implicit-namespace-package"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

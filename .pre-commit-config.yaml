@@ -77,11 +77,13 @@ repos:
         pass_filenames: false
         files: "(pyproject.toml|uv.lock)$"
         priority: 0
-      # Keep the dev tools in sync with the branch. Skip the project (CUDA build).
+      # Keep the dev tools in sync with the branch.
+      # Only the dev group (no project, so no torch), and inexact to keep the
+      # packages of the CUDA group installed by `just init`.
       - id: uv-sync
         name: uv-sync
         entry: uv sync
-        args: [--frozen, --no-install-project]
+        args: [--frozen, --only-group, dev, --inexact]
         language: system
         stages: [post-checkout, post-merge, post-rewrite]
         always_run: true

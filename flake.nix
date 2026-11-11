@@ -30,6 +30,8 @@
           name = "cuda-home-${cudaPackages.cudaMajorMinorVersion}";
           paths = [
             cudaPackages.cuda_nvcc
+            # Provides nv/target, needed by cuda_fp16.h
+            cudaPackages.cccl
             (lib.getDev cudaPackages.cuda_cudart)
             (lib.getLib cudaPackages.cuda_cudart)
             (lib.getStatic cudaPackages.cuda_cudart)

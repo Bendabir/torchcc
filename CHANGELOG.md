@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Move from Poetry to uv (with a lock file) and from `poetry-core` to setuptools.
 - Use the PyTorch stable ABI. Wheels now work with PyTorch 2.10 or newer.
-- Build one wheel per CUDA major version (12 and 13) and per Python version. CUDA is provided by Nix in CI.
+- Build one wheel per CUDA version (12.6, 12.8, 13.0, 13.2 and 13.4) and per Python version, like PyTorch. CUDA is provided by Nix in CI.
 - Raise the minimum Python version to 3.11.
 - Raise `ValueError` for negative connectivity on CUDA (it was a `TypeError`).
 

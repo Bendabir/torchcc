@@ -6,9 +6,9 @@
 // Empty module so Python can import the shared library (it registers the ops on load).
 extern "C"
 {
-    PyObject *PyInit__C(void)
+    PyObject *PyInit__cuda(void)
     {
-        static struct PyModuleDef module_def = {PyModuleDef_HEAD_INIT, "_C", nullptr, -1, nullptr};
+        static struct PyModuleDef module_def = {PyModuleDef_HEAD_INIT, "_cuda", nullptr, -1, nullptr};
         return PyModule_Create(&module_def);
     }
 }
