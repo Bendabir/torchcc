@@ -200,7 +200,7 @@ ignore-variadic-names = true
 # --- pytest ---
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--import-mode=importlib"]
-filterwarnings = ["ignore::DeprecationWarning"]
+filterwarnings = ["error::"]
 testpaths = ["tests"]
 
 # --- coverage ---
