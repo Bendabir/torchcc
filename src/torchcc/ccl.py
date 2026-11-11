@@ -7,7 +7,8 @@ from typing import Literal
 import torch
 
 # Importing the extension registers the torch.ops.torchcc.* operators.
-from torchcc import _C, _cpu  # noqa: F401
+from torchcc import _C, _cpu  # ruff: ignore[unused-import]
+from torchcc.constants import BATCH_2D_DIM
 
 
 def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
@@ -22,7 +23,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     ----------
     x : torch.Tensor
         Data to perform CCL on.
-        It must be a batch of images (N, H, W).
+        It must be a batch of images [N, H, W].
         Only uint8 data is supported.
     connectivity : {4, 8}, optional
         Define how to perform CCL.
@@ -52,10 +53,10 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
         if connectivity not in {4, 8}:
             raise ValueError("Only 4-connectivity and 8-connectivity are supported.")
 
-        if connectivity == 4:  # noqa: PLR2004
+        if connectivity == 4:  # ruff: ignore[magic-value-comparison]
             raise NotImplementedError("2D CCL 4-connectivity is not yet supported.")
 
-        if x.ndim != 3:  # noqa: PLR2004
+        if x.ndim != BATCH_2D_DIM:
             raise ValueError("Input must be a batch of images [N, H, W].")
 
         if x.dtype != torch.uint8:
@@ -66,7 +67,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
                 "Provided input is too big and will cause overflow on labels."
             )
 
-        # TODO : Fix contiguous requirement.
+        # FIXME : Fix contiguous requirement. # ruff: ignore[line-contains-fixme]
         return torch.ops.torchcc.ccl2d(x.contiguous(), connectivity)
 
     return _cpu.ccl2d(x, connectivity)  # pragma: no cover
@@ -83,7 +84,7 @@ def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tenso
     ----------
     x : torch.Tensor
         Data to perform CCL on.
-        It must be a batch of volumes (N, H, W, D).
+        It must be a batch of volumes [N, H, W, D].
         Only uint8 data is supported.
     connectivity : {6, 18, 26}, optional
         Define how to perform CCL.

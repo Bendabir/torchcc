@@ -119,12 +119,12 @@ The library can be built with debug mode by defined the `DEBUG_MODE=true` env va
 
 ### Quality
 
-Code quality is ensured by several tools (`ruff`, `mypy` & `black`).
+Code quality is ensured by several tools (`ruff` & `ty`).
 
 ```bash
-uv run black src tests *.py
+uv run ruff format src tests *.py
 uv run ruff check --fix src tests *.py
-uv run mypy src tests *.py
+uv run ty check
 ```
 
 These checks (and the Nix ones : `nixfmt`, `deadnix` & `statix`) also run as git hooks with [prek](https://prek.j178.dev). Install the hooks once, then run them on demand.

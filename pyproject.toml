@@ -17,29 +17,29 @@ Repository = "https://github.com/bendabir/torchcc"
 Documentation = "https://github.com/Bendabir/torchcc/README.md"
 
 [project.optional-dependencies]
-opencv = ["opencv-python>=4,<5"]
-opencv-headless = ["opencv-python-headless>=4,<5"]
-cc3d = ["connected-components-3d>=3,<4"]
+opencv = ["opencv-python>=4.0,<5"]
+opencv-headless = ["opencv-python-headless>=4.0,<5"]
+cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
 
 [dependency-groups]
 dev = [
     "prek>=0.5,<1",
-    "mypy>=1.11.2,<2",            # TODO : Move to MyPy 2.x or ty/pyrefly
-    "ruff>=0.6.6,<0.7",           # TODO : Update
-    "black>=24.8.0,<25",          # TODO : Move to Ruff
-    "pytest>=8.3.2,<9",           # TODO : Update
-    "pytest-cov>=5.0.0,<6",
-    "pytest-randomly>=3.15.0,<4",
+    "ty>=0.0,<0.1",
+    "ruff>=0.15,<1",
+    "pytest>=9.0,<10",
+    "pytest-cov>=7.0,<8",
+    "pytest-randomly>=5.0,<6",
 ]
 matrix = [
-    "httpx>=0.27.0,<0.28",           # TODO : Move to httpx2
-    "beautifulsoup4>=4.12.3,<5",
-    "cyclopts>=2.9.9,<3",            # TODO : Update
-    "pandas>=2.2.3,<3",              # TODO : Update
-    "pandas-stubs>=2.2.2.240807,<3",
+    # TODO : Move to self-contained scripts ?
+    "httpx2>=2.16,<3",
+    "beautifulsoup4>=4.12,<5",
+    "cyclopts>=5.0,<6",
+    "pandas>=3.0,<4",
+    "pandas-stubs>=3.0,<4",
 ]
 # Needed to build the extension without build isolation (CI)
-build = ["setuptools>=77", "ninja>=1,<2"]
+build = ["setuptools>=77", "ninja>=1.0,<2"]
 # One group per CUDA version to build against (and test locally). They are not published.
 cu126 = ["torch>=2.10,<2.15", "nvidia-cuda-runtime-cu12==12.6.*"]
 cu128 = ["torch>=2.10,<2.12", "nvidia-cuda-runtime-cu12==12.8.*"]
@@ -48,7 +48,7 @@ cu132 = ["torch>=2.12,<3", "nvidia-cuda-runtime==13.2.*"]
 cu134 = ["torch>=2.15,<3", "nvidia-cuda-runtime==13.4.*"]
 
 [build-system]
-requires = ["setuptools>=77", "ninja>=1,<2", "torch>=2.10,<3"]
+requires = ["setuptools>=77", "ninja>=1.0,<2", "torch>=2.10,<3"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -59,6 +59,8 @@ torchcc = ["py.typed"]
 
 # --- uv ---
 [tool.uv]
+# Ignore packages published in the last 3 days (supply chain safety)
+exclude-newer = "3 days"
 conflicts = [
     [
         { group = "cu126" },
@@ -107,50 +109,13 @@ name = "pytorch-cu134"
 url = "https://download.pytorch.org/whl/cu134"
 explicit = true
 
-# --- black ---
-[tool.black]
-line-length = 88
-target-version = ["py311"]
-preview = false
+# --- ty ---
+[tool.ty.environment]
+python-version = "3.11"
+root = ["src", "tests"]
 
-# --- mypy ---
-[tool.mypy]
-local_partial_types = true
-python_version = "3.11"
-mypy_path = "src/,tests/"
-files = "**/src/**/*.py,**/tests/**/*.py"
-scripts_are_modules = true
-ignore_missing_imports = true
-namespace_packages = true
-explicit_package_bases = true
-show_error_codes = true
-disallow_any_generics = true
-disallow_any_unimported = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_decorators = true
-disallow_untyped_defs = true
-implicit_optional = false
-strict_equality = true
-strict_optional = true
-warn_incomplete_stub = true
-warn_no_return = true
-warn_redundant_casts = true
-warn_return_any = true
-warn_unreachable = true
-warn_unused_ignores = true
-warn_unused_configs = true
-check_untyped_defs = true
-enable_error_code = [
-    "explicit-override",
-    "ignore-without-code",
-    "possibly-undefined",
-    "redundant-expr",
-    "redundant-self",
-    "truthy-bool",
-    "truthy-iterable",
-    "unused-awaitable",
-]
+[tool.ty.src]
+include = ["src", "tests", "scripts"]
 
 # --- ruff ---
 [tool.ruff]
@@ -159,99 +124,50 @@ target-version = "py311"
 indent-width = 4
 preview = true
 namespace-packages = ["src/torchcc"]
-include = ["**/src/**/*.py", "**/tests/**/*.py", "**/pyproject.toml"]
+include = [
+    "src/**/*.py",
+    "tests/**/*.py",
+    "pyproject.toml",
+    "setup.py",
+    "scripts/**/*.py",
+]
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.ruff.lint]
 task-tags = ["TODO", "FIXME", "NOTE"]
-select = [
-    "A",     # flake8-builtins
-    "ANN",   # flake8-annotations
-    "ARG",   # flake8-unused-arguments
-    "ASYNC", # flake8-async
-    "B",     # flake8-bugbear
-    "BLE",   # flake8-blind-except
-    "C4",    # flake8-comprehensions
-    "C90",   # mccabe
-    "COM",   # flake8-commas
-    "CPY",   # flake8-copyright
-    "D",     # pydocstyle
-    "DOC",   # flake8-docstyle
-    "DTZ",   # flake8-datetimez
-    "ERA",   # eradicate
-    "EXE",   # flake8-executable
-    "F",     # pyflakes
-    "FA",    # flake8-future-annotations
-    "FBT",   # flake8-boolean-trap
-    "FIX",   # flake8-fixme
-    "FLY",   # flynt
-    "FURB",  # refurb
-    "G",     # flake8-logging-format
-    "I",     # isort
-    "ICN",   # flake8-import-conventions
-    "INP",   # flake8-no-pep420
-    "INT",   # flake8-gettext
-    "ISC",   # flake8-implicit-str-concat
-    "LOG",   # flake8-logging
-    "N",     # pep8-naming
-    "NPY",   # numpy rules
-    "PERF",  # perflint
-    "PGH",   # pygrep-hooks
-    "PIE",   # flake8-pie
-    "PL",    # pylint
-    "PT",    # flake8-pytest-style
-    "PTH",   # flake8-use-pathlib
-    "PYI",   # flake8-pyi
-    "Q",     # flake8-quotes
-    "RET",   # flake8-return
-    "RSE",   # flake8-raise
-    "RUF",   # ruff specific
-    "S",     # flake8-bandit
-    "SIM",   # flake8-simplify
-    "SLF",   # flake8-self
-    "SLOT",  # flake8-slots
-    "T10",   # flake8-debugger
-    "T20",   # flake8-print
-    "TCH",   # flake8-type-checking
-    "TD",    # flake8-todos
-    "TID",   # flake8-tidy-imports
-    "TRY",   # tryceratops
-    "UP",    # pyupgrade
-    "W",     # pycodestyle warnings
-    "YTT",   # flake8-2020
-]
+select = ["ALL"]
 ignore = [
-    "ANN401",
-    "COM812",
-    "D100",
-    "D104",
-    "D105",
-    "TD001",
-    "TD002",
-    "TD003",
-    "TRY003",
+    "any-type",
+    "dot-format-in-exception",
+    "f-string-in-exception",
+    "invalid-todo-tag",
+    "missing-todo-author",
+    "missing-todo-link",
+    "missing-trailing-comma",
+    "raise-vanilla-args",
+    "raw-string-in-exception",
+    "undocumented-magic-method",
+    "undocumented-public-module",
+    "undocumented-public-package",
 ]
-unfixable = ["ERA001"]
+unfixable = ["commented-out-code"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-    "CPY001",
-
-    "D101",
-    "D102",
-    "D103",
-
-    "PLR2004",
-    "PLR6301",
-
-    "PTH",
-
-    "S101",
-    "S311",
-
-    "SLF001",
+    "assert",
+    "boolean-type-hint-positional-argument",
+    "magic-value-comparison",
+    "missing-copyright-notice",
+    "no-self-use",
+    "private-member-access",
+    "suspicious-non-cryptographic-random-usage",
+    "undocumented-public-class",
+    "undocumented-public-function",
+    "undocumented-public-method",
 ]
-"*.pyi" = ["CPY"]
-"scripts/*.py" = ["INP001"]
+"scripts/*.py" = ["implicit-namespace-package"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
@@ -284,7 +200,7 @@ ignore-variadic-names = true
 # --- pytest ---
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", "--import-mode=importlib"]
-filterwarnings = ["ignore::DeprecationWarning"]
+filterwarnings = ["error::"]
 testpaths = ["tests"]
 
 # --- coverage ---
