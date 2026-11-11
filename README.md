@@ -18,6 +18,21 @@ You can install TorchCC by using a custom PyPI index. There is one index per sup
 pip install --index-url https://bendabir.github.io/pypi/cu126 torchcc
 ```
 
+#### uv
+
+```toml
+[project]
+dependencies = ["torchcc>=0.1.0"]
+
+[tool.uv.sources]
+torchcc = { index = "bendabir-cu126" }
+
+[[tool.uv.index]]
+name = "bendabir-cu126"
+url = "https://bendabir.github.io/pypi/cu126"
+explicit = true
+```
+
 #### Poetry
 
 ```toml
@@ -35,7 +50,7 @@ torchcc = { version = "^0.1.0", source = "bendabir-cu126" }
 > [!NOTE]
 > This is a temporary solution. I might also upload artifacts to PyPI, but it means that one version of CUDA needs to be selected. It's not optimal as I'd like to uncouple CUDA versions from the library version.
 
-1. Go the release page.
+1. Go to the [release page](https://github.com/Bendabir/torchcc/releases).
 2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
 3. Install it in your env. For example : `pip install torchcc-0.1.0+cu126-cp312-cp312-linux_x86_64.whl`
 
@@ -55,7 +70,7 @@ labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W]
 
 ### CPU support
 
-CPU support is delegated to third-party libraries. [OpenCV](https://github.com/opencv/opencv-python) is used for 2D Connected Components Labeling on CPU, while [ConnectedComponents3D](https://github.com/seung-lab/connected-components-3d) is used for 3D counterpart. Both libraries are optional. Install them for transparent CPU support.
+CPU support is delegated to third-party libraries. [OpenCV](https://github.com/opencv/opencv-python) is used for 2D Connected Components Labeling on CPU, while [ConnectedComponents3D](https://github.com/seung-lab/connected-components-3d) is used for 3D counterpart. Both libraries are optional. Install them for transparent CPU support. Extras are available (`opencv`, `opencv-headless` and `cc3d`).
 
 ```bash
 pip install "opencv-python-headless>=4,<5" # 2D
@@ -131,12 +146,12 @@ For VSCode IntelliSense, link the PyTorch and Python headers in the `lib` direct
 ```bash
 cd lib
 ln -s ../.venv/lib/python*/site-packages/torch libtorch
-ln -s "$(uv run python -c 'import sysconfig; print(sysconfig.get_path("include"))')" python
+ln -s "$(uv run --no-sync python -c 'import sysconfig; print(sysconfig.get_path("include"))')" python
 ```
 
 ### Build
 
-`uv sync` already builds the library in the virtual env. To build a wheel (the way CI does) :
+`just init` already builds the library in the virtual env. To build a wheel (the way CI does) :
 
 ```bash
 just build cu126
@@ -209,7 +224,7 @@ This work is based on the following articles.
 
 [3] Bolelli, F., Allegretti, S., Lumetti, L., & Grana, C. (2024). [A State-of-the-Art Review with Code about Connected Components Labeling on GPUs](https://federicobolelli.it/pub_files/2024tpds.pdf).
 
-[4] Hennequin, A., Lacassagne, L., Cabaret, L., Meunier, Q., & Meunier, Q. A. (2018). [A new Direct Connected Component Labeling and Analysis Algorithms for GPUs](https://hal.science/hal-01923784/document). https://doi.org/10.1109/dasip.2018.8596835ï
+[4] Hennequin, A., Lacassagne, L., Cabaret, L., Meunier, Q., & Meunier, Q. A. (2018). [A new Direct Connected Component Labeling and Analysis Algorithms for GPUs](https://hal.science/hal-01923784/document). https://doi.org/10.1109/dasip.2018.8596835
 
 ### Online Resources
 
