@@ -186,7 +186,7 @@ csrc = Path("csrc")
 setup(
     ext_modules=[
         CUDAExtension(
-            name="torchcc._C",
+            name="torchcc._cuda",
             sources=[
                 *(p.as_posix() for p in csrc.rglob("*.cpp")),
                 *(p.as_posix() for p in csrc.rglob("*.cu")),

@@ -7,7 +7,7 @@ from typing import Literal
 import torch
 
 # Importing the extension registers the torch.ops.torchcc.* operators.
-from torchcc import _C, _cpu  # ruff: ignore[unused-import]
+from torchcc import _cpu, _cuda  # ruff: ignore[unused-import]
 from torchcc.constants import BATCH_2D_DIM
 
 

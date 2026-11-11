@@ -49,7 +49,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-torchcc = ["py.typed", "_C.pyi"]
+torchcc = ["py.typed", "_cuda.pyi"]
 
 # --- uv ---
 [tool.uv]

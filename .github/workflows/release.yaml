@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir unpacked
           unzip -q dist/*.whl -d unpacked
-          so=$(find unpacked -name "_C*.so")
+          so=$(find unpacked -name "_cuda*.so")
           readelf -d "$so"
           if readelf -d "$so" | grep -q /nix/store; then
             echo "The extension refers to the Nix store." >&2
