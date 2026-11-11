@@ -5,6 +5,9 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # NixOS only : nix-ld exposes its libraries in NIX_LD_LIBRARY_PATH. Elsewhere this keeps the current value.
 export LD_LIBRARY_PATH := env('NIX_LD_LIBRARY_PATH', env('LD_LIBRARY_PATH', ''))
 
+# Avoid uv to rebuild everything unnecessarily.
+export UV_NO_SYNC := "1"
+
 # CUDA version to develop and build against (see `flake.nix` and `pyproject.toml`)
 cuda126 := "cu126"
 

@@ -92,6 +92,17 @@ This runs `nix develop .#cu126 -c uv sync --group cu126` and `uv run prek instal
 
 The `cuXXX` shells provide a host compiler for local development. The `cuXXX-ci` shells do not, so the compiler of the machine is used (this is what CI does to build wheels).
 
+#### Why `uv` does not sync automatically
+
+The CUDA version is a dependency group (`cuXXX`) that is not a default group. A plain `uv sync` or `uv run` only selects the default groups. It would replace the CUDA build of PyTorch by the default one from PyPI, then rebuild the extension outside of the Nix shell (no compiler, so it fails). To avoid this :
+
+- Only `just init` (and `just build`) syncs the environment, and always inside the Nix shell.
+- The `justfile` exports `UV_NO_SYNC=1`, so `uv run` in the other recipes uses the existing `.venv` as is. This variable only affects `uv run` and only recipes started through `just`. A bare `uv run` in your shell still syncs, so use `uv run --no-sync` there.
+- The `ruff` hooks use `uv run --only-group dev` and the `ty` hook uses `uv run --no-sync`. They never rebuild the project.
+- The `uv-sync` hook (after checkout, merge and rewrite) installs only the `dev` group with `--inexact` (`uv sync --frozen --only-group dev --inexact`). Excluding the project leaves PyTorch alone, and `--inexact` keeps the packages of the CUDA group. `--inexact` alone is not enough, as PyTorch is a direct dependency of the project and would still be replaced.
+
+Run `just init <cuda>` again to switch CUDA version, or after a change of `uv.lock`.
+
 ### Editor
 
 For VSCode IntelliSense, link the PyTorch and Python headers in the `lib` directory.
