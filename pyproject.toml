@@ -17,29 +17,29 @@ Repository = "https://github.com/bendabir/torchcc"
 Documentation = "https://github.com/Bendabir/torchcc/README.md"
 
 [project.optional-dependencies]
-opencv = ["opencv-python>=4,<5"]
-opencv-headless = ["opencv-python-headless>=4,<5"]
-cc3d = ["connected-components-3d>=3,<4"]
+opencv = ["opencv-python>=4.0,<5"]
+opencv-headless = ["opencv-python-headless>=4.0,<5"]
+cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
 
 [dependency-groups]
 dev = [
     "prek>=0.5,<1",
-    "mypy>=1.11.2,<2",            # TODO : Move to MyPy 2.x or ty/pyrefly
-    "ruff>=0.6.6,<0.7",           # TODO : Update
-    "black>=24.8.0,<25",          # TODO : Move to Ruff
-    "pytest>=8.3.2,<9",           # TODO : Update
-    "pytest-cov>=5.0.0,<6",
-    "pytest-randomly>=3.15.0,<4",
+    "mypy>=1.11,<2",           # TODO : Move to ty
+    "ruff>=0.6,<0.7",          # TODO : Update
+    "black>=24.8,<25",         # TODO : Move to Ruff
+    "pytest>=9.0,<10",
+    "pytest-cov>=7.0,<8",
+    "pytest-randomly>=5.1,<6",
 ]
 matrix = [
-    "httpx>=0.27.0,<0.28",           # TODO : Move to httpx2
-    "beautifulsoup4>=4.12.3,<5",
-    "cyclopts>=2.9.9,<3",            # TODO : Update
-    "pandas>=2.2.3,<3",              # TODO : Update
-    "pandas-stubs>=2.2.2.240807,<3",
+    "httpx>=0.27,<0.28",       # TODO : Move to httpx2
+    "beautifulsoup4>=4.12,<5",
+    "cyclopts>=2.9,<3",        # TODO : Update
+    "pandas>=2.2,<3",          # TODO : Update
+    "pandas-stubs>=2.2,<3",
 ]
 # Needed to build the extension without build isolation (CI)
-build = ["setuptools>=77", "ninja>=1,<2"]
+build = ["setuptools>=77", "ninja>=1.0,<2"]
 # One group per CUDA version to build against (and test locally). They are not published.
 cu126 = ["torch>=2.10,<2.15", "nvidia-cuda-runtime-cu12==12.6.*"]
 cu128 = ["torch>=2.10,<2.12", "nvidia-cuda-runtime-cu12==12.8.*"]
@@ -48,7 +48,7 @@ cu132 = ["torch>=2.12,<3", "nvidia-cuda-runtime==13.2.*"]
 cu134 = ["torch>=2.15,<3", "nvidia-cuda-runtime==13.4.*"]
 
 [build-system]
-requires = ["setuptools>=77", "ninja>=1,<2", "torch>=2.10,<3"]
+requires = ["setuptools>=77", "ninja>=1.0,<2", "torch>=2.10,<3"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

@@ -2527,7 +2527,7 @@ wheels = [
 
 [[package]]
 name = "pytest"
-version = "8.4.2"
+version = "9.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
@@ -2536,34 +2536,35 @@ dependencies = [
     { name = "pluggy" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a3/5c/00a0e072241553e1a7496d638deababa67c5058571567b92a7eaa258397c/pytest-8.4.2.tar.gz", hash = "sha256:86c0d0b93306b961d58d62a4db4879f27fe25513d4b969df351abdddb3c30e01", size = 1519618, upload-time = "2025-09-04T14:34:22.711Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/42/bb4641652e58dedeac2ec51abc1f8cae4fee4ec63899a0999016229a0f2a/pytest-9.2.0.tar.gz", hash = "sha256:97c4f3b1f3c7414aa36465e09b8220f1d03627993bd51b1282e193753c80557b", size = 1797555, upload-time = "2026-10-27T21:30:20.728Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/a4/20da314d277121d6534b3a980b29035dcd51e6744bd79075a6ce8fa4eb8d/pytest-8.4.2-py3-none-any.whl", hash = "sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79", size = 365750, upload-time = "2025-09-04T14:34:20.226Z" },
+    { url = "https://files.pythonhosted.org/packages/51/39/1f5d8c8877a0fa327db959c19341d4be61660de1ab6b7391f9eb805bcd67/pytest-9.2.0-py3-none-any.whl", hash = "sha256:07acdcf88ec174f907dc01af70bf52d49b014bbab03faeeade31c96b18c2e588", size = 411776, upload-time = "2026-10-27T21:30:19.131Z" },
 ]
 
 [[package]]
 name = "pytest-cov"
-version = "5.0.0"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "coverage" },
+    { name = "pluggy" },
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/67/00efc8d11b630c56f15f4ad9c7f9223f1e5ec275aaae3fa9118c6a223ad2/pytest-cov-5.0.0.tar.gz", hash = "sha256:5837b58e9f6ebd335b0f8060eecce69b662415b16dc503883a02f45dfeb14857", size = 63042, upload-time = "2024-03-24T20:16:34.856Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/51/a849f96e117386044471c8ec2bd6cfebacda285da9525c9106aeb28da671/pytest_cov-7.1.0.tar.gz", hash = "sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2", size = 55592, upload-time = "2026-03-21T20:11:16.284Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/3a/af5b4fa5961d9a1e6237b530eb87dd04aea6eb83da09d2a4073d81b54ccf/pytest_cov-5.0.0-py3-none-any.whl", hash = "sha256:4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652", size = 21990, upload-time = "2024-03-24T20:16:32.444Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/7a/d968e294073affff457b041c2be9868a40c1c71f4a35fcc1e45e5493067b/pytest_cov-7.1.0-py3-none-any.whl", hash = "sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678", size = 22876, upload-time = "2026-03-21T20:11:14.438Z" },
 ]
 
 [[package]]
 name = "pytest-randomly"
-version = "3.16.0"
+version = "5.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/68/d221ed7f4a2a49a664da721b8e87b52af6dd317af2a6cb51549cf17ac4b8/pytest_randomly-3.16.0.tar.gz", hash = "sha256:11bf4d23a26484de7860d82f726c0629837cf4064b79157bd18ec9d41d7feb26", size = 13367, upload-time = "2024-10-25T15:45:34.274Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/59/d9f088bdf2bdafd7b5305d2be5f2e73d330756e092c448e4e534a30d9bda/pytest_randomly-5.1.0.tar.gz", hash = "sha256:cdf8af20419969d273b97c8e7c8d688200807e815bdc733cf2a6af183080ad58", size = 9010, upload-time = "2026-11-08T23:48:13.168Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/70/b31577d7c46d8e2f9baccfed5067dd8475262a2331ffb0bfdf19361c9bde/pytest_randomly-3.16.0-py3-none-any.whl", hash = "sha256:8633d332635a1a0983d3bba19342196807f6afb17c3eef78e02c2f85dade45d6", size = 8396, upload-time = "2024-10-25T15:45:32.78Z" },
+    { url = "https://files.pythonhosted.org/packages/67/ef/9979eae8db530930873d15fb16043ef6d72b5042f2636de4d85568eb3df4/pytest_randomly-5.1.0-py3-none-any.whl", hash = "sha256:fb9004e6821422291087d0294fd62f45ff304094db11fbdff8f2fe1ed20764d8", size = 8969, upload-time = "2026-11-08T23:48:11.833Z" },
 ]
 
 [[package]]
@@ -3098,16 +3099,16 @@ matrix = [
 
 [package.metadata]
 requires-dist = [
-    { name = "connected-components-3d", marker = "extra == 'cc3d'", specifier = ">=3,<4" },
-    { name = "opencv-python", marker = "extra == 'opencv'", specifier = ">=4,<5" },
-    { name = "opencv-python-headless", marker = "extra == 'opencv-headless'", specifier = ">=4,<5" },
+    { name = "connected-components-3d", marker = "extra == 'cc3d'", specifier = ">=3.0,<4" },
+    { name = "opencv-python", marker = "extra == 'opencv'", specifier = ">=4.0,<5" },
+    { name = "opencv-python-headless", marker = "extra == 'opencv-headless'", specifier = ">=4.0,<5" },
     { name = "torch", specifier = ">=2.10,<3" },
 ]
 provides-extras = ["opencv", "opencv-headless", "cc3d"]
 
 [package.metadata.requires-dev]
 build = [
-    { name = "ninja", specifier = ">=1,<2" },
+    { name = "ninja", specifier = ">=1.0,<2" },
     { name = "setuptools", specifier = ">=77" },
 ]
 cu126 = [
@@ -3131,20 +3132,20 @@ cu134 = [
     { name = "torch", specifier = ">=2.15,<3", index = "https://download.pytorch.org/whl/cu134", conflict = { package = "torchcc", group = "cu134" } },
 ]
 dev = [
-    { name = "black", specifier = ">=24.8.0,<25" },
-    { name = "mypy", specifier = ">=1.11.2,<2" },
+    { name = "black", specifier = ">=24.8,<25" },
+    { name = "mypy", specifier = ">=1.11,<2" },
     { name = "prek", specifier = ">=0.5,<1" },
-    { name = "pytest", specifier = ">=8.3.2,<9" },
-    { name = "pytest-cov", specifier = ">=5.0.0,<6" },
-    { name = "pytest-randomly", specifier = ">=3.15.0,<4" },
-    { name = "ruff", specifier = ">=0.6.6,<0.7" },
+    { name = "pytest", specifier = ">=9.0,<10" },
+    { name = "pytest-cov", specifier = ">=7.0,<8" },
+    { name = "pytest-randomly", specifier = ">=5.1,<6" },
+    { name = "ruff", specifier = ">=0.6,<0.7" },
 ]
 matrix = [
-    { name = "beautifulsoup4", specifier = ">=4.12.3,<5" },
-    { name = "cyclopts", specifier = ">=2.9.9,<3" },
-    { name = "httpx", specifier = ">=0.27.0,<0.28" },
-    { name = "pandas", specifier = ">=2.2.3,<3" },
-    { name = "pandas-stubs", specifier = ">=2.2.2.240807,<3" },
+    { name = "beautifulsoup4", specifier = ">=4.12,<5" },
+    { name = "cyclopts", specifier = ">=2.9,<3" },
+    { name = "httpx", specifier = ">=0.27,<0.28" },
+    { name = "pandas", specifier = ">=2.2,<3" },
+    { name = "pandas-stubs", specifier = ">=2.2,<3" },
 ]
 
 [[package]]
