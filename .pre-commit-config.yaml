@@ -88,6 +88,25 @@ repos:
         always_run: true
         pass_filenames: false
         priority: 0
+      - id: nixfmt
+        name: nixfmt
+        entry: nixfmt --check
+        language: system
+        types: [nix]
+        priority: 0
+      - id: deadnix
+        name: deadnix
+        entry: deadnix --fail
+        language: system
+        types: [nix]
+        priority: 0
+      - id: statix
+        name: statix
+        entry: statix check
+        language: system
+        types: [nix]
+        pass_filenames: false
+        priority: 0
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
     hooks:
