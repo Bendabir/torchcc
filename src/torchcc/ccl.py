@@ -17,7 +17,8 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     Note
     ----
     On CPU, computation is delegated to OpenCV if installed.
-    On GPU, contiguous data is required.
+    On GPU, non-contiguous data is copied first, unless only the last dimension
+    is contiguous (e.g. a channel slice of a [N, C, H, W] tensor).
 
     Parameters
     ----------
@@ -36,12 +37,13 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     -------
     torch.Tensor
         The labeled Connected Components.
+        Labels are unique within an image, not across the batch.
 
     Raises
     ------
     ValueError
         If the connectivity is not supported, if the data is not a batch of images
-        or if the data is too big.
+        or if the images are too big.
     TypeError
         If the data is not uint8.
     NotImplementedError
@@ -62,13 +64,10 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
         if x.dtype != torch.uint8:
             raise TypeError("Input must be uint8 data.")
 
-        if x.numel() > torch.iinfo(torch.int32).max:
-            raise ValueError(
-                "Provided input is too big and will cause overflow on labels."
-            )
+        if x.shape[-2] * x.shape[-1] > torch.iinfo(torch.int32).max:
+            raise ValueError("Images are too big and will cause overflow on labels.")
 
-        # FIXME : Fix contiguous requirement. # ruff: ignore[line-contains-fixme]
-        return torch.ops.torchcc.ccl2d(x.contiguous(), connectivity)
+        return torch.ops.torchcc.ccl2d(x, connectivity)
 
     return _cpu.ccl2d(x, connectivity)  # pragma: no cover
 

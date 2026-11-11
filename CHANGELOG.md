@@ -14,10 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build one wheel per CUDA version (12.6, 12.8, 13.0, 13.2 and 13.4) and per Python version, like PyTorch. CUDA is provided by Nix in CI.
 - Raise the minimum Python version to 3.11.
 - Raise `ValueError` for negative connectivity on CUDA (it was a `TypeError`).
+- Make 2D CCL on CUDA up to 40% faster. It uses an extra buffer of 1 byte per pixel (about 20% more peak GPU memory).
+- Make 2D CCL labels on CUDA unique per image, not across the batch.
+- Read 2D input on CUDA without a copy when only its last dimension is contiguous (e.g. a channel slice `x[:, c]` or a crop). It makes such inputs up to 17% faster.
+
+### Fixed
+
+- Return an empty result for empty 2D input on CUDA, instead of leaving a CUDA error that made the next CUDA operation fail.
 
 ### Removed
 
-- Wheels for older PyTorch and CUDA versions (CUDA < 12).
+- Remove the batch size limit of 2D CCL on CUDA. The limit now applies to one image (2^31 - 1 pixels).
+- Wheels for older PyTorch and CUDA versions (CUDA < 12.6).
 
 ## [0.1.0] - 2024-10-08
 
