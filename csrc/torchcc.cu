@@ -67,6 +67,22 @@ namespace torchcc
 
         if (connectivity == 8)
         {
+            // Union-find runs on a compact buffer with one label per 2x2 block (about the size of the input).
+            // The paper stores block labels in the output (top-left pixel of each block) to avoid cudaMalloc.
+            // The caching allocator makes this allocation cheap, and the dense layout uses whole 32 B sectors
+            // (the sparse one used 1 int out of 4) with a 4x smaller working set for find.
+            // Measured on sm_86 only : 17-27% faster at batch 32, neutral at batch 1.
+            // Cost : about +1 B per pixel, so peak memory goes from 5 B to 6 B per pixel (+20%).
+            // If a compute capability (or a memory-bound use case) needs the in-place layout back,
+            // the sparse version is in commit 5960911.
+            const uint32_t bw = (w + 1) / 2;
+            const uint32_t bh = (h + 1) / 2;
+            torch::stable::Tensor blocks = torch::stable::new_empty(
+                x,
+                {static_cast<int64_t>(n), static_cast<int64_t>(bh), static_cast<int64_t>(bw)},
+                torch::headeronly::ScalarType::Int);
+            int32_t *const blocks_ptr = blocks.mutable_data_ptr<int32_t>();
+
             // One thread per 2x2 block, in tiles of 32x8 blocks : warps are coalesced on a row,
             // tiles keep vertical neighbours in the same thread block. One image per grid z.
             const uint32_t image = h * w;
@@ -81,19 +97,20 @@ namespace torchcc
             {
                 const uint32_t count = std::min(n - first, MAX_GRID_Z);
                 const dim3 grid = dim3(
-                    ((w + 1) / 2 + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
-                    ((h + 1) / 2 + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
+                    (bw + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
+                    (bh + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
                     count);
                 const uint8_t *const chunk_x = x_ptr + static_cast<int64_t>(first) * image;
+                int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
                 int32_t *const chunk_labels = labels_ptr + static_cast<int64_t>(first) * image;
 
-                buf::ccl2d::init<<<grid, block, 0, stream>>>(chunk_x, chunk_labels, w, h, count);
+                buf::ccl2d::init<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, chunk_labels, w, h, count);
+                buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, chunk_blocks, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::compress<<<grid, block, 0, stream>>>(chunk_labels, w, h, count);
+                buf::ccl2d::compress<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, chunk_labels, w, h, count);
+                buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, chunk_blocks, chunk_labels, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
             }
         }

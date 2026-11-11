@@ -112,49 +112,49 @@ namespace buf
         }
 
         // --- KERNELS ---
-        __global__ void init(
-            const uint8_t *__restrict__ const g_batch_img,
-            int32_t *__restrict__ const g_batch_labels,
-            const uint32_t w,
-            const uint32_t h,
-            const uint32_t n)
+        // Block labels live in a compact buffer [N, bh, bw] with bh = ceil(h / 2) and bw = ceil(w / 2),
+        // one int per 2x2 block, so label reads and writes are coalesced.
+        // Each block takes its own block index (in its image) as initial label.
+        __global__ void init(int32_t *__restrict__ const g_batch_blocks, const uint32_t bw, const uint32_t bh, const uint32_t n)
         {
-            // Each thread basically work on the top-left pixel
-            const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
-            const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
+            const uint32_t brow = blockIdx.y * blockDim.y + threadIdx.y;
+            const uint32_t bcol = blockIdx.x * blockDim.x + threadIdx.x;
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = row * w + col;
 
-            if ((row >= h) || (col >= w) || (depth >= n))
+            if ((brow >= bh) || (bcol >= bw) || (depth >= n))
             {
                 return;
             }
 
-            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
+            const uint32_t block = brow * bw + bcol;
 
-            // Assign each block to the raster index (in its image) of the top-left pixel
-            g_labels[index] = index;
+            g_batch_blocks[static_cast<int64_t>(depth) * bh * bw + block] = block;
         }
 
         __global__ void merge(
             const uint8_t *__restrict__ const g_batch_img,
-            int32_t *__restrict__ const g_batch_labels,
+            int32_t *__restrict__ const g_batch_blocks,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
         {
-            const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
-            const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
+            const uint32_t bw = (w + 1) / 2;
+            const uint32_t bh = (h + 1) / 2;
+            const uint32_t brow = blockIdx.y * blockDim.y + threadIdx.y;
+            const uint32_t bcol = blockIdx.x * blockDim.x + threadIdx.x;
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = row * w + col; // Basically pixel 5 (see paper)
 
-            if ((row >= h) || (col >= w) || (depth >= n))
+            if ((brow >= bh) || (bcol >= bw) || (depth >= n))
             {
                 return;
             }
 
+            const uint32_t row = 2 * brow;
+            const uint32_t col = 2 * bcol;
+            const uint32_t index = row * w + col; // Basically pixel 5 (see paper)
+            const uint32_t block = brow * bw + bcol;
             const uint8_t *const g_img = g_batch_img + static_cast<int64_t>(depth) * h * w;
-            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
+            int32_t *const g_blocks = g_batch_blocks + static_cast<int64_t>(depth) * bh * bw;
 
             // NOTE : As we're only using bit 0, 1, 2, 3, 4 and 8, this could technically fits on a byte
             uint16_t mask = 0;
@@ -223,7 +223,7 @@ namespace buf
             if (hasBit(mask, 0) && g_img[index - w - 1])
             {
                 // Merge block X with block P (top-left)
-                computeUnion(g_labels, index, index - 2 * w - 2); // above, left
+                computeUnion(g_blocks, block, block - bw - 1); // above, left
             }
 
             // Check if we have pixels in the bottom of the top block
@@ -231,7 +231,7 @@ namespace buf
             if ((hasBit(mask, 1) && g_img[index - w]) || (hasBit(mask, 2) && g_img[index - w + 1]))
             {
                 // Merge block X with block Q
-                computeUnion(g_labels, index, index - 2 * w); // above
+                computeUnion(g_blocks, block, block - bw); // above
             }
 
             // Check if we have a top-right pixel and a top-right diagonal pixel
@@ -239,7 +239,7 @@ namespace buf
             if (hasBit(mask, 3) && g_img[index - w + 2])
             {
                 // Merge block X with block R
-                computeUnion(g_labels, index, index - 2 * w + 2); // above, right
+                computeUnion(g_blocks, block, block - bw + 1); // above, right
             }
 
             // Check if we have pixels in the right of the left block
@@ -247,48 +247,49 @@ namespace buf
             if ((hasBit(mask, 4) && g_img[index - 1]) || (hasBit(mask, 8) && g_img[index + w - 1]))
             {
                 // Merge block X with block S
-                computeUnion(g_labels, index, index - 2); // left
+                computeUnion(g_blocks, block, block - 1); // left
             }
         }
 
-        __global__ void compress(int32_t *__restrict__ const g_batch_labels, const uint32_t w, const uint32_t h, const uint32_t n)
+        __global__ void compress(int32_t *__restrict__ const g_batch_blocks, const uint32_t bw, const uint32_t bh, const uint32_t n)
         {
-            const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
-            const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
+            const uint32_t brow = blockIdx.y * blockDim.y + threadIdx.y;
+            const uint32_t bcol = blockIdx.x * blockDim.x + threadIdx.x;
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = row * w + col;
 
-            if ((row >= h) || (col >= w) || (depth >= n))
+            if ((brow >= bh) || (bcol >= bw) || (depth >= n))
             {
                 return;
             }
 
-            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
-
-            findAndCompress(g_labels, index);
+            findAndCompress(g_batch_blocks + static_cast<int64_t>(depth) * bh * bw, brow * bw + bcol);
         }
 
         __global__ void finalize(
             const uint8_t *__restrict__ const g_batch_img,
+            const int32_t *__restrict__ const g_batch_blocks,
             int32_t *__restrict__ const g_batch_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
         {
-            const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
-            const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
+            const uint32_t bw = (w + 1) / 2;
+            const uint32_t bh = (h + 1) / 2;
+            const uint32_t brow = blockIdx.y * blockDim.y + threadIdx.y;
+            const uint32_t bcol = blockIdx.x * blockDim.x + threadIdx.x;
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = row * w + col;
 
-            if ((row >= h) || (col >= w) || (depth >= n))
+            if ((brow >= bh) || (bcol >= bw) || (depth >= n))
             {
                 return;
             }
 
+            const uint32_t row = 2 * brow;
+            const uint32_t col = 2 * bcol;
+            const uint32_t index = row * w + col;
             const uint8_t *const g_img = g_batch_img + static_cast<int64_t>(depth) * h * w;
             int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
-
-            uint32_t label = g_labels[index] + 1;
+            const uint32_t label = g_batch_blocks[static_cast<int64_t>(depth) * bh * bw + brow * bw + bcol] + 1;
 
             // Pseudo-algorithm of the paper uses multiplication to avoid checks
             // but I suppose that checks are more efficient
