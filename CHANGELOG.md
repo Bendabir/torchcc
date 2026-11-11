@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Remove the batch size limit of 2D CCL on CUDA. The limit now applies to one image (2^31 - 1 pixels).
-- Wheels for older PyTorch and CUDA versions (CUDA < 12).
+- Wheels for older PyTorch and CUDA versions (CUDA < 12.6).
 
 ## [0.1.0] - 2024-10-08
 
