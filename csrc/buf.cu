@@ -265,6 +265,9 @@ namespace buf
             findAndCompress(g_batch_blocks + static_cast<int64_t>(depth) * bh * bw, brow * bw + bcol);
         }
 
+        // One thread per 2x2 block. Each warp still writes 64 consecutive ints per pixel row (L2 merges them).
+        // Measured on sm_86 : about 1.2x the copy bound (x.to(int32)), which is the floor here as the block
+        // buffer is read too. One thread per pixel was 5-15% slower (4x more threads, 1-byte loads).
         __global__ void finalize(
             const uint8_t *__restrict__ const g_batch_img,
             const int32_t *__restrict__ const g_batch_blocks,
