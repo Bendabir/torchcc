@@ -30,14 +30,6 @@ dev = [
     "pytest-cov>=7.0,<8",
     "pytest-randomly>=5.0,<6",
 ]
-matrix = [
-    # TODO : Move to self-contained scripts ?
-    "httpx2>=2.16,<3",
-    "beautifulsoup4>=4.12,<5",
-    "cyclopts>=5.0,<6",
-    "pandas>=3.0,<4",
-    "pandas-stubs>=3.0,<4",
-]
 # Needed to build the extension without build isolation (CI)
 build = ["setuptools>=77", "ninja>=1.0,<2"]
 # One group per CUDA version to build against (and test locally). They are not published.
@@ -115,7 +107,7 @@ python-version = "3.11"
 root = ["src", "tests"]
 
 [tool.ty.src]
-include = ["src", "tests", "scripts"]
+include = ["src", "tests"]
 
 # --- ruff ---
 [tool.ruff]
@@ -129,7 +121,6 @@ include = [
     "tests/**/*.py",
     "pyproject.toml",
     "setup.py",
-    "scripts/**/*.py",
 ]
 
 [tool.ruff.format]
@@ -167,7 +158,6 @@ unfixable = ["commented-out-code"]
     "undocumented-public-function",
     "undocumented-public-method",
 ]
-"scripts/*.py" = ["implicit-namespace-package"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
