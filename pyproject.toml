@@ -28,7 +28,7 @@ dev = [
     "ruff>=0.15,<1",
     "pytest>=9.0,<10",
     "pytest-cov>=7.0,<8",
-    "pytest-randomly>=5.1,<6",
+    "pytest-randomly>=5.0,<6",
 ]
 matrix = [
     # TODO : Move to self-contained scripts ?
@@ -59,6 +59,8 @@ torchcc = ["py.typed"]
 
 # --- uv ---
 [tool.uv]
+# Ignore packages published in the last 3 days (supply chain safety)
+exclude-newer = "3 days"
 conflicts = [
     [
         { group = "cu126" },
