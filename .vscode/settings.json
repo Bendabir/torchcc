@@ -2,10 +2,6 @@
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
     "diffEditor.ignoreTrimWhitespace": false,
-    "mypy-type-checker.importStrategy": "fromEnvironment",
-    "mypy-type-checker.args": ["--cache-dir=.mypy_cache_vscode"],
-    // The daemon doesn't seem to work properly, errors don't show, so better to disable it for now
-    "mypy-type-checker.preferDaemon": false,
     "ruff.importStrategy": "fromEnvironment",
     "python.languageServer": "Pylance",
     "python.testing.pytestArgs": ["tests"],
@@ -74,24 +70,16 @@
         "**/Thumbs.db": true,
         "**/*.egg-info": true,
         "**/__pycache__": true,
-        "**/.mypy_cache": true,
-        "**/.mypy_cache_vscode": true,
         "**/.ruff_cache": true,
-        "**/.ruff_cache_vscode": true,
-        "**/.pytest_cache": true,
-        "**/.pytest_cache_vscode": true
+        "**/.pytest_cache": true
     },
     "files.watcherExclude": {
         "**/dist": true,
         "**/build": true,
         "**/*.egg-info": true,
         "**/__pycache__": true,
-        "**/.mypy_cache": true,
-        "**/.mypy_cache_vscode": true,
         "**/.ruff_cache": true,
-        "**/.ruff_cache_vscode": true,
         "**/.pytest_cache": true,
-        "**/.pytest_cache_vscode": true,
         "**/datasets": true
     },
     "search.exclude": {
@@ -100,12 +88,8 @@
         "**/build": true,
         "**/*.egg-info": true,
         "**/__pycache__": true,
-        "**/.mypy_cache": true,
-        "**/.mypy_cache_vscode": true,
         "**/.ruff_cache": true,
-        "**/.ruff_cache_vscode": true,
-        "**/.pytest_cache": true,
-        "**/.pytest_cache_vscode": true
+        "**/.pytest_cache": true
     },
     "C_Cpp.files.exclude": {
         "**/.vscode": true,
