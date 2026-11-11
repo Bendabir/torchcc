@@ -21,7 +21,7 @@ alias help := default
 # Create the virtual env for a CUDA version and install the git hooks.
 [group('setup')]
 init CUDA=cuda126:
-    nix develop .#{{ CUDA }} -c uv sync --group {{ CUDA }}
+    nix develop .#{{ CUDA }} -c uv sync --group build --group {{ CUDA }}
     uv run prek install
 
 # Update the lock file
