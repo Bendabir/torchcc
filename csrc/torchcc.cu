@@ -11,8 +11,6 @@
 #include <buf.h>
 
 // Use constants so it's typed (instead of using text substitution)
-constexpr uint32_t BUF_2D_BLOCK_COLS = 32; // a warp reads 32 consecutive 2x2 blocks of a row
-constexpr uint32_t BUF_2D_BLOCK_ROWS = 8;
 constexpr uint32_t MAX_GRID_Z = 65535;
 
 namespace torchcc
@@ -85,7 +83,8 @@ namespace torchcc
             int32_t *const blocks_ptr = blocks.mutable_data_ptr<int32_t>();
 
             // One thread per 2x2 block, in tiles of 32x8 blocks : warps are coalesced on a row,
-            // tiles keep vertical neighbours in the same thread block. One image per grid z.
+            // localMerge joins the blocks of a tile in shared memory, borderMerge only the links across tiles,
+            // finalize finds the roots. One image per grid z.
             const uint32_t image = h * w;
             const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
 
@@ -105,11 +104,10 @@ namespace torchcc
                 int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
                 int32_t *const chunk_labels = labels_ptr + static_cast<int64_t>(first) * image;
 
-                buf::ccl2d::init<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
+                buf::ccl2d::localMerge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
-                STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::compress<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
+                const dim3 border_grid = dim3((grid.x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES, grid.y, grid.z);
+                buf::ccl2d::borderMerge<<<border_grid, dim3(BUF_2D_BORDER_THREADS, BUF_2D_BORDER_TILES), 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
                 buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, chunk_labels, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();

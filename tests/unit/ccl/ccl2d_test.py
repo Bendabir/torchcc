@@ -197,6 +197,9 @@ def test_ccl2d_batch(
         pytest.param((1, 33, 46), id="odd-even"),
         pytest.param((5, 65, 129), id="batch-odd"),
         pytest.param((3, 256, 256), id="batch-even"),
+        # A tile is 64x16 pixels, these shapes go one pixel past a tile border
+        pytest.param((2, 17, 65), id="tile-border"),
+        pytest.param((1, 33, 129), id="tile-border-2"),
     ],
 )
 @pytest.mark.parametrize("density", [0.1, 0.5, 0.9])
