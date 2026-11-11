@@ -5,107 +5,60 @@ on:
       - "*.*.*"
 jobs:
   build:
-    name: build
+    name: build (${{ matrix.cuda.tag }}, python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: true
       matrix:
-        include:
-          # FIXME : Fix issues with recent G++ versions.
-          #         See : https://stackoverflow.com/questions/6622454/cuda-incompatible-with-my-gcc-version
-          # # CUDA 9.2
-          # - cuda-version: "9.2"
-          #   python-version: "3.9"
-          # # CUDA 10.1
-          # - cuda-version: "10.1"
-          #   python-version: "3.9"
-          # # CUDA 10.2
-          # - cuda-version: "10.2"
-          #   python-version: "3.9"
-          # - cuda-version: "10.2"
-          #   python-version: "3.10"
-          # CUDA 11.0
-          - cuda-version: "11.0"
-            python-version: "3.9"
-          # CUDA 11.1
-          - cuda-version: "11.1"
-            python-version: "3.9"
-          # CUDA 11.3
-          - cuda-version: "11.3"
-            python-version: "3.9"
-          - cuda-version: "11.3"
-            python-version: "3.10"
-          # CUDA 11.6
-          - cuda-version: "11.6"
-            python-version: "3.9"
-          - cuda-version: "11.6"
-            python-version: "3.10"
-          # CUDA 11.7
-          - cuda-version: "11.7"
-            python-version: "3.9"
-          - cuda-version: "11.7"
-            python-version: "3.10"
-          - cuda-version: "11.7"
-            python-version: "3.11"
-          # CUDA 11.8
-          - cuda-version: "11.8"
-            python-version: "3.9"
-          - cuda-version: "11.8"
-            python-version: "3.10"
-          - cuda-version: "11.8"
-            python-version: "3.11"
-          - cuda-version: "11.8"
-            python-version: "3.12"
-          # CUDA 12.1
-          - cuda-version: "12.1"
-            python-version: "3.9"
-          - cuda-version: "12.1"
-            python-version: "3.10"
-          - cuda-version: "12.1"
-            python-version: "3.11"
-          - cuda-version: "12.1"
-            python-version: "3.12"
-          # CUDA 12.4
-          - cuda-version: "12.4"
-            python-version: "3.9"
-          - cuda-version: "12.4"
-            python-version: "3.10"
-          - cuda-version: "12.4"
-            python-version: "3.11"
-          - cuda-version: "12.4"
-            python-version: "3.12"
-    container:
-      image: ghcr.io/bendabir/cuda:${{ matrix.cuda-version }}
-    env:
-      POETRY_CORE_VERSION: "1.9.0"
+        cuda:
+          # One build per CUDA major version, using the oldest version we support.
+          # The group and the Nix shell are defined in pyproject.toml and flake.nix.
+          # TODO : Be more consistent and buid one per supported CUDA version like Torch ?
+          - group: cu126
+            tag: cu12
+          - group: cu130
+            tag: cu13
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - name: sync-code
         uses: actions/checkout@v4
-      - name: setup-python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      # NOTE : Not running pip check because it causes some errors with Ninja
-      - name: prepare-env
-        run: python -m pip install "poetry-core==${{ env.POETRY_CORE_VERSION }}" ninja wheel
-      - name: install-torch
-        env:
-          CUDA_VERSION: ${{ matrix.cuda-version }}
-        shell: bash
-        run: python -m pip install torch numpy setuptools typing-extensions --index-url https://download.pytorch.org/whl/cu${CUDA_VERSION//\./}
-      - name: generate-setup
-        run: python poetry2setup.py
+      # Nix only provides the CUDA toolkit. Python, PyTorch and NVIDIA libs come from PyPI.
+      - name: setup-nix
+        uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
+      - name: install-deps
+        run: >
+          nix develop .#${{ matrix.cuda.group }}-ci -c
+          uv sync --locked --python ${{ matrix.python-version }}
+          --no-default-groups --group build --group ${{ matrix.cuda.group }}
+          --no-install-project
       - name: build
-        run: python setup.py bdist_wheel
+        run: >
+          nix develop .#${{ matrix.cuda.group }}-ci -c
+          uv build --wheel --no-build-isolation --python .venv/bin/python
+      # The extension must not depend on anything from the Nix store
+      - name: check
+        shell: bash
+        run: |
+          mkdir unpacked
+          unzip -q dist/*.whl -d unpacked
+          so=$(find unpacked -name "_C*.so")
+          readelf -d "$so"
+          if readelf -d "$so" | grep -q /nix/store; then
+            echo "The extension refers to the Nix store." >&2
+            exit 1
+          fi
+          echo "Max. glibc symbol : $(objdump -T "$so" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
       - name: rename
         id: rename
         env:
-          CUDA_VERSION: ${{ matrix.cuda-version }}
+          CUDA_TAG: ${{ matrix.cuda.tag }}
         run: |
           cd dist
 
           WHEEL_NAME=$(ls)
-          NEW_WHEEL_NAME=$(echo $WHEEL_NAME | sed "s/\(torchcc-[^-]*\)/\1+cu${CUDA_VERSION//\./}/g")
+          NEW_WHEEL_NAME=$(echo $WHEEL_NAME | sed "s/\(torchcc-[^-]*\)/\1+${CUDA_TAG}/g")
 
           mv $WHEEL_NAME $NEW_WHEEL_NAME
           echo "wheel-name=${NEW_WHEEL_NAME}" >> "$GITHUB_OUTPUT"

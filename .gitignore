@@ -11,9 +11,7 @@
 **/dist
 **/build
 **/*.egg-info
-poetry.lock
 .coverage
 **/datasets/2d
 **/datasets/3d
-setup.py
 **/lib/**

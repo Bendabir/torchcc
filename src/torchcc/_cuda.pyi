@@ -1,6 +1,0 @@
-from typing import Literal
-
-import torch
-
-def ccl2d(x: torch.Tensor, connectivity: Literal[4, 8]) -> torch.Tensor: ...
-def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26]) -> torch.Tensor: ...

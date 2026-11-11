@@ -37,7 +37,7 @@ torchcc = { version = "^0.1.0", source = "bendabir-cu121" }
 
 1. Go the release page.
 2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
-3. Install it in your env. For example : `pip install torchcc-0.1.0+cu121-cp312-cp312-linux_x86_64.whl`
+3. Install it in your env. For example : `pip install torchcc-0.1.0+cu12-cp312-cp312-linux_x86_64.whl`
 
 ## Usage
 
@@ -64,144 +64,55 @@ pip install "connected-components-3d>=3,<4" # 3D
 
 ## Compatibility
 
-Below is the planned compatibility matrix for TorchCC. If possible, all PyTorch version after Python 3.9 will be supported. For various compatibility reasons, only PyTorch versions supporting at least CUDA 11.0 are supported.
+TorchCC requires Python 3.11 or newer and PyTorch 2.10 or newer. It relies on the PyTorch stable ABI, so one wheel works with several PyTorch versions. There is one wheel per Python version and per CUDA major version.
 
-| CUDA Version | PyTorch Version                                                                                            | Supported |
-| ------------ | ---------------------------------------------------------------------------------------------------------- | :-------: |
-| `9.2`        | `1.7.1`                                                                                                    |    ❌     |
-| `10.1`       | `1.7.1`, `1.8.0`, `1.8.1`                                                                                  |    ❌     |
-| `10.2`       | `1.7.1`, `1.8.0`, `1.8.1`, `1.9.0`, `1.9.1`, `1.10.0`, `1.10.1`, `1.10.2`, `1.11.0`                        |    ❌     |
-| `11.0`       | `1.7.1`                                                                                                    |    ❕     |
-| `11.1`       | `1.8.0`, `1.8.1`, `1.9.0`, `1.9.1`                                                                         |    ❕     |
-| `11.3`       | `1.10.0`, `1.10.1`, `1.10.2`, `1.11.0`, `1.12.0`, `1.12.1`                                                 |    ❕     |
-| `11.6`       | `1.12.0`, `1.12.1`, `1.13.0`, `1.13.1`                                                                     |    ✔️     |
-| `11.7`       | `1.13.0`, `1.13.1`, `2.0.0`, `2.0.1`                                                                       |    ✔️     |
-| `11.8`       | `2.0.0`, `2.0.1`, `2.1.0`, `2.1.1`, `2.1.2`, `2.2.0`, `2.2.1`, `2.3.0`, `2.3.1`, `2.4.0`, `2.4.1`, `2.5.0` |    ✔️     |
-| `12.1`       | `2.1.0`, `2.1.1`, `2.1.2`, `2.2.0`, `2.2.1`, `2.3.0`, `2.3.1`, `2.4.0`, `2.4.1`, `2.5.0`                   |    ✔️     |
-| `12.4`       | `2.4.0`, `2.4.1`, `2.5.0`                                                                                  |    ✔️     |
+| Wheel   | Built with CUDA | Expected to work with PyTorch built for CUDA |
+| ------- | --------------- | -------------------------------------------- |
+| `+cu12` | `12.6`          | `12.6`, `12.8`                               |
+| `+cu13` | `13.0`          | `13.0`, `13.2`, `13.4`                       |
 
-TorchCC is not yet built for some versions of CUDA because of some build errors due to changes in `torchlib`.
-
-<details>
-  <summary><b>PyTorch Compatibility Matrix</b></summary>
-
-| Torch Version | CUDA 9.2 | CUDA 10.1 | CUDA 10.2 | CUDA 11.0 | CUDA 11.1 | CUDA 11.3 | CUDA 11.6 | CUDA 11.7 | CUDA 11.8 | CUDA 12.1 | CUDA 12.4 | Min. Python Version | Max. Python Version |
-| ------------- | -------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | ------------------- | ------------------- |
-| 1.7.1         | ☑️       | ☑️        | ✅        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.8.0         | ❌       | ☑️        | ✅        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.8.1         | ❌       | ☑️        | ✅        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.9.0         | ❌       | ❌        | ✅        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.9.1         | ❌       | ❌        | ✅        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.10.0        | ❌       | ❌        | ✅        | ❌        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.10.1        | ❌       | ❌        | ✅        | ❌        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.9                 |
-| 1.10.2        | ❌       | ❌        | ✅        | ❌        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.6                 | 3.10                |
-| 1.11.0        | ❌       | ❌        | ✅        | ❌        | ❌        | ☑️        | ❌        | ❌        | ❌        | ❌        | ❌        | 3.7                 | 3.10                |
-| 1.12.0        | ❌       | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | ❌        | ❌        | ❌        | 3.7                 | 3.10                |
-| 1.12.1        | ❌       | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | ❌        | ❌        | ❌        | 3.7                 | 3.10                |
-| 1.13.0        | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | ❌        | ❌        | 3.7                 | 3.10                |
-| 1.13.1        | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | ❌        | ❌        | 3.7                 | 3.10                |
-| 2.0.0         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | ❌        | 3.8                 | 3.11                |
-| 2.0.1         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | ❌        | 3.8                 | 3.11                |
-| 2.1.0         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.1.1         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.1.2         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.2.0         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.2.1         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.3.0         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.3.1         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ✅        | 🟦        | ❌        | 3.8                 | 3.11                |
-| 2.4.0         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ☑️        | ✅        | 🟦        | 3.8                 | 3.12                |
-| 2.4.1         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ☑️        | ✅        | 🟦        | 3.8                 | 3.12                |
-| 2.5.0         | ❌       | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ❌        | ☑️        | ✅        | ☑️        | 3.9                 | 3.12                |
-
-- ✅ : Default Stable CUDA
-- ☑️ : Stable CUDA
-- 🟦 : Experimental CUDA
-- ❌ : Unsupported
-
-More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
-
-</details>
+> [!NOTE]
+> Compatibility with other minor versions of CUDA comes from CUDA minor version compatibility. It is expected but not tested yet.
 
 ## Development
 
-### Libraries
-
-For local development, a few libraries are required. We need the NVIDIA CUDA Toolkit to build our CUDA kernels along with the Torch library (`libtorch`) for PyTorch bindings. We also need the Python headers for the bindings. The following instructions assume Linux (or WSL). This is mostly for integration with VSCode.
-
-Please carefully read all the instructions before running the setup.
-
-#### NVIDIA CUDA Toolkit
-
-The NVIDIA CUDA Toolkit can be downloaded from https://developer.nvidia.com/cuda-toolkit-archive. It will create a symbolic link to `/usr/local/cuda`. Versions can be switched with `update-alternatives`.
-
-#### Torch
-
-As we're building some bindings for Torch, we also need the different header files of `libtorch`. These can be downloaded from the official PyTorch website : https://pytorch.org/get-started/locally. The library must go to the `lib` directory.
-
-For example :
-
-```bash
-cd lib
-wget https://download.pytorch.org/libtorch/cu121/libtorch-shared-with-deps-2.4.1%2Bcu121.zip # libtorch 2.4.1 for CUDA 12.1 (Linux)
-unzip libtorch-shared-with-deps-2.4.1%2Bcu121.zip
-rm libtorch-shared-with-deps-2.4.1%2Bcu121.zip
-```
-
-> [!WARNING]
-> Make sure you've downloaded the proper version of `libtorch` for both CUDA and your system. The `libtorch` version must match the PyTorch's one.
-
-One other alternative is to use the headers shipped with PyTorch directly.
-
-```bash
-cd lib
-ln -s $(poetry env info --path)/lib/python*/site-packages/torch libtorch
-```
-
-#### Python
-
-Because we can use different versions of Python, we need to provide the proper headers. On Linux, these are usually stored to `/usr/include/python<x>.<y>`. One easy solution is just to create another symbolic link in the `lib` directory.
-
-```bash
-cd lib
-ln -s /usr/include/$(basename $(realpath $(poetry env info --executable))) python
-```
+The CUDA Toolkit comes from Nix (see [`flake.nix`](./flake.nix)). Python, PyTorch and the NVIDIA runtime libraries come from PyPI through [uv](https://docs.astral.sh/uv/). There is one Nix shell and one uv dependency group per CUDA version : `cu126`, `cu128`, `cu130`, `cu132` and `cu134`.
 
 ### Install
 
-Prepare a virtual as follow :
+Enter the shell for a CUDA version, then create the virtual env with the matching group.
 
 ```bash
-poetry env use python
-poetry lock
-poetry install --with dev
+nix develop .#cu126
+uv sync --group cu126
+```
+
+The `cuXXX` shells provide a host compiler for local development. The `cuXXX-ci` shells do not, so the compiler of the machine is used (this is what CI does to build wheels).
+
+### Editor
+
+For VSCode IntelliSense, link the PyTorch and Python headers in the `lib` directory.
+
+```bash
+cd lib
+ln -s ../.venv/lib/python*/site-packages/torch libtorch
+ln -s "$(uv run python -c 'import sysconfig; print(sysconfig.get_path("include"))')" python
 ```
 
 ### Build
 
-Once everything is setup, the library can be build with the following script. This is a bit hacky as we don't have control on the build env used by Poetry, which is an issue here (as we need dynamic control over CUDA version, thus PyTorch version).
-First, a build env must be prepared.
+`uv sync` already builds the library in the virtual env. To build a wheel (the way CI does) :
 
 ```bash
-# First, install PyTorch for a given version of CUDA
-poetry run pip install torch --index-url https://download.pytorch.org/whl/121
-
-# Then install required build packages
-poetry install --no-root --only build
-
-# Generate a setup.py file
-poetry run python poetry2setup.py
-```
-
-```bash
-# Then build
-poetry run python setup.py bdist_wheel
+nix develop .#cu126-ci -c uv sync --no-default-groups --group build --group cu126 --no-install-project
+nix develop .#cu126-ci -c uv build --wheel --no-build-isolation --python .venv/bin/python
 ```
 
 One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library is built for. Use `MAX_JOBS` to tune build parallelism. Both variables use defaults if not provided.
 
 ```bash
 # Select the architectures
-MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" poetry run python setup.py bdist_wheel
+MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" uv build --wheel --no-build-isolation --python .venv/bin/python
 ```
 
 The library can be built with debug mode by defined the `DEBUG_MODE=true` env variable.
@@ -211,9 +122,9 @@ The library can be built with debug mode by defined the `DEBUG_MODE=true` env va
 Code quality is ensured by several tools (`ruff`, `mypy` & `black`).
 
 ```bash
-poetry run black src tests *.py
-poetry run ruff check --fix src tests *.py
-poetry run mypy src tests *.py
+uv run black src tests *.py
+uv run ruff check --fix src tests *.py
+uv run mypy src tests *.py
 ```
 
 ### Tests
@@ -229,7 +140,7 @@ cd datasets
 PyTest is used to run unit tests. Only the GPU code is tested (after build). CPU code is assumed correct as it lies on third-party libraries.
 
 ```bash
-poetry run pytest --cov=src/torchcc tests/unit
+uv run pytest --cov=src/torchcc tests/unit
 ```
 
 ## Implementation
