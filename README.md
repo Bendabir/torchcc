@@ -78,14 +78,17 @@ TorchCC requires Python 3.11 or newer and PyTorch 2.10 or newer. It relies on th
 
 The CUDA Toolkit comes from Nix (see [`flake.nix`](./flake.nix)). Python, PyTorch and the NVIDIA runtime libraries come from PyPI through [uv](https://docs.astral.sh/uv/). There is one Nix shell and one uv dependency group per CUDA version : `cu126`, `cu128`, `cu130`, `cu132` and `cu134`.
 
+Common tasks are available as [just](https://just.systems) recipes. Run `just` to list them. Recipes that depend on CUDA take the version as argument (default : `cu126`), for example `just build cu130`.
+
 ### Install
 
-Enter the shell for a CUDA version, then create the virtual env with the matching group.
+Create the virtual env for a CUDA version (default `cu126`) and install the git hooks.
 
 ```bash
-nix develop .#cu126
-uv sync --group cu126
+just init cu126
 ```
+
+This runs `nix develop .#cu126 -c uv sync --group cu126` and `uv run prek install`.
 
 The `cuXXX` shells provide a host compiler for local development. The `cuXXX-ci` shells do not, so the compiler of the machine is used (this is what CI does to build wheels).
 
@@ -104,6 +107,12 @@ ln -s "$(uv run python -c 'import sysconfig; print(sysconfig.get_path("include")
 `uv sync` already builds the library in the virtual env. To build a wheel (the way CI does) :
 
 ```bash
+just build cu126
+```
+
+This runs the following commands.
+
+```bash
 nix develop .#cu126-ci -c uv sync --no-default-groups --group build --group cu126 --no-install-project
 nix develop .#cu126-ci -c uv build --wheel --no-build-isolation --python .venv/bin/python
 ```
@@ -112,7 +121,7 @@ One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library
 
 ```bash
 # Select the architectures
-MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" uv build --wheel --no-build-isolation --python .venv/bin/python
+MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" just build cu126
 ```
 
 The library can be built with debug mode by defined the `DEBUG_MODE=true` env variable.
@@ -122,16 +131,14 @@ The library can be built with debug mode by defined the `DEBUG_MODE=true` env va
 Code quality is ensured by several tools (`ruff` & `ty`).
 
 ```bash
-uv run ruff format src tests *.py
-uv run ruff check --fix src tests *.py
-uv run ty check
+just format # ruff format
+just lint # ruff check --fix & ty check
 ```
 
-These checks (and the Nix ones : `nixfmt`, `deadnix` & `statix`) also run as git hooks with [prek](https://prek.j178.dev). Install the hooks once, then run them on demand.
+These checks (and the Nix ones : `nixfmt`, `deadnix` & `statix`) also run as git hooks with [prek](https://prek.j178.dev). `just init` installs the hooks. Run them on demand with :
 
 ```bash
-uv run prek install
-uv run prek run --all-files
+just check
 ```
 
 ### Tests
@@ -139,15 +146,13 @@ uv run prek run --all-files
 Tests use a subset of the datasets from the [YACCLAB](https://github.com/prittt/YACCLAB) project [2]. These can be downloaded with the scripts in the [`datasets`](./datasets) directory.
 
 ```bash
-cd datasets
-./2d.sh # Download and extract the 2D data
-./3d.sh # Download and extract the 3D data
+just data # Download and extract the 2D and 3D data (see datasets/2d.sh and datasets/3d.sh)
 ```
 
 PyTest is used to run unit tests. Only the GPU code is tested (after build). CPU code is assumed correct as it lies on third-party libraries.
 
 ```bash
-uv run pytest --cov=src/torchcc tests/unit
+just test # Extra arguments go to pytest, for example : just test -k ccl2d
 ```
 
 ## Implementation
