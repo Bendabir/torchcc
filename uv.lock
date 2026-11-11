@@ -2821,7 +2821,7 @@ wheels = [
 
 [[package]]
 name = "torchcc"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'group-7-torchcc-cu128' or (extra == 'group-7-torchcc-cu126' and extra == 'group-7-torchcc-cu130') or (extra == 'group-7-torchcc-cu126' and extra == 'group-7-torchcc-cu132') or (extra == 'group-7-torchcc-cu126' and extra == 'group-7-torchcc-cu134') or (extra == 'group-7-torchcc-cu130' and extra == 'group-7-torchcc-cu132') or (extra == 'group-7-torchcc-cu130' and extra == 'group-7-torchcc-cu134') or (extra == 'group-7-torchcc-cu132' and extra == 'group-7-torchcc-cu134')" },
@@ -2918,13 +2918,13 @@ cu134 = [
 ]
 dev = [
     { name = "connected-components-3d", specifier = ">=3.0,<4" },
-    { name = "cyclopts", specifier = ">=5,<6" },
+    { name = "cyclopts", specifier = ">=5.0,<6" },
     { name = "opencv-python-headless", specifier = ">=4.0,<5" },
     { name = "prek", specifier = ">=0.5,<1" },
     { name = "pytest", specifier = ">=9.0,<10" },
     { name = "pytest-cov", specifier = ">=7.0,<8" },
     { name = "pytest-randomly", specifier = ">=5.0,<6" },
-    { name = "rich", specifier = ">=14,<15" },
+    { name = "rich", specifier = ">=14.0,<15" },
     { name = "ruff", specifier = ">=0.15,<1" },
     { name = "ty", specifier = ">=0.0,<0.1" },
 ]
