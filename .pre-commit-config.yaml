@@ -1,35 +1,49 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
-minimum_pre_commit_version: 3.7.0
+# See https://prek.j178.dev for more information
 fail_fast: true
 default_language_version:
   python: python3.11
 
+default_install_hook_types:
+  - pre-commit
+  - post-checkout
+  - post-merge
+  - post-rewrite
+
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+  - repo: builtin
     hooks:
       - id: check-added-large-files
+        priority: 0
       - id: check-toml
+        priority: 0
       - id: check-yaml
         args:
           - --allow-multiple-documents
-      - id: check-merge-conflict
-      - id: check-symlinks
-      - id: destroyed-symlinks
-      - id: check-executables-have-shebangs
-      - id: check-shebang-scripts-are-executable
-      - id: detect-private-key
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-      - id: name-tests-test
-      - id: fix-encoding-pragma
-        args:
-          - --remove
-  - repo: https://gitlab.com/bmares/check-json5
-    rev: v1.0.0
-    hooks:
+        priority: 0
       - id: check-json5
+        priority: 0
+      - id: check-merge-conflict
+        priority: 0
+      - id: check-symlinks
+        priority: 0
+      - id: destroyed-symlinks
+        priority: 0
+      - id: check-executables-have-shebangs
+        priority: 0
+      - id: check-shebang-scripts-are-executable
+        priority: 0
+      - id: detect-private-key
+        priority: 0
+      - id: end-of-file-fixer
+        priority: 0
+      - id: trailing-whitespace
+        priority: 0
+  # Hooks without builtin support
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: name-tests-test
+        priority: 0
   - repo: local
     hooks:
       - id: black
@@ -39,6 +53,7 @@ repos:
         language: system
         types_or: [python, pyi]
         require_serial: true
+        priority: 0
       - id: ruff
         name: ruff
         entry: uv run --only-group dev ruff check
@@ -46,6 +61,7 @@ repos:
         language: system
         types_or: [python, pyi]
         require_serial: true
+        priority: 0
       - id: mypy
         name: mypy
         entry: uv run --no-install-project mypy
@@ -53,6 +69,44 @@ repos:
         language: system
         types_or: [python, pyi]
         require_serial: true
+        priority: 0
+      - id: uv-lock
+        name: uv-lock
+        entry: uv lock
+        args: [--check]
+        language: system
+        pass_filenames: false
+        files: "(pyproject.toml|uv.lock)$"
+        priority: 0
+      # Keep the dev tools in sync with the branch. Skip the project (CUDA build).
+      - id: uv-sync
+        name: uv-sync
+        entry: uv sync
+        args: [--frozen, --no-install-project]
+        language: system
+        stages: [post-checkout, post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
+        priority: 0
+      - id: nixfmt
+        name: nixfmt
+        entry: nixfmt --check
+        language: system
+        types: [nix]
+        priority: 0
+      - id: deadnix
+        name: deadnix
+        entry: deadnix --fail
+        language: system
+        types: [nix]
+        priority: 0
+      - id: statix
+        name: statix
+        entry: statix check
+        language: system
+        types: [nix]
+        pass_filenames: false
+        priority: 0
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
     hooks:
@@ -61,14 +115,4 @@ repos:
         name: prettier (JSON, Markdown & YAML)
         entry: prettier --check --ignore-unknown
         files: "\\.(json|md|yaml|yml)$"
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.7
-    hooks:
-      - id: uv-lock
-  - repo: local
-    hooks:
-      - id: forbid-yml-file
-        name: no .yml extension
-        entry: Yaml file must have the .yaml extension
-        language: fail
-        files: ".*\\.yml"
+        priority: 0
