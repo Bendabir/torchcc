@@ -113,8 +113,8 @@ namespace buf
 
         // --- KERNELS ---
         __global__ void init(
-            const uint8_t *__restrict__ const g_img,
-            int32_t *__restrict__ const g_labels,
+            const uint8_t *__restrict__ const g_batch_img,
+            int32_t *__restrict__ const g_batch_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
@@ -123,31 +123,22 @@ namespace buf
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t depth = blockIdx.z;
-            const uint32_t label = row * w + col;
-            const uint32_t index = depth * w * h + label;
+            const uint32_t index = row * w + col;
 
             if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
 
-            // Assign each block to the raster index of the top-left pixel
-            // FIXME : Switch to the real raster index local to the image
-            //         in the batch instead of the pixel index.
-            //         With the current code, using the raster index causes
-            //         some issues with union computation as union is computed
-            //         accross images.
-            //         Possible solutions could be :
-            //           1. Force to constrain the union to the local image by checking bounds.
-            //           2. Use a depth of 1 ? This might affect performances, so to be checked.
-            //         The current solution works but does affect the maximum input size
-            //         as we need to ensure we don't overflow with labels.
+            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
+
+            // Assign each block to the raster index (in its image) of the top-left pixel
             g_labels[index] = index;
         }
 
         __global__ void merge(
-            const uint8_t *__restrict__ const g_img,
-            int32_t *__restrict__ const g_labels,
+            const uint8_t *__restrict__ const g_batch_img,
+            int32_t *__restrict__ const g_batch_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
@@ -155,12 +146,15 @@ namespace buf
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = depth * w * h + row * w + col; // Basically pixel 5 (see paper)
+            const uint32_t index = row * w + col; // Basically pixel 5 (see paper)
 
             if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
+
+            const uint8_t *const g_img = g_batch_img + static_cast<int64_t>(depth) * h * w;
+            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
 
             // NOTE : As we're only using bit 0, 1, 2, 3, 4 and 8, this could technically fits on a byte
             uint16_t mask = 0;
@@ -257,24 +251,26 @@ namespace buf
             }
         }
 
-        __global__ void compress(int32_t *__restrict__ const g_labels, const uint32_t w, const uint32_t h, const uint32_t n)
+        __global__ void compress(int32_t *__restrict__ const g_batch_labels, const uint32_t w, const uint32_t h, const uint32_t n)
         {
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = depth * w * h + row * w + col;
+            const uint32_t index = row * w + col;
 
             if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
 
+            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
+
             findAndCompress(g_labels, index);
         }
 
         __global__ void finalize(
-            const uint8_t *__restrict__ const g_img,
-            int32_t *__restrict__ const g_labels,
+            const uint8_t *__restrict__ const g_batch_img,
+            int32_t *__restrict__ const g_batch_labels,
             const uint32_t w,
             const uint32_t h,
             const uint32_t n)
@@ -282,12 +278,15 @@ namespace buf
             const uint32_t row = 2 * (blockIdx.y * blockDim.y + threadIdx.y);
             const uint32_t col = 2 * (blockIdx.x * blockDim.x + threadIdx.x);
             const uint32_t depth = blockIdx.z;
-            const uint32_t index = depth * w * h + row * w + col;
+            const uint32_t index = row * w + col;
 
             if ((row >= h) || (col >= w) || (depth >= n))
             {
                 return;
             }
+
+            const uint8_t *const g_img = g_batch_img + static_cast<int64_t>(depth) * h * w;
+            int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
 
             uint32_t label = g_labels[index] + 1;
 

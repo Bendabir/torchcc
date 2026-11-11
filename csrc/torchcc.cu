@@ -33,9 +33,12 @@ namespace torchcc
         // TODO : Dedicated kernel for non-contiguous inputs ?
         STD_TORCH_CHECK(x.is_contiguous(), "Input must be contiguous.");
 
-        // As each block of 2x2 pixels will take the raster index of its top-left pixel,
+        // As each block of 2x2 pixels will take the raster index (in its image) of its top-left pixel,
         // we need to ensure we don't overflow (int64_t, so the check itself cannot overflow)
-        STD_TORCH_CHECK(x.numel() <= INT32_MAX, "Provided input is too big and will cause overflow on labels.");
+        STD_TORCH_CHECK(
+            (x.size(-2) * x.size(-1)) <= INT32_MAX,
+            "Images are too big and will cause overflow on labels."
+        );
 
         const uint32_t n = x.size(0);
         const uint32_t w = x.size(-1);

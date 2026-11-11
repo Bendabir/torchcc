@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise the minimum Python version to 3.11.
 - Raise `ValueError` for negative connectivity on CUDA (it was a `TypeError`).
 - Make 2D CCL on CUDA up to 30% faster.
+- Make 2D CCL labels on CUDA unique per image, not across the batch.
 
 ### Fixed
 
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Remove the batch size limit of 2D CCL on CUDA. The limit now applies to one image (2^31 - 1 pixels).
 - Wheels for older PyTorch and CUDA versions (CUDA < 12).
 
 ## [0.1.0] - 2024-10-08

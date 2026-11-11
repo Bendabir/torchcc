@@ -371,17 +371,25 @@ def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> No
     if connectivity == 4:
         pytest.skip("4-connectivity is not yet supported.")
 
-    size = 1_300
-
-    # Check we have enough vRAM to run the test
-    # (otherwise, it's a non-issue)
-    if size**3 >= torch.cuda.get_device_properties(device).total_memory:
-        pytest.skip("Not enough vRAM to run the test.")
-
-    images = torch.zeros((size, size, size), device=device, dtype=torch.uint8)
+    # One image with more than INT32_MAX pixels.
+    # Expanding a single pixel needs no memory, the check runs before any copy.
+    size = 46_341
+    images = torch.zeros((1, 1, 1), device=device, dtype=torch.uint8)
 
     with pytest.raises(
         ValueError,
-        match=re.escape("Provided input is too big and will cause overflow on labels."),
+        match=re.escape("Images are too big and will cause overflow on labels."),
     ):
-        ccl2d(images, connectivity=connectivity)
+        ccl2d(images.expand(1, size, size), connectivity=connectivity)
+
+
+@REQUIRES_CUDA
+def test_ccl2d_labels_per_image(device: torch.device, seed: int) -> None:
+    # Labels restart in each image : the same image gives the same labels.
+    rng = np.random.default_rng(seed)
+    image = torch.from_numpy((rng.random((1, 33, 47)) < 0.5).astype(np.uint8))
+
+    labels = ccl2d(image.expand(3, -1, -1).to(device), connectivity=8)
+
+    assert torch.equal(labels[0], labels[1])
+    assert torch.equal(labels[0], labels[2])
