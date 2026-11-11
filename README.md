@@ -15,19 +15,19 @@ You can install TorchCC by using a custom PyPI index. There is one index per sup
 #### pip
 
 ```bash
-pip install --index-url https://bendabir.github.io/pypi/cu121 torchcc
+pip install --index-url https://bendabir.github.io/pypi/cu126 torchcc
 ```
 
 #### Poetry
 
 ```toml
 [[tool.poetry.source]]
-name = "bendabir-cu121"
-url = "https://bendabir.github.io/pypi/cu121"
+name = "bendabir-cu126"
+url = "https://bendabir.github.io/pypi/cu126"
 priority = "explicit"
 
 [tool.poetry.dependencies]
-torchcc = { version = "^0.1.0", source = "bendabir-cu121" }
+torchcc = { version = "^0.1.0", source = "bendabir-cu126" }
 ```
 
 ### Direct Install
@@ -37,7 +37,7 @@ torchcc = { version = "^0.1.0", source = "bendabir-cu121" }
 
 1. Go the release page.
 2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
-3. Install it in your env. For example : `pip install torchcc-0.1.0+cu12-cp312-cp312-linux_x86_64.whl`
+3. Install it in your env. For example : `pip install torchcc-0.1.0+cu126-cp312-cp312-linux_x86_64.whl`
 
 ## Usage
 
@@ -64,15 +64,36 @@ pip install "connected-components-3d>=3,<4" # 3D
 
 ## Compatibility
 
-TorchCC requires Python 3.11 or newer and PyTorch 2.10 or newer. It relies on the PyTorch stable ABI, so one wheel works with several PyTorch versions. There is one wheel per Python version and per CUDA major version.
+TorchCC requires Python 3.11 or newer and PyTorch 2.10 or newer. It relies on the PyTorch stable ABI, so one wheel works with several PyTorch versions. There is one wheel per Python version and per CUDA version, like PyTorch.
 
-| Wheel   | Built with CUDA | Expected to work with PyTorch built for CUDA |
-| ------- | --------------- | -------------------------------------------- |
-| `+cu12` | `12.6`          | `12.6`, `12.8`                               |
-| `+cu13` | `13.0`          | `13.0`, `13.2`, `13.4`                       |
+| CUDA Version | PyTorch Version                        | Supported |
+| ------------ | -------------------------------------- | :-------: |
+| `12.6`       | `2.10`, `2.11`, `2.12`, `2.13`, `2.14` |    ✔️     |
+| `12.8`       | `2.10`, `2.11`                         |    ✔️     |
+| `13.0`       | `2.10`, `2.11`, `2.12`, `2.13`, `2.14` |    ✔️     |
+| `13.2`       | `2.12`, `2.13`, `2.14`, `2.15`         |    ✔️     |
+| `13.4`       | `2.15`                                 |    ✔️     |
 
-> [!NOTE]
-> Compatibility with other minor versions of CUDA comes from CUDA minor version compatibility. It is expected but not tested yet.
+<details>
+  <summary><b>PyTorch Compatibility Matrix</b></summary>
+
+| Torch Version | CUDA 12.6 | CUDA 12.8 | CUDA 13.0 | CUDA 13.2 | CUDA 13.4 | Min. Python Version | Max. Python Version | C++ Version |
+| ------------- | --------- | --------- | --------- | --------- | --------- | ------------------- | ------------------- | ----------- |
+| 2.10          | ☑️        | ✅        | 🟦        | ❌        | ❌        | 3.10                | 3.14                | C++17       |
+| 2.11          | ☑️        | ☑️        | ✅        | ❌        | ❌        | 3.10                | 3.14                | C++17       |
+| 2.12          | ☑️        | ❌        | ✅        | 🟦        | ❌        | 3.10                | 3.14                | C++17       |
+| 2.13          | ☑️        | ❌        | ✅        | 🟦        | ❌        | 3.10                | 3.15                | C++20       |
+| 2.14          | ☑️        | ❌        | ☑️        | ✅        | ❌        | 3.10                | 3.15                | C++20       |
+| 2.15          | ❌        | ❌        | ❌        | ✅        | 🟦        | 3.11                | 3.15                | C++20       |
+
+- ✅ : Default Stable CUDA
+- ☑️ : Stable CUDA
+- 🟦 : Experimental CUDA
+- ❌ : Unsupported
+
+More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
+
+</details>
 
 ## Development
 

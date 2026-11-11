@@ -5,7 +5,7 @@ on:
       - "*.*.*"
 jobs:
   build:
-    name: build (${{ matrix.cuda.tag }}, python ${{ matrix.python-version }})
+    name: build (${{ matrix.cuda }}, python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -13,13 +13,9 @@ jobs:
       fail-fast: true
       matrix:
         cuda:
-          # One build per CUDA major version, using the oldest version we support.
+          # One build per CUDA version, like PyTorch.
           # The group and the Nix shell are defined in pyproject.toml and flake.nix.
-          # TODO : Be more consistent and buid one per supported CUDA version like Torch ?
-          - group: cu126
-            tag: cu12
-          - group: cu130
-            tag: cu13
+          [cu126, cu128, cu130, cu132, cu134]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - name: sync-code
@@ -29,13 +25,13 @@ jobs:
         uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
       - name: install-deps
         run: >
-          nix develop .#${{ matrix.cuda.group }}-ci -c
+          nix develop .#${{ matrix.cuda }}-ci -c
           uv sync --locked --python ${{ matrix.python-version }}
-          --no-default-groups --group build --group ${{ matrix.cuda.group }}
+          --no-default-groups --group build --group ${{ matrix.cuda }}
           --no-install-project
       - name: build
         run: >
-          nix develop .#${{ matrix.cuda.group }}-ci -c
+          nix develop .#${{ matrix.cuda }}-ci -c
           uv build --wheel --no-build-isolation --python .venv/bin/python
       # The extension must not depend on anything from the Nix store
       - name: check
@@ -53,7 +49,7 @@ jobs:
       - name: rename
         id: rename
         env:
-          CUDA_TAG: ${{ matrix.cuda.tag }}
+          CUDA_TAG: ${{ matrix.cuda }}
         run: |
           cd dist
 
