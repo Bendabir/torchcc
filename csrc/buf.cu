@@ -253,20 +253,6 @@ namespace buf
             }
         }
 
-        __global__ void compress(int32_t *__restrict__ const g_batch_blocks, const uint32_t bw, const uint32_t bh, const uint32_t n)
-        {
-            const uint32_t brow = blockIdx.y * blockDim.y + threadIdx.y;
-            const uint32_t bcol = blockIdx.x * blockDim.x + threadIdx.x;
-            const uint32_t depth = blockIdx.z;
-
-            if ((brow >= bh) || (bcol >= bw) || (depth >= n))
-            {
-                return;
-            }
-
-            findAndCompress(g_batch_blocks + static_cast<int64_t>(depth) * bh * bw, brow * bw + bcol);
-        }
-
         // One thread per 2x2 block. Each warp still writes 64 consecutive ints per pixel row (L2 merges them).
         // Measured on sm_86 : about 1.2x the copy bound (x.to(int32)), which is the floor here as the block
         // buffer is read too. One thread per pixel was 5-15% slower (4x more threads, 1-byte loads).
@@ -274,7 +260,7 @@ namespace buf
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
             const int64_t sh,
-            const int32_t *__restrict__ const g_batch_blocks,
+            int32_t *__restrict__ const g_batch_blocks,
             int32_t *__restrict__ const g_batch_labels,
             const uint32_t w,
             const uint32_t h,
@@ -296,7 +282,8 @@ namespace buf
             const uint32_t index = row * w + col;
             const uint8_t *const g_img = g_batch_img + depth * sn + row * sh + col;
             int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
-            const uint32_t label = g_batch_blocks[static_cast<int64_t>(depth) * bh * bw + brow * bw + bcol] + 1;
+            // Fused compress : the forest is final after merge, so each thread finds its root here.
+            const uint32_t label = findAndCompress(g_batch_blocks + static_cast<int64_t>(depth) * bh * bw, brow * bw + bcol) + 1;
 
             // Pseudo-algorithm of the paper uses multiplication to avoid checks
             // but I suppose that checks are more efficient

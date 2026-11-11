@@ -109,8 +109,6 @@ namespace torchcc
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
                 buf::ccl2d::merge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::compress<<<grid, block, 0, stream>>>(chunk_blocks, bw, bh, count);
-                STD_CUDA_KERNEL_LAUNCH_CHECK();
                 buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, chunk_labels, w, h, count);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
             }

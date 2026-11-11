@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make 2D CCL on CUDA up to 40% faster. It uses an extra buffer of 1 byte per pixel (about 20% more peak GPU memory).
 - Make 2D CCL labels on CUDA unique per image, not across the batch.
 - Read 2D input on CUDA without a copy when only its last dimension is contiguous (e.g. a channel slice `x[:, c]` or a crop). It makes such inputs up to 17% faster.
+- Make 2D CCL on CUDA 3-12% faster with one less kernel launch per call.
 
 ### Fixed
 
