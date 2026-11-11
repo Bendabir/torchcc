@@ -43,7 +43,8 @@ namespace torchcc
         // Run on the device of the input
         const torch::stable::accelerator::DeviceGuard guard(x.get_device_index());
 
-        torch::stable::Tensor labels = torch::stable::new_zeros(x, x.sizes(), torch::headeronly::ScalarType::Int);
+        // No zero fill : finalize writes every pixel (background included)
+        torch::stable::Tensor labels = torch::stable::new_empty(x, x.sizes(), torch::headeronly::ScalarType::Int);
 
         // A grid dimension of 0 fails the launch
         if (x.numel() == 0)
