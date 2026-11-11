@@ -2790,6 +2790,8 @@ cu134 = [
     { name = "torch", version = "2.15.0+cu134", source = { registry = "https://download.pytorch.org/whl/cu134" } },
 ]
 dev = [
+    { name = "connected-components-3d" },
+    { name = "opencv-python-headless" },
     { name = "prek" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -2833,6 +2835,8 @@ cu134 = [
     { name = "torch", specifier = ">=2.15,<3", index = "https://download.pytorch.org/whl/cu134", conflict = { package = "torchcc", group = "cu134" } },
 ]
 dev = [
+    { name = "connected-components-3d", specifier = ">=3.0,<4" },
+    { name = "opencv-python-headless", specifier = ">=4.0,<5" },
     { name = "prek", specifier = ">=0.5,<1" },
     { name = "pytest", specifier = ">=9.0,<10" },
     { name = "pytest-cov", specifier = ">=7.0,<8" },

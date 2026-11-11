@@ -18,7 +18,7 @@ Documentation = "https://github.com/Bendabir/torchcc/README.md"
 
 [project.optional-dependencies]
 opencv = ["opencv-python>=4.0,<5"]
-opencv-headless = ["opencv-python-headless>=4.0,<5"]
+opencv-headless = ["opencv-python-headless>=4.0,<5"] # TODO : Update ?
 cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
 
 [dependency-groups]
@@ -29,6 +29,8 @@ dev = [
     "pytest>=9.0,<10",
     "pytest-cov>=7.0,<8",
     "pytest-randomly>=5.0,<6",
+    "opencv-python-headless>=4.0,<5",
+    "connected-components-3d>=3.0,<4",
 ]
 # Needed to build the extension without build isolation (CI)
 build = ["setuptools>=77", "ninja>=1.0,<2"]
@@ -116,12 +118,7 @@ target-version = "py311"
 indent-width = 4
 preview = true
 namespace-packages = ["src/torchcc"]
-include = [
-    "src/**/*.py",
-    "tests/**/*.py",
-    "pyproject.toml",
-    "setup.py",
-]
+include = ["src/**/*.py", "tests/**/*.py", "pyproject.toml", "setup.py"]
 
 [tool.ruff.format]
 docstring-code-format = true
