@@ -6,10 +6,10 @@ from __future__ import annotations
 import glob
 import os
 import sys
-from typing import Any
 
 import torch
 import torch.version
+from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 # Define some default architectures to build for (basically all)
@@ -17,9 +17,11 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 TORCH_CUDA_ARCH_LIST = "TORCH_CUDA_ARCH_LIST"
 DEBUG_MODE = "DEBUG_MODE"
 
-if TORCH_CUDA_ARCH_LIST not in os.environ:
-    archs: list[str] = []
+# Restrict to the PyTorch stable ABI introduced in 2.10, whatever PyTorch version
+# is used to build. Format : (major << 56) | (minor << 48)
+TORCH_TARGET_VERSION = "-DTORCH_TARGET_VERSION=0x020a000000000000"
 
+if TORCH_CUDA_ARCH_LIST not in os.environ:
     if torch.version.cuda is None:
         raise RuntimeError("Couldn't infer CUDA version.")
 
@@ -29,35 +31,26 @@ if TORCH_CUDA_ARCH_LIST not in os.environ:
     # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
     # https://en.wikipedia.org/wiki/CUDA
     # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
-    if version <= (10, 2):
-        archs.extend(("3.0", "3.5", "3.7"))
+    # shortcut: assumes CUDA >= 12.6, add version checks to support older CUDA.
+    # TODO : Add support for newer architectures
+    archs = [
+        "6.0",
+        "6.1",
+        "6.2",
+        "7.0",
+        "7.2",
+        "7.5",
+        "8.0",
+        "8.6",
+        "8.9",
+        "9.0",
+        "9.0a",
+        "10.0",
+    ]
 
-    if version <= (11, 8):
-        archs.extend(("5.0", "5.2", "5.3"))
-
-    if version >= (8, 0):
-        archs.extend(("6.0", "6.1", "6.2"))
-
-    if version >= (9, 0):
-        archs.extend(("7.0", "7.2"))
-
-    if version >= (10, 0):
-        archs.append("7.5")
-
-    if version >= (11, 0):
-        archs.append("8.0")
-
-    if version >= (11, 1):
-        archs.append("8.6")
-
-    if version >= (11, 8):
-        archs.append("8.9")
-
-    if version >= (12, 0):
-        archs.extend(("9.0", "9.0a"))
-
-    if version >= (12, 6):
-        archs.append("10.0")
+    # CUDA 13 dropped Maxwell, Pascal and Volta
+    if version >= (13, 0):
+        archs = archs[archs.index("7.5") :]
 
     # For forward-compatibility
     # See : https://pytorch.org/docs/stable/cpp_extension.html
@@ -73,6 +66,7 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
         "-D__CUDA_NO_HALF_OPERATORS__",
         "-D__CUDA_NO_HALF_CONVERSIONS__",
         "-D__CUDA_NO_HALF2_OPERATORS__",
+        TORCH_TARGET_VERSION,
         "-O0" if debug_mode else "-O3",
     ]
 
@@ -84,6 +78,7 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
 
 def _cxx_extra_compile_args(*, debug_mode: bool) -> list[str]:
     extra_compile_args = [
+        TORCH_TARGET_VERSION,
         "-O0" if debug_mode else "-O3",
     ]
 
@@ -120,30 +115,25 @@ def _include_dirs() -> list[str]:
     return include_dirs
 
 
-def build(setup_kwargs: dict[str, Any]) -> None:
-    """Add specifications to build the CUDA extension."""
-    debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"
+debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"
 
-    setup_kwargs.update(
-        {
-            "ext_modules": [
-                CUDAExtension(
-                    name="torchcc._cuda",
-                    sources=[
-                        *glob.glob("csrc/**/*.cpp", recursive=True),
-                        *glob.glob("csrc/**/*.cu", recursive=True),
-                    ],
-                    include_dirs=_include_dirs(),
-                    extra_compile_args={
-                        "cxx": _cxx_extra_compile_args(debug_mode=debug_mode),
-                        "nvcc": _nvcc_extra_compile_args(debug_mode=debug_mode),
-                    },
-                    extra_link_args=_extra_link_args(debug_mode=debug_mode),
-                )
+# Project metadata lives in pyproject.toml
+setup(
+    ext_modules=[
+        CUDAExtension(
+            name="torchcc._C",
+            sources=[
+                *glob.glob("csrc/**/*.cpp", recursive=True),
+                *glob.glob("csrc/**/*.cu", recursive=True),
             ],
-            "cmdclass": {
-                "build_ext": BuildExtension.with_options(no_python_abi_suffix=True)
+            include_dirs=_include_dirs(),
+            extra_compile_args={
+                "cxx": _cxx_extra_compile_args(debug_mode=debug_mode),
+                "nvcc": _nvcc_extra_compile_args(debug_mode=debug_mode),
             },
-            "zip_safe": False,
-        }
-    )
+            extra_link_args=_extra_link_args(debug_mode=debug_mode),
+        )
+    ],
+    cmdclass={"build_ext": BuildExtension.with_options(no_python_abi_suffix=True)},
+    zip_safe=False,
+)
