@@ -7,7 +7,7 @@ from typing import Annotated
 
 import bs4
 import cyclopts
-import httpx
+import httpx2
 import pandas as pd
 
 _WHEEL_PATTERN = re.compile(
@@ -44,7 +44,7 @@ def _version(v: str) -> tuple[int, ...]:
 
 
 def _get_versions(url: str) -> pd.DataFrame:
-    r = httpx.get(url, follow_redirects=True)
+    r = httpx2.get(url, follow_redirects=True)
 
     r.raise_for_status()
 
