@@ -67,3 +67,30 @@ data:
 [group('test')]
 test *ARGS:
     uv run pytest --cov=src/torchcc {{ ARGS }} tests/unit
+
+# Check without modifying files. Concise output for agents. Defaults to src and tests.
+[group('agent')]
+[private]
+agent-check *PATHS:
+    @uv run ruff format --check --quiet --color never {{ if PATHS == "" { "src tests" } else { PATHS } }}
+    @uv run ruff check --quiet --color never --output-format concise {{ if PATHS == "" { "src tests" } else { PATHS } }}
+    @uv run ty check --quiet --color never --output-format concise {{ if PATHS == "" { "src tests" } else { PATHS } }}
+
+# Run the unit tests concisely and stop at the first failure. Extra arguments go to pytest.
+[group('agent')]
+[private]
+agent-test *ARGS:
+    @uv run pytest --quiet --tb=short --show-capture=no --no-header --color=no --maxfail=1 {{ ARGS }} tests/unit \
+        | sed -E '/^[.FEsxX]+([[:space:]]+\[[[:space:]]*[0-9]+%\])?$/d'
+
+# Run all git hooks quietly. Hooks may modify files.
+[group('agent')]
+[private]
+agent-hooks:
+    @uv run prek run --all-files --quiet --no-progress --color never
+
+# Rebuild the extension after a change in csrc or include. Quiet unless it fails.
+[group('agent')]
+[private]
+agent-rebuild CUDA=cuda126:
+    @nix develop .#{{ CUDA }} -c uv sync --quiet --group build --group {{ CUDA }} --reinstall-package torchcc
