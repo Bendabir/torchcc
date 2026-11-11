@@ -110,6 +110,45 @@ More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-c
 
 </details>
 
+## Benchmarks
+
+`ccl2d` with 8-connectivity. Median time in milliseconds. GPU is an NVIDIA GeForce RTX 3080 Ti. CPU is an Intel Core i7-12700KF. The speedup is the CPU time divided by the GPU time.
+
+| Dataset      | Batch | Shape     | CPU (ms) | GPU (ms) | Speedup |
+| ------------ | ----: | --------- | -------: | -------: | ------: |
+| 3dpes        |     1 | 576x704   |    0.501 |    0.083 |    6.0x |
+| 3dpes        |     8 | 576x704   |    1.887 |    0.163 |   11.6x |
+| 3dpes        |    32 | 576x704   |    6.473 |    0.402 |   16.1x |
+| 3dpes        |    64 | 576x704   |   14.084 |    0.756 |   18.6x |
+| fingerprints |     1 | 300x300   |    0.123 |    0.069 |    1.8x |
+| fingerprints |     8 | 300x300   |    2.024 |    0.105 |   19.3x |
+| fingerprints |    32 | 300x300   |    5.491 |    0.253 |   21.7x |
+| fingerprints |    64 | 300x300   |    9.576 |    0.458 |   20.9x |
+| hamlet       |     1 | 2125x1273 |    1.445 |    0.202 |    7.2x |
+| hamlet       |     8 | 2125x1273 |   11.381 |    0.880 |   12.9x |
+| hamlet       |    32 | 2125x1273 |   43.807 |    3.364 |   13.0x |
+| hamlet       |    64 | 2125x1273 |   97.559 |   10.852 |    9.0x |
+| medical      |     1 | 847x1920  |    1.073 |    0.250 |    4.3x |
+| medical      |     8 | 847x1920  |    9.222 |    0.955 |    9.7x |
+| medical      |    32 | 847x1920  |   30.343 |    3.631 |    8.4x |
+| medical      |    64 | 847x1920  |   61.151 |   10.468 |    5.8x |
+| mirflickr    |     1 | 375x500   |    0.284 |    0.124 |    2.3x |
+| mirflickr    |     8 | 375x500   |    2.604 |    0.361 |    7.2x |
+| mirflickr    |    32 | 375x500   |    8.849 |    1.572 |    5.6x |
+| mirflickr    |    64 | 375x500   |   15.902 |    2.330 |    6.8x |
+| random       |     1 | 32x32     |    0.009 |    0.064 |    0.1x |
+| random       |     8 | 32x32     |    0.023 |    0.073 |    0.3x |
+| random       |    32 | 32x32     |    0.240 |    0.110 |    2.2x |
+| random       |    64 | 32x32     |    0.440 |    0.103 |    4.3x |
+| tobacco800   |     1 | 1575x1200 |    0.821 |    0.680 |    1.2x |
+| tobacco800   |     8 | 1575x1200 |    8.476 |    2.760 |    3.1x |
+| tobacco800   |    32 | 1575x1200 |   29.103 |    4.639 |    6.3x |
+| tobacco800   |    64 | 1575x1200 |   53.197 |   12.429 |    4.3x |
+| xdocs        |     1 | 3381x5034 |    9.963 |    3.837 |    2.6x |
+| xdocs        |     8 | 3381x5034 |   86.350 |   13.399 |    6.4x |
+| xdocs        |    32 | 3381x5034 |  336.704 |   20.113 |   16.7x |
+| xdocs        |    64 | 3381x5034 |  663.592 |   51.600 |   12.9x |
+
 ## Development
 
 The CUDA Toolkit comes from Nix (see [`flake.nix`](./flake.nix)). Python, PyTorch and the NVIDIA runtime libraries come from PyPI through [uv](https://docs.astral.sh/uv/). There is one Nix shell and one uv dependency group per CUDA version : `cu126`, `cu128`, `cu130`, `cu132` and `cu134`.
