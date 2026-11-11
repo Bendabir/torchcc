@@ -68,6 +68,10 @@ data:
 test *ARGS:
     uv run pytest --cov=src/torchcc {{ ARGS }} tests/unit
 
+[group('test')]
+benchmark:
+    uv run --no-sync python scripts/benchmark.py
+
 # Check without modifying files. Concise output for agents. Defaults to src and tests.
 [group('agent')]
 [private]
