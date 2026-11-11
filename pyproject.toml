@@ -25,13 +25,14 @@ cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
 dev = [
     "prek>=0.5,<1",
     "ty>=0.0,<0.1",
-    "ruff>=0.6,<0.7",          # TODO : Update
+    "ruff>=0.15,<1",
     "black>=24.8,<25",         # TODO : Move to Ruff
     "pytest>=9.0,<10",
     "pytest-cov>=7.0,<8",
     "pytest-randomly>=5.1,<6",
 ]
 matrix = [
+    # TODO : Move to self-contained scripts ?
     "httpx2>=2.16,<3",
     "beautifulsoup4>=4.12,<5",
     "cyclopts>=5.0,<6",
@@ -128,99 +129,47 @@ target-version = "py311"
 indent-width = 4
 preview = true
 namespace-packages = ["src/torchcc"]
-include = ["**/src/**/*.py", "**/tests/**/*.py", "**/pyproject.toml"]
+include = [
+    "src/**/*.py",
+    "tests/**/*.py",
+    "pyproject.toml",
+    "setup.py",
+    "scripts/**/*.py",
+]
 
 [tool.ruff.lint]
 task-tags = ["TODO", "FIXME", "NOTE"]
-select = [
-    "A",     # flake8-builtins
-    "ANN",   # flake8-annotations
-    "ARG",   # flake8-unused-arguments
-    "ASYNC", # flake8-async
-    "B",     # flake8-bugbear
-    "BLE",   # flake8-blind-except
-    "C4",    # flake8-comprehensions
-    "C90",   # mccabe
-    "COM",   # flake8-commas
-    "CPY",   # flake8-copyright
-    "D",     # pydocstyle
-    "DOC",   # flake8-docstyle
-    "DTZ",   # flake8-datetimez
-    "ERA",   # eradicate
-    "EXE",   # flake8-executable
-    "F",     # pyflakes
-    "FA",    # flake8-future-annotations
-    "FBT",   # flake8-boolean-trap
-    "FIX",   # flake8-fixme
-    "FLY",   # flynt
-    "FURB",  # refurb
-    "G",     # flake8-logging-format
-    "I",     # isort
-    "ICN",   # flake8-import-conventions
-    "INP",   # flake8-no-pep420
-    "INT",   # flake8-gettext
-    "ISC",   # flake8-implicit-str-concat
-    "LOG",   # flake8-logging
-    "N",     # pep8-naming
-    "NPY",   # numpy rules
-    "PERF",  # perflint
-    "PGH",   # pygrep-hooks
-    "PIE",   # flake8-pie
-    "PL",    # pylint
-    "PT",    # flake8-pytest-style
-    "PTH",   # flake8-use-pathlib
-    "PYI",   # flake8-pyi
-    "Q",     # flake8-quotes
-    "RET",   # flake8-return
-    "RSE",   # flake8-raise
-    "RUF",   # ruff specific
-    "S",     # flake8-bandit
-    "SIM",   # flake8-simplify
-    "SLF",   # flake8-self
-    "SLOT",  # flake8-slots
-    "T10",   # flake8-debugger
-    "T20",   # flake8-print
-    "TCH",   # flake8-type-checking
-    "TD",    # flake8-todos
-    "TID",   # flake8-tidy-imports
-    "TRY",   # tryceratops
-    "UP",    # pyupgrade
-    "W",     # pycodestyle warnings
-    "YTT",   # flake8-2020
-]
+select = ["ALL"]
 ignore = [
-    "ANN401",
-    "COM812",
-    "D100",
-    "D104",
-    "D105",
-    "TD001",
-    "TD002",
-    "TD003",
-    "TRY003",
+    "any-type",
+    "dot-format-in-exception",
+    "f-string-in-exception",
+    "invalid-todo-tag",
+    "missing-todo-author",
+    "missing-todo-link",
+    "missing-trailing-comma",
+    "raise-vanilla-args",
+    "raw-string-in-exception",
+    "undocumented-magic-method",
+    "undocumented-public-module",
+    "undocumented-public-package",
 ]
-unfixable = ["ERA001"]
+unfixable = ["commented-out-code"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-    "CPY001",
-
-    "D101",
-    "D102",
-    "D103",
-
-    "PLR2004",
-    "PLR6301",
-
-    "PTH",
-
-    "S101",
-    "S311",
-
-    "SLF001",
+    "assert",
+    "boolean-type-hint-positional-argument",
+    "magic-value-comparison",
+    "missing-copyright-notice",
+    "no-self-use",
+    "private-member-access",
+    "suspicious-non-cryptographic-random-usage",
+    "undocumented-public-class",
+    "undocumented-public-function",
+    "undocumented-public-method",
 ]
-"*.pyi" = ["CPY"]
-"scripts/*.py" = ["INP001"]
+"scripts/*.py" = ["implicit-namespace-package"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

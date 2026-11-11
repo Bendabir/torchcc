@@ -54,7 +54,7 @@ def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
 def test_ccl2d(
     path: str,
     device: torch.device,
-    contiguous: bool,  # noqa: FBT001
+    contiguous: bool,
     connectivity: Literal[4, 8],
 ) -> None:
     if connectivity == 4:
@@ -143,7 +143,7 @@ def test_ccl2d(
 def test_ccl2d_batch(
     paths: list[str],
     device: torch.device,
-    contiguous: bool,  # noqa: FBT001
+    contiguous: bool,
     connectivity: Literal[4, 8],
 ) -> None:
     if connectivity == 4:

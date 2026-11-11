@@ -8,6 +8,8 @@ from typing import Literal
 import numpy as np
 import torch
 
+from torchcc.constants import BATCH_2D_DIM, BATCH_3D_DIM
+
 try:
     import cv2
 except ImportError:  # pragma: no cover
@@ -65,7 +67,7 @@ def ccl2d(  # pragma: no cover
             stacklevel=2,
         )
 
-        if x.ndim != 3:  # noqa: PLR2004
+        if x.ndim != BATCH_2D_DIM:
             raise ValueError("Input must be a batch of images [N, H, W].")
 
         data = x.numpy()
@@ -131,7 +133,7 @@ def ccl3d(  # pragma: no cover
             stacklevel=2,
         )
 
-        if x.ndim != 4:  # noqa: PLR2004
+        if x.ndim != BATCH_3D_DIM:
             raise ValueError("Input must be a batch of volumes [N, H, W, D].")
 
         data = x.numpy()

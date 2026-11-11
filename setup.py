@@ -3,10 +3,9 @@
 # mypy: allow-untyped-calls
 from __future__ import annotations
 
-import glob
 import os
+from pathlib import Path
 
-import torch
 import torch.version
 from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
@@ -31,7 +30,7 @@ if TORCH_CUDA_ARCH_LIST not in os.environ:
     # https://en.wikipedia.org/wiki/CUDA
     # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
     # shortcut: assumes CUDA >= 12.6, add version checks to support older CUDA.
-    # TODO : Add support for newer architectures
+    # TODO : Add support for newer architectures. # ruff: ignore[line-contains-todo]
     archs = [
         "6.0",
         "6.1",
@@ -100,11 +99,13 @@ def _include_dirs() -> list[str]:
         #        Otherwise the compiler doesn't find our header files.
         #        Other libs (Python, Torch, CUDA, etc.)
         #        are automatically provided.
-        os.path.abspath("include"),
+        str(Path("include").resolve()),
     ]
 
 
 debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"
+
+csrc = Path("csrc")
 
 # Project metadata lives in pyproject.toml
 setup(
@@ -112,8 +113,8 @@ setup(
         CUDAExtension(
             name="torchcc._C",
             sources=[
-                *glob.glob("csrc/**/*.cpp", recursive=True),
-                *glob.glob("csrc/**/*.cu", recursive=True),
+                *(p.as_posix() for p in csrc.rglob("*.cpp")),
+                *(p.as_posix() for p in csrc.rglob("*.cu")),
             ],
             include_dirs=_include_dirs(),
             extra_compile_args={
