@@ -23,7 +23,7 @@ cc3d = ["connected-components-3d>=3,<4"]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=3.7.0,<4",       # TODO : Move to prek
+    "prek>=0.5,<1",
     "mypy>=1.11.2,<2",            # TODO : Move to MyPy 2.x or ty/pyrefly
     "ruff>=0.6.6,<0.7",           # TODO : Update
     "black>=24.8.0,<25",          # TODO : Move to Ruff
