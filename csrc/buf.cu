@@ -181,11 +181,15 @@ namespace buf
 
             const uint32_t bw = (w + 1) / 2;
             const uint32_t bh = (h + 1) / 2;
+            // Tiles are flattened on grid x (gridDim.y is limited to 65535)
+            const uint32_t tiles_x = (bw + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS;
+            const uint32_t tile_x = blockIdx.x % tiles_x;
+            const uint32_t tile_y = blockIdx.x / tiles_x;
             const uint32_t tx = threadIdx.x;
             const uint32_t ty = threadIdx.y;
             const uint32_t local = ty * BUF_2D_BLOCK_COLS + tx;
-            const uint32_t brow = blockIdx.y * BUF_2D_BLOCK_ROWS + ty;
-            const uint32_t bcol = blockIdx.x * BUF_2D_BLOCK_COLS + tx;
+            const uint32_t brow = tile_y * BUF_2D_BLOCK_ROWS + ty;
+            const uint32_t bcol = tile_x * BUF_2D_BLOCK_COLS + tx;
             const uint32_t depth = blockIdx.z;
             // No early return before the barriers : threads outside the image only keep their own label
             const bool inside = (brow < bh) && (bcol < bw) && (depth < n);
@@ -227,8 +231,8 @@ namespace buf
 
             // Local and global raster orders match, so the root index is never above the block index
             const uint32_t root = uf::find<0>(s_labels, local);
-            const uint32_t root_row = blockIdx.y * BUF_2D_BLOCK_ROWS + root / BUF_2D_BLOCK_COLS;
-            const uint32_t root_col = blockIdx.x * BUF_2D_BLOCK_COLS + root % BUF_2D_BLOCK_COLS;
+            const uint32_t root_row = tile_y * BUF_2D_BLOCK_ROWS + root / BUF_2D_BLOCK_COLS;
+            const uint32_t root_col = tile_x * BUF_2D_BLOCK_COLS + root % BUF_2D_BLOCK_COLS;
 
             g_batch_blocks[static_cast<int64_t>(depth) * bh * bw + brow * bw + bcol] = root_row * bw + root_col;
         }
@@ -272,8 +276,13 @@ namespace buf
 
             const uint32_t bw = (w + 1) / 2;
             const uint32_t bh = (h + 1) / 2;
-            const uint32_t brow = blockIdx.y * BUF_2D_BLOCK_ROWS + ty;
-            const uint32_t bcol = (blockIdx.x * BUF_2D_BORDER_TILES + threadIdx.y) * BUF_2D_BLOCK_COLS + tx;
+            // Groups of tiles are flattened on grid x (gridDim.y is limited to 65535)
+            const uint32_t tiles_x = (bw + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS;
+            const uint32_t groups_x = (tiles_x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES;
+            const uint32_t group_x = blockIdx.x % groups_x;
+            const uint32_t tile_y = blockIdx.x / groups_x;
+            const uint32_t brow = tile_y * BUF_2D_BLOCK_ROWS + ty;
+            const uint32_t bcol = (group_x * BUF_2D_BORDER_TILES + threadIdx.y) * BUF_2D_BLOCK_COLS + tx;
             const uint32_t depth = blockIdx.z;
 
             if ((brow >= bh) || (bcol >= bw) || (depth >= n))
@@ -323,8 +332,10 @@ namespace buf
         {
             const uint32_t bw = (w + 1) / 2;
             const uint32_t bh = (h + 1) / 2;
-            const uint32_t brow = blockIdx.y * blockDim.y + threadIdx.y;
-            const uint32_t bcol = blockIdx.x * blockDim.x + threadIdx.x;
+            // Tiles are flattened on grid x (gridDim.y is limited to 65535)
+            const uint32_t tiles_x = (bw + blockDim.x - 1) / blockDim.x;
+            const uint32_t brow = (blockIdx.x / tiles_x) * blockDim.y + threadIdx.y;
+            const uint32_t bcol = (blockIdx.x % tiles_x) * blockDim.x + threadIdx.x;
             const uint32_t depth = blockIdx.z;
 
             if ((brow >= bh) || (bcol >= bw) || (depth >= n))

@@ -194,6 +194,8 @@ def test_ccl2d_batch(
         # 4-connectivity works on strips of 4 rows and chunks of 32 pixels
         pytest.param((2, 9, 97), id="strip-warp-border"),
         pytest.param((1, 3, 1000), id="wide"),
+        # More tile rows than gridDim.y can hold (65535 tiles of 16 rows)
+        pytest.param((1, 1_048_577, 1), id="tall"),
     ],
 )
 @pytest.mark.parametrize("density", [0.1, 0.5, 0.9, 1.0])

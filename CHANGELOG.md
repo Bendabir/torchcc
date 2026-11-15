@@ -30,6 +30,7 @@ The different improvements applied to 2D CCL represent a 2x to 4x improvements c
 ### Fixed
 
 - Return an empty result for empty 2D input on CUDA, instead of leaving a CUDA error that made the next CUDA operation fail.
+- Fix 2D CCL with 8-connectivity on CUDA for images taller than about one million rows (the launch failed).
 - Return int32 labels on CPU (2D and 3D), like on CUDA. Labels above 255 wrapped around before.
 
 ### Removed

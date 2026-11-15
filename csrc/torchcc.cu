@@ -105,8 +105,9 @@ namespace
             const uint8_t *const img = img_ptr + first * sn;
             int32_t *const labels = b.labels + static_cast<int64_t>(first) * b.h * b.w;
             int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
-            const dim3 grid = dim3(tiles_x, tiles_y, count);
-            const dim3 border_grid = dim3((tiles_x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES, tiles_y, count);
+            // Tiles are flattened on grid x : gridDim.y (65535) would cap the height of an image
+            const dim3 grid = dim3(tiles_x * tiles_y, 1, count);
+            const dim3 border_grid = dim3(((tiles_x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES) * tiles_y, 1, count);
 
             buf::ccl2d::localMerge<<<grid, block, 0, b.stream>>>(img, sn, sh, chunk_blocks, b.w, b.h, count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
