@@ -194,6 +194,8 @@ def test_ccl2d_batch(
         # 4-connectivity works on strips of 4 rows and chunks of 32 pixels
         pytest.param((2, 9, 97), id="strip-warp-border"),
         pytest.param((1, 3, 1000), id="wide"),
+        # More tile rows than gridDim.y can hold (65535 tiles of 16 rows)
+        pytest.param((1, 1_048_577, 1), id="tall"),
     ],
 )
 @pytest.mark.parametrize("density", [0.1, 0.5, 0.9, 1.0])
@@ -446,6 +448,23 @@ def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> No
         match=re.escape("Images are too big and will cause overflow on labels."),
     ):
         ccl2d(images.expand(1, size, size), connectivity=connectivity)
+
+
+@pytest.mark.parametrize("connectivity", [4, 8])
+def test_ccl2d_cpu_many_components(connectivity: Literal[4, 8]) -> None:
+    # Isolated pixels give 1024 components : labels must not wrap around at 255.
+    batch = np.zeros((2, 64, 64), dtype=np.uint8)
+    batch[:, ::2, ::2] = 1
+
+    with pytest.warns(UserWarning, match="Falling back to OpenCV"):
+        labels = ccl2d(torch.from_numpy(batch), connectivity=connectivity)
+
+    expected = np.stack([
+        cv2.connectedComponents(img, connectivity=connectivity)[1] for img in batch
+    ])
+
+    assert labels.dtype == torch.int32
+    np.testing.assert_array_equal(labels.numpy(), expected, strict=True)
 
 
 @pytest.mark.parametrize("connectivity", [4, 8])

@@ -15,6 +15,7 @@ namespace
 {
     // Use constants so it's typed (instead of using text substitution)
     constexpr uint32_t MAX_GRID_Z = 65535; // Hardware limit of gridDim.z (one image per z)
+    constexpr uint32_t MAX_BLOCK_Z = 64;   // Hardware limit of blockDim.z
 
     // Check that x is a CUDA uint8 tensor with ndim dimensions.
     void checkBatch(const torch::stable::Tensor &x, const int64_t ndim, const char *const shape_message)
@@ -105,8 +106,9 @@ namespace
             const uint8_t *const img = img_ptr + first * sn;
             int32_t *const labels = b.labels + static_cast<int64_t>(first) * b.h * b.w;
             int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
-            const dim3 grid = dim3(tiles_x, tiles_y, count);
-            const dim3 border_grid = dim3((tiles_x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES, tiles_y, count);
+            // Tiles are flattened on grid x : gridDim.y (65535) would cap the height of an image
+            const dim3 grid = dim3(tiles_x * tiles_y, 1, count);
+            const dim3 border_grid = dim3(((tiles_x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES) * tiles_y, 1, count);
 
             buf::ccl2d::localMerge<<<grid, block, 0, b.stream>>>(img, sn, sh, chunk_blocks, b.w, b.h, count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
@@ -120,6 +122,101 @@ namespace
                 count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
             buf::ccl2d::finalize<<<grid, block, 0, b.stream>>>(img, sn, sh, chunk_blocks, labels, b.w, b.h, count);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
+        }
+    }
+    // What the 3D launchers need. The caller keeps the labels alive.
+    struct Batch3D
+    {
+        torch::stable::Tensor img; // row voxels are contiguous, other strides are free
+        int32_t *labels;           // dense [n, h, w, d]
+        uint32_t n;          // volumes in the batch
+        uint32_t h;          // volume planes
+        uint32_t w;          // volume rows
+        uint32_t d;          // volume columns
+        cudaStream_t stream; // current stream of the input device
+    };
+
+    // Smallest power of 2 that is at least x, up to limit (a power of 2).
+    // C++17 : torch 2.10 to 2.12 build extensions in C++17, so no std::bit_ceil.
+    // Once we only use C++20 or later, we can replace with the following : std::min(std::bit_ceil(x), limit)
+    uint32_t ceilPow2(uint32_t x, const uint32_t limit)
+    {
+        if (x <= 1)
+        {
+            return 1;
+        }
+
+        // Set all bits below the highest one, then add 1
+        --x;
+        x |= x >> 1;
+        x |= x >> 2;
+        x |= x >> 4;
+        x |= x >> 8;
+        x |= x >> 16;
+        ++x;
+
+        return std::min(x, limit);
+    }
+
+    // BUF in 3D : one thread per 2x2x2 block. init makes each block a root, merge joins the
+    // connected blocks in global memory, finalize finds the roots and writes the voxel labels.
+    void launchBUF3D(const Batch3D &b)
+    {
+        const uint8_t *const img_ptr = b.img.const_data_ptr<uint8_t>();
+        const int64_t sn = b.img.stride(0);
+        const int64_t sh = b.img.stride(1);
+        const int64_t sw = b.img.stride(2);
+
+        // One label per 2x2x2 block (dense, about 0.5 B per voxel)
+        const uint32_t bd = (b.d + 1) / 2;
+        const uint32_t bw = (b.w + 1) / 2;
+        const uint32_t bh = (b.h + 1) / 2;
+        torch::stable::Tensor blocks = torch::stable::new_empty(
+            b.img,
+            {static_cast<int64_t>(b.n), static_cast<int64_t>(bh), static_cast<int64_t>(bw), static_cast<int64_t>(bd)},
+            torch::headeronly::ScalarType::Int);
+        int32_t *const blocks_ptr = blocks.mutable_data_ptr<int32_t>();
+        const int64_t volume_blocks = static_cast<int64_t>(bh) * bw * bd;
+        const int64_t volume_voxels = static_cast<int64_t>(b.h) * b.w * b.d;
+
+        // Tile shape from the volume : 32x8x1 blocks in general, but a thin volume (small D, then small W)
+        // gives its unused threads to rows, then planes, so no thread is idle.
+        // Without it, a volume with D <= 2 used 1 thread out of 32 (about 7x slower).
+        // Planes are capped by blockDim.z, so a volume with D <= 2 and W <= 2 runs 64 threads per block.
+        const uint32_t tile_x = ceilPow2(bd, BUF_3D_BLOCK_X);
+        const uint32_t tile_y = ceilPow2(bw, bd >= BUF_3D_BLOCK_X ? BUF_3D_BLOCK_Y : BUF_3D_THREADS / tile_x);
+        const uint32_t tile_z = std::min(BUF_3D_THREADS / (tile_x * tile_y), MAX_BLOCK_Z);
+        const dim3 block = dim3(tile_x, tile_y, tile_z);
+        const uint32_t tiles_x = (bd + tile_x - 1) / tile_x;
+        const uint32_t tiles_y = (bw + tile_y - 1) / tile_y;
+        const uint32_t tiles_z = (bh + tile_z - 1) / tile_z;
+
+        // gridDim.z is limited, so launch the batch in chunks of volumes (one volume per grid z)
+        for (uint32_t first = 0; first < b.n; first += MAX_GRID_Z)
+        {
+            const uint32_t count = std::min(b.n - first, MAX_GRID_Z);
+            const uint8_t *const img = img_ptr + first * sn;
+            int32_t *const labels = b.labels + first * volume_voxels;
+            int32_t *const chunk_blocks = blocks_ptr + first * volume_blocks;
+            // Tiles of all planes are flattened on grid x : gridDim.y (65535) would cap the size of a volume
+            const dim3 grid = dim3(tiles_x * tiles_y * tiles_z, 1, count);
+
+            buf::ccl3d::init<<<grid, block, 0, b.stream>>>(chunk_blocks, b.d, b.w, b.h, count);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
+            buf::ccl3d::merge<<<grid, block, 0, b.stream>>>(img, sn, sh, sw, chunk_blocks, b.d, b.w, b.h, count);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
+            buf::ccl3d::finalize<<<grid, block, 0, b.stream>>>(
+                img,
+                sn,
+                sh,
+                sw,
+                chunk_blocks,
+                labels,
+                b.d,
+                b.w,
+                b.h,
+                count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
         }
     }
@@ -184,8 +281,9 @@ namespace torchcc
         return labels;
     }
 
-    // Host entry point of 3D CCL. Not implemented yet : every valid connectivity (6, 18, 26)
-    // is rejected, so the zero-filled return at the end is unreachable for now.
+    // Host entry point of 3D CCL. Checks the input, allocates the int32 labels [N, H, W, D]
+    // and launches BUF (26-connectivity) on the current stream.
+    // Asynchronous. Empty inputs return empty labels.
     torch::stable::Tensor ccl3d(const torch::stable::Tensor &x, const int64_t connectivity)
     {
         STD_TORCH_CHECK(
@@ -193,9 +291,46 @@ namespace torchcc
             "Only 6-connectivity, 18-connectivity and 26-connectivity are supported.");
         STD_TORCH_CHECK(connectivity != 6, "3D CCL 6-connectivity is not yet supported.");
         STD_TORCH_CHECK(connectivity != 18, "3D CCL 18-connectivity is not yet supported.");
-        STD_TORCH_CHECK(connectivity != 26, "3D CCL 26-connectivity is not yet supported.");
         checkBatch(x, 4, "Input must be a batch of volumes [N, H, W, D].");
 
-        return torch::stable::new_zeros(x, x.sizes(), torch::headeronly::ScalarType::Int);
+        // Labels are block raster indices in a volume (so below h * w * d).
+        // Divide instead of multiply : with N = 0, the other sizes can be big enough to overflow int64.
+        const int64_t h = x.size(1);
+        const int64_t w = x.size(2);
+        const int64_t d = x.size(3);
+        STD_TORCH_CHECK(
+            (h == 0) || (w == 0) || ((w <= INT32_MAX / h) && (d <= INT32_MAX / (h * w))),
+            "Volumes are too big and will cause overflow on labels.");
+
+        // Run on the device of the input
+        const torch::stable::accelerator::DeviceGuard guard(x.get_device_index());
+
+        // No zero fill : finalize writes every voxel (background included)
+        torch::stable::Tensor labels = torch::stable::new_empty(x, x.sizes(), torch::headeronly::ScalarType::Int);
+
+        // A grid dimension of 0 fails the launch
+        if (x.numel() == 0)
+        {
+            return labels;
+        }
+
+        void *stream_ptr = nullptr;
+        TORCH_ERROR_CODE_CHECK(aoti_torch_get_current_cuda_stream(x.get_device_index(), &stream_ptr));
+
+        // Kernels read the volume with its batch, plane and row strides.
+        // Only the voxels of a row must be contiguous.
+        const Batch3D batch = {
+            x.stride(3) == 1 ? x : torch::stable::contiguous(x),
+            labels.mutable_data_ptr<int32_t>(),
+            static_cast<uint32_t>(x.size(0)),
+            static_cast<uint32_t>(h),
+            static_cast<uint32_t>(w),
+            static_cast<uint32_t>(d),
+            static_cast<cudaStream_t>(stream_ptr),
+        };
+
+        launchBUF3D(batch);
+
+        return labels;
     }
 }

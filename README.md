@@ -66,7 +66,11 @@ labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W], connectiv
 
 ### 3D Connected Components Labeling
 
-**TODO**
+```python
+labels = torchcc.ccl3d(volumes, connectivity = 26) # volumes : [N x H x W x D], connectivity 6, 18 or 26
+```
+
+On CUDA, only 26-connectivity is supported for now. Labels are unique within a volume, not consecutive.
 
 ### CPU support
 
@@ -114,52 +118,53 @@ More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-c
 
 ## Benchmarks
 
-GPU is an NVIDIA GeForce RTX 3080 Ti. CPU is an Intel Core i7-12700KF. The speedup is the CPU time divided by the GPU time. Median time in milliseconds. Benchmark is executed in various [YACCLAB](https://github.com/prittt/YACCLAB) datasets. Figures are provided against a naive CPU execution of OpenCV CCL.
+GPU is an NVIDIA GeForce RTX 3080 Ti. CPU is an Intel Core i7-12700KF. The speedup is the CPU time divided by the GPU time. Median time in milliseconds. Benchmark is executed in various [YACCLAB](https://github.com/prittt/YACCLAB) datasets. Figures are provided against a naive CPU execution of OpenCV CCL (2D) or ConnectedComponents3D (3D).
 
-GPU times exclude the transfers between host and device. Run `uv run --no-sync python scripts/benchmark.py --connectivity <4|8> --repeats 20` to reproduce (see `just data` first).
+GPU times exclude the transfers between host and device. Run `uv run --no-sync python scripts/benchmark.py --connectivity <4|8>` (2D) or `uv run --no-sync python scripts/benchmark.py ccl3d` (3D) to reproduce (see `just data` first).
 
 | Task | Geometry | Connectivity | Speedup (mean) | Speedup (geometric mean) |
 | ---- | -------- | ------------ | -------------- | ------------------------ |
-| CCL  | 2D       | 4            | 11.7           | 6.7                      |
-| CCL  | 2D       | 8            | 15.5           | 8.5                      |
+| CCL  | 2D       | 4            | 30.1           | 17.4                     |
+| CCL  | 2D       | 8            | 32.6           | 18.2                     |
+| CCL  | 3D       | 26           | 110.0          | 94.1                     |
 
 <details>
   <summary><b>CCL 2D 4-connectivity Figures</b></summary>
 
 | Dataset      | Batch | Shape     | CPU (ms) | GPU (ms) | Speedup |
 | ------------ | ----: | --------- | -------: | -------: | ------: |
-| 3dpes        |     1 | 576x704   |    0.178 |    0.066 |    2.7x |
-| 3dpes        |     8 | 576x704   |    2.223 |    0.109 |   20.4x |
-| 3dpes        |    32 | 576x704   |    7.147 |    0.250 |   28.6x |
-| 3dpes        |    64 | 576x704   |   13.882 |    0.474 |   29.3x |
-| fingerprints |     1 | 300x300   |    0.122 |    0.057 |    2.1x |
-| fingerprints |     8 | 300x300   |    2.294 |    0.080 |   28.8x |
-| fingerprints |    32 | 300x300   |    4.810 |    0.218 |   22.1x |
-| fingerprints |    64 | 300x300   |    9.104 |    0.314 |   29.0x |
-| hamlet       |     1 | 2125x1273 |    1.422 |    0.128 |   11.1x |
-| hamlet       |     8 | 2125x1273 |   11.077 |    0.563 |   19.7x |
-| hamlet       |    32 | 2125x1273 |   47.677 |    1.993 |   23.9x |
-| hamlet       |    64 | 2125x1273 |   91.916 |   10.021 |    9.2x |
-| medical      |     1 | 847x1920  |    1.405 |    0.310 |    4.5x |
-| medical      |     8 | 847x1920  |    9.478 |    1.186 |    8.0x |
-| medical      |    32 | 847x1920  |   33.942 |    5.305 |    6.4x |
-| medical      |    64 | 847x1920  |   68.915 |    5.117 |   13.5x |
-| mirflickr    |     1 | 375x500   |    0.105 |    0.149 |    0.7x |
-| mirflickr    |     8 | 375x500   |    2.553 |    0.293 |    8.7x |
-| mirflickr    |    32 | 375x500   |    7.181 |    0.805 |    8.9x |
-| mirflickr    |    64 | 375x500   |   15.783 |    1.629 |    9.7x |
-| random       |     1 | 32x32     |    0.009 |    0.100 |    0.1x |
-| random       |     8 | 32x32     |    0.024 |    0.102 |    0.2x |
-| random       |    32 | 32x32     |    0.113 |    0.078 |    1.5x |
-| random       |    64 | 32x32     |    0.344 |    0.100 |    3.5x |
-| tobacco800   |     1 | 1575x1200 |    1.402 |    0.403 |    3.5x |
-| tobacco800   |     8 | 1575x1200 |    7.903 |    1.526 |    5.2x |
-| tobacco800   |    32 | 1575x1200 |   28.819 |    3.549 |    8.1x |
-| tobacco800   |    64 | 1575x1200 |   61.913 |    9.930 |    6.2x |
-| xdocs        |     1 | 3381x5034 |   10.403 |    2.091 |    5.0x |
-| xdocs        |     8 | 3381x5034 |   91.376 |   12.409 |    7.4x |
-| xdocs        |    32 | 3381x5034 |  402.124 |   13.253 |   30.3x |
-| xdocs        |    64 | 3381x5034 |  769.600 |   43.055 |   17.9x |
+| 3dpes        |     1 | 576x704   |    0.360 |    0.057 |    6.4x |
+| 3dpes        |     8 | 576x704   |    4.069 |    0.097 |   42.1x |
+| 3dpes        |    32 | 576x704   |   12.090 |    0.248 |   48.7x |
+| 3dpes        |    64 | 576x704   |   22.759 |    0.406 |   56.0x |
+| fingerprints |     1 | 300x300   |    0.142 |    0.062 |    2.3x |
+| fingerprints |     8 | 300x300   |    1.294 |    0.076 |   17.1x |
+| fingerprints |    32 | 300x300   |    6.603 |    0.171 |   38.6x |
+| fingerprints |    64 | 300x300   |   12.881 |    0.291 |   44.3x |
+| hamlet       |     1 | 2125x1273 |    2.567 |    0.146 |   17.5x |
+| hamlet       |     8 | 2125x1273 |   20.029 |    0.529 |   37.9x |
+| hamlet       |    32 | 2125x1273 |   78.808 |    1.949 |   40.4x |
+| hamlet       |    64 | 2125x1273 |  152.743 |    3.824 |   39.9x |
+| medical      |     1 | 847x1920  |    1.404 |    0.116 |   12.1x |
+| medical      |     8 | 847x1920  |   12.913 |    0.339 |   38.1x |
+| medical      |    32 | 847x1920  |   52.696 |    1.160 |   45.4x |
+| medical      |    64 | 847x1920  |   99.772 |    2.280 |   43.8x |
+| mirflickr    |     1 | 375x500   |    0.134 |    0.078 |    1.7x |
+| mirflickr    |     8 | 375x500   |    2.899 |    0.125 |   23.1x |
+| mirflickr    |    32 | 375x500   |   11.384 |    0.256 |   44.5x |
+| mirflickr    |    64 | 375x500   |   22.714 |    0.430 |   52.9x |
+| random       |     1 | 32x32     |    0.008 |    0.049 |    0.2x |
+| random       |     8 | 32x32     |    0.022 |    0.056 |    0.4x |
+| random       |    32 | 32x32     |    0.114 |    0.073 |    1.6x |
+| random       |    64 | 32x32     |    0.358 |    0.067 |    5.3x |
+| tobacco800   |     1 | 1575x1200 |    1.504 |    0.102 |   14.8x |
+| tobacco800   |     8 | 1575x1200 |   11.290 |    0.356 |   31.8x |
+| tobacco800   |    32 | 1575x1200 |   66.421 |    1.131 |   58.7x |
+| tobacco800   |    64 | 1575x1200 |  122.265 |    2.178 |   56.1x |
+| xdocs        |     1 | 3381x5034 |   11.760 |    0.515 |   22.8x |
+| xdocs        |     8 | 3381x5034 |  117.430 |    3.137 |   37.4x |
+| xdocs        |    32 | 3381x5034 |  484.724 |   12.267 |   39.5x |
+| xdocs        |    64 | 3381x5034 |  995.372 |   24.295 |   41.0x |
 
 </details>
 
@@ -168,38 +173,61 @@ GPU times exclude the transfers between host and device. Run `uv run --no-sync p
 
 | Dataset      | Batch | Shape     | CPU (ms) | GPU (ms) | Speedup |
 | ------------ | ----: | --------- | -------: | -------: | ------: |
-| 3dpes        |     1 | 576x704   |    0.154 |    0.059 |    2.6x |
-| 3dpes        |     8 | 576x704   |    1.934 |    0.097 |   20.0x |
-| 3dpes        |    32 | 576x704   |    6.148 |    0.227 |   27.1x |
-| 3dpes        |    64 | 576x704   |   14.782 |    0.391 |   37.8x |
-| fingerprints |     1 | 300x300   |    0.128 |    0.069 |    1.9x |
-| fingerprints |     8 | 300x300   |    0.994 |    0.071 |   14.0x |
-| fingerprints |    32 | 300x300   |    4.508 |    0.140 |   32.1x |
-| fingerprints |    64 | 300x300   |    9.402 |    0.213 |   44.2x |
-| hamlet       |     1 | 2125x1273 |    1.575 |    0.108 |   14.6x |
-| hamlet       |     8 | 2125x1273 |   13.974 |    0.387 |   36.1x |
-| hamlet       |    32 | 2125x1273 |   47.217 |    1.440 |   32.8x |
-| hamlet       |    64 | 2125x1273 |   83.564 |   10.226 |    8.2x |
-| medical      |     1 | 847x1920  |    0.848 |    0.147 |    5.8x |
-| medical      |     8 | 847x1920  |    8.530 |    0.558 |   15.3x |
-| medical      |    32 | 847x1920  |   30.143 |    2.518 |   12.0x |
-| medical      |    64 | 847x1920  |   70.027 |   12.494 |    5.6x |
-| mirflickr    |     1 | 375x500   |    0.103 |    0.101 |    1.0x |
-| mirflickr    |     8 | 375x500   |    2.192 |    0.139 |   15.7x |
-| mirflickr    |    32 | 375x500   |    8.143 |    0.355 |   22.9x |
-| mirflickr    |    64 | 375x500   |   16.375 |    0.662 |   24.7x |
-| random       |     1 | 32x32     |    0.008 |    0.052 |    0.2x |
-| random       |     8 | 32x32     |    0.021 |    0.059 |    0.4x |
-| random       |    32 | 32x32     |    0.147 |    0.105 |    1.4x |
-| random       |    64 | 32x32     |    0.404 |    0.109 |    3.7x |
-| tobacco800   |     1 | 1575x1200 |    1.119 |    0.326 |    3.4x |
-| tobacco800   |     8 | 1575x1200 |    6.550 |    1.104 |    5.9x |
-| tobacco800   |    32 | 1575x1200 |   24.899 |    2.817 |    8.8x |
-| tobacco800   |    64 | 1575x1200 |   53.400 |    7.338 |    7.3x |
-| xdocs        |     1 | 3381x5034 |    9.668 |    1.477 |    6.5x |
-| xdocs        |     8 | 3381x5034 |   74.450 |    6.431 |   11.6x |
-| xdocs        |    32 | 3381x5034 |  302.609 |    8.746 |   34.6x |
-| xdocs        |    64 | 3381x5034 |  617.387 |   17.038 |   36.2x |
+| 3dpes        |     1 | 576x704   |    0.264 |    0.062 |    4.2x |
+| 3dpes        |     8 | 576x704   |    2.022 |    0.093 |   21.7x |
+| 3dpes        |    32 | 576x704   |   10.537 |    0.216 |   48.8x |
+| 3dpes        |    64 | 576x704   |   22.509 |    0.387 |   58.2x |
+| fingerprints |     1 | 300x300   |    0.135 |    0.065 |    2.1x |
+| fingerprints |     8 | 300x300   |    1.577 |    0.111 |   14.2x |
+| fingerprints |    32 | 300x300   |    5.907 |    0.148 |   39.8x |
+| fingerprints |    64 | 300x300   |   11.357 |    0.184 |   61.9x |
+| hamlet       |     1 | 2125x1273 |    1.846 |    0.086 |   21.4x |
+| hamlet       |     8 | 2125x1273 |   17.982 |    0.399 |   45.0x |
+| hamlet       |    32 | 2125x1273 |   69.041 |    1.383 |   49.9x |
+| hamlet       |    64 | 2125x1273 |  150.140 |    2.811 |   53.4x |
+| medical      |     1 | 847x1920  |    1.331 |    0.111 |   12.0x |
+| medical      |     8 | 847x1920  |   10.278 |    0.302 |   34.0x |
+| medical      |    32 | 847x1920  |   53.315 |    1.031 |   51.7x |
+| medical      |    64 | 847x1920  |   96.121 |    2.049 |   46.9x |
+| mirflickr    |     1 | 375x500   |    0.125 |    0.070 |    1.8x |
+| mirflickr    |     8 | 375x500   |    1.959 |    0.108 |   18.1x |
+| mirflickr    |    32 | 375x500   |    9.973 |    0.188 |   53.0x |
+| mirflickr    |    64 | 375x500   |   18.091 |    0.322 |   56.3x |
+| random       |     1 | 32x32     |    0.008 |    0.040 |    0.2x |
+| random       |     8 | 32x32     |    0.020 |    0.058 |    0.3x |
+| random       |    32 | 32x32     |    0.157 |    0.069 |    2.3x |
+| random       |    64 | 32x32     |    0.415 |    0.077 |    5.4x |
+| tobacco800   |     1 | 1575x1200 |    1.071 |    0.096 |   11.1x |
+| tobacco800   |     8 | 1575x1200 |   10.529 |    0.267 |   39.5x |
+| tobacco800   |    32 | 1575x1200 |   46.636 |    0.881 |   52.9x |
+| tobacco800   |    64 | 1575x1200 |   91.048 |    1.722 |   52.9x |
+| xdocs        |     1 | 3381x5034 |   12.579 |    0.359 |   35.0x |
+| xdocs        |     8 | 3381x5034 |   87.683 |    2.116 |   41.4x |
+| xdocs        |    32 | 3381x5034 |  464.194 |    8.682 |   53.5x |
+| xdocs        |    64 | 3381x5034 |  990.620 |   17.851 |   55.5x |
+
+</details>
+
+<details>
+  <summary><b>CCL 3D 26-connectivity Figures</b></summary>
+
+| Dataset              | Batch | Shape        | CPU (ms) | GPU (ms) | Speedup |
+| -------------------- | ----: | ------------ | -------: | -------: | ------: |
+| hilbert              |     1 | 130x130x130  |    2.671 |    0.077 |   34.9x |
+| hilbert              |     4 | 130x130x130  |   11.927 |    0.162 |   73.7x |
+| hilbert              |     8 | 130x130x130  |   24.628 |    0.285 |   86.3x |
+| mitochondria         |     1 | 165x768x1024 |  213.918 |    1.826 |  117.1x |
+| mitochondria         |     4 | 165x768x1024 |  959.348 |    7.255 |  132.2x |
+| mitochondria         |     8 | 165x768x1024 | 1863.677 |   14.496 |  128.6x |
+| oasis                |     1 | 128x256x256  |   25.884 |    0.356 |   72.8x |
+| oasis                |     4 | 128x256x256  |   96.221 |    1.064 |   90.4x |
+| oasis                |     8 | 128x256x256  |  182.521 |    2.011 |   90.8x |
+| random3D/classical   |     1 | 256x256x256  |  171.280 |    0.814 |  210.5x |
+| random3D/classical   |     4 | 256x256x256  |  671.213 |    2.948 |  227.7x |
+| random3D/classical   |     8 | 256x256x256  | 1368.573 |    6.011 |  227.7x |
+| random3D/granularity |     1 | 256x256x256  |   10.687 |    0.241 |   44.4x |
+| random3D/granularity |     4 | 256x256x256  |   44.690 |    0.772 |   57.9x |
+| random3D/granularity |     8 | 256x256x256  |   83.235 |    1.514 |   55.0x |
 
 </details>
 
@@ -334,7 +362,7 @@ The following algorithms are used in the implementation. Some algorithms are not
 | CCL  | 2D       | 8            | BUF       | [1], [3]   |     ✔️      |
 | CCL  | 3D       | 6            |           |            |     ❌      |
 | CCL  | 3D       | 18           |           |            |     ❌      |
-| CCL  | 3D       | 26           | BUF       | [1], [3]   |     ❌      |
+| CCL  | 3D       | 26           | BUF       | [1], [3]   |     ✔️      |
 
 ## References
 
