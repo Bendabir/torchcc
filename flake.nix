@@ -25,8 +25,6 @@
 
       # Compiler overrides, when the default one of a CUDA version does not build.
       stdenvs = {
-        # CUDA 12.6 needs G++ < 14, the host one is too new
-        cu126 = pkgs.gcc13Stdenv;
         # CUDA 12.8 fails with the default G++ 14
         cu128 = pkgs.gcc13Stdenv;
       };
@@ -56,26 +54,24 @@
       # Nix only provides the CUDA toolkit.
       shell =
         { cudaPackages, stdenv }:
-        (if stdenv != null then pkgs.mkShell.override { inherit stdenv; } else pkgs.mkShellNoCC) {
-          packages = [ pkgs.uv ];
+        pkgs.mkShell.override { inherit stdenv; } {
+          packages = [
+            pkgs.uv
+            pkgs.patchelf
+          ];
           CUDA_HOME = cudaHome cudaPackages;
         };
     in
     {
-      # cuXXX : local development, with a host compiler supported by this CUDA version.
-      # cuXXX-ci : no Nix compiler, so the host toolchain of the machine is used.
-      #            This keeps wheels free of Nix glibc and RPATHs.
-      #            Exception: versions in `stdenvs` use their Nix compiler.
-      devShells.${system} = lib.concatMapAttrs (name: cudaPackages: {
-        ${name} = shell {
+      # cuXXX : Nix compiler supported by this CUDA version, for local development and CI.
+      #         The RPATH of the built extension must be stripped before packaging (see release.yaml).
+      devShells.${system} = lib.mapAttrs (
+        name: cudaPackages:
+        shell {
           inherit cudaPackages;
           stdenv = stdenvs.${name} or cudaPackages.backendStdenv;
-        };
-        "${name}-ci" = shell {
-          inherit cudaPackages;
-          stdenv = stdenvs.${name} or null;
-        };
-      }) toolkits;
+        }
+      ) toolkits;
 
       formatter.${system} = pkgs.nixfmt-rfc-style;
     };

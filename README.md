@@ -294,7 +294,7 @@ just init cu126
 
 This runs `nix develop .#cu126 -c uv sync --group build --group cu126` and `uv run prek install`.
 
-The `cuXXX` shells provide a host compiler for local development. The `cuXXX-ci` shells do not, so the compiler of the machine is used (this is what CI does to build wheels).
+The `cuXXX` shells provide a host compiler supported by the CUDA version. CI uses the same shells to build wheels, then strips the RPATH of the extension.
 
 #### Why `uv` does not sync automatically
 

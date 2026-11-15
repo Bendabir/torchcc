@@ -69,20 +69,29 @@ jobs:
         uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
       - name: install-deps
         run: >
-          nix develop .#${{ matrix.cuda-version }}-ci -c
+          nix develop .#${{ matrix.cuda-version }} -c
           uv sync --locked --python ${{ matrix.python-version }}
           --no-default-groups --group build --group ${{ matrix.cuda-version }}
           --no-install-project
       - name: build
         run: >
-          nix develop .#${{ matrix.cuda-version }}-ci -c
+          nix develop .#${{ matrix.cuda-version }} -c
           uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
+      # The Nix compiler sets an RPATH to the Nix store (glibc, libstdc++, CUDA).
+      # PyTorch is loaded by Python first, so the extension does not need it.
+      - name: strip-rpath
+        run: |
+          mkdir unpacked
+          unzip -q dist/*.whl -d unpacked
+          so=$(find unpacked -name "_cuda*.so")
+          nix develop .#${{ matrix.cuda-version }} -c patchelf --remove-rpath "$so"
+          rm dist/*.whl
+          # Repack so that RECORD matches the patched file
+          nix develop .#${{ matrix.cuda-version }} -c uvx --from wheel wheel pack unpacked --dest-dir dist
       # The extension must not depend on anything from the Nix store
       - name: check
         shell: bash
         run: |
-          mkdir unpacked
-          unzip -q dist/*.whl -d unpacked
           so=$(find unpacked -name "_cuda*.so")
           readelf -d "$so"
           if readelf -d "$so" | grep -q /nix/store; then
@@ -90,6 +99,7 @@ jobs:
             exit 1
           fi
           echo "Max. glibc symbol : $(objdump -T "$so" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
+          echo "Max. GLIBCXX symbol : $(objdump -T "$so" | grep -o 'GLIBCXX_[0-9.]*' | sort -uV | tail -n 1)"
       # The wheel name already carries the CUDA tag (local version set in setup.py)
       - name: upload
         uses: actions/upload-artifact@v4
