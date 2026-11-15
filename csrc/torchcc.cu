@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <torchcc.h>
 #include <buf.h>
+#include <ha4.h>
 
 // Use constants so it's typed (instead of using text substitution)
 constexpr uint32_t MAX_GRID_Z = 65535;
@@ -20,7 +21,6 @@ namespace torchcc
         STD_TORCH_CHECK(
             (connectivity == 4) || (connectivity == 8),
             "Only 4-connectivity and 8-connectivity are supported.");
-        STD_TORCH_CHECK(connectivity != 4, "2D CCL 4-connectivity is not yet supported.");
 
         const size_t ndim = x.dim();
 
@@ -29,7 +29,7 @@ namespace torchcc
         STD_TORCH_CHECK(x.scalar_type() == torch::headeronly::ScalarType::Byte, "Input must be uint8 data.");
 
 
-        // As each block of 2x2 pixels will take the raster index (in its image) of its top-left pixel,
+        // Labels are raster indices in an image (0-based for BUF, 1-based for HA4, so up to h * w),
         // we need to ensure we don't overflow (int64_t, so the check itself cannot overflow)
         STD_TORCH_CHECK(
             (x.size(-2) * x.size(-1)) <= INT32_MAX,
@@ -43,7 +43,7 @@ namespace torchcc
         // Run on the device of the input
         const torch::stable::accelerator::DeviceGuard guard(x.get_device_index());
 
-        // No zero fill : finalize writes every pixel (background included)
+        // No zero fill : finalize (BUF) and relabel (HA4) write every pixel (background included)
         torch::stable::Tensor labels = torch::stable::new_empty(x, x.sizes(), torch::headeronly::ScalarType::Int);
 
         // A grid dimension of 0 fails the launch
@@ -64,54 +64,76 @@ namespace torchcc
         const uint8_t *const x_ptr = img.const_data_ptr<uint8_t>();
         int32_t *const labels_ptr = labels.mutable_data_ptr<int32_t>();
 
+        // Union-find runs on a compact buffer with one label per 2x2 block (about the size of the input).
+        // The paper stores block labels in the output (top-left pixel of each block) to avoid cudaMalloc.
+        // The caching allocator makes this allocation cheap, and the dense layout uses whole 32 B sectors
+        // (the sparse one used 1 int out of 4) with a 4x smaller working set for find.
+        // Measured on sm_86 only : 17-27% faster at batch 32, neutral at batch 1.
+        // Cost : about +1 B per pixel, so peak memory goes from 5 B to 6 B per pixel (+20%).
+        // If a compute capability (or a memory-bound use case) needs the in-place layout back,
+        // the sparse version is in commit 5960911.
+        // Only 8-connectivity (BUF) needs it : HA4 runs union-find in the labels.
+        const uint32_t bw = (w + 1) / 2;
+        const uint32_t bh = (h + 1) / 2;
+        torch::stable::Tensor blocks;
+        int32_t *blocks_ptr = nullptr;
+
         if (connectivity == 8)
         {
-            // Union-find runs on a compact buffer with one label per 2x2 block (about the size of the input).
-            // The paper stores block labels in the output (top-left pixel of each block) to avoid cudaMalloc.
-            // The caching allocator makes this allocation cheap, and the dense layout uses whole 32 B sectors
-            // (the sparse one used 1 int out of 4) with a 4x smaller working set for find.
-            // Measured on sm_86 only : 17-27% faster at batch 32, neutral at batch 1.
-            // Cost : about +1 B per pixel, so peak memory goes from 5 B to 6 B per pixel (+20%).
-            // If a compute capability (or a memory-bound use case) needs the in-place layout back,
-            // the sparse version is in commit 5960911.
-            const uint32_t bw = (w + 1) / 2;
-            const uint32_t bh = (h + 1) / 2;
-            torch::stable::Tensor blocks = torch::stable::new_empty(
+            blocks = torch::stable::new_empty(
                 x,
                 {static_cast<int64_t>(n), static_cast<int64_t>(bh), static_cast<int64_t>(bw)},
                 torch::headeronly::ScalarType::Int);
-            int32_t *const blocks_ptr = blocks.mutable_data_ptr<int32_t>();
+            blocks_ptr = blocks.mutable_data_ptr<int32_t>();
+        }
 
-            // One thread per 2x2 block, in tiles of 32x8 blocks : warps are coalesced on a row,
-            // localMerge joins the blocks of a tile in shared memory, borderMerge only the links across tiles,
-            // finalize finds the roots. One image per grid z.
-            const uint32_t image = h * w;
-            const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
+        const uint32_t image = h * w;
+
+        // gridDim.z is limited, so launch the batch in chunks of images (one image per grid z).
+        // We need to split the algorithms in multiple kernels
+        // as we need to store intermediate results to global memory for synchronization.
+        for (uint32_t first = 0; first < n; first += MAX_GRID_Z)
+        {
+            const uint32_t count = std::min(n - first, MAX_GRID_Z);
+            const uint8_t *const chunk_x = x_ptr + first * sn;
+            int32_t *const chunk_labels = labels_ptr + static_cast<int64_t>(first) * image;
+
+            if (connectivity == 4)
+            {
+                // HA4 : one warp per row, one block per strip of 4 rows. stripLabeling merges the runs
+                // inside each strip, borderMerge the runs across strips, relabel finds the roots.
+                // grid.x is limited to 2^31 - 1, so no limit on h here.
+                const dim3 block = dim3(HA4_2D_BLOCK_COLS, HA4_2D_BLOCK_ROWS);
+                const dim3 grid = dim3((h + HA4_2D_BLOCK_ROWS - 1) / HA4_2D_BLOCK_ROWS, 1, count);
+
+                ha4::ccl2d::stripLabeling<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+                ha4::ccl2d::borderMerge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+                ha4::ccl2d::relabel<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_labels, w, h, count);
+                STD_CUDA_KERNEL_LAUNCH_CHECK();
+                continue;
+            }
 
             // Start with BUF algorithm because it's easier to implement
             // but we should move to BKE at some point because it's more efficient.
-            // We need to split the algorithm in multiple kernels
-            // as we need to store intermediate results to global memory for synchronization.
-            // gridDim.z is limited, so launch the batch in chunks of images.
-            for (uint32_t first = 0; first < n; first += MAX_GRID_Z)
-            {
-                const uint32_t count = std::min(n - first, MAX_GRID_Z);
-                const dim3 grid = dim3(
-                    (bw + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
-                    (bh + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
-                    count);
-                const uint8_t *const chunk_x = x_ptr + first * sn;
-                int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
-                int32_t *const chunk_labels = labels_ptr + static_cast<int64_t>(first) * image;
+            // One thread per 2x2 block, in tiles of 32x8 blocks : warps are coalesced on a row,
+            // localMerge joins the blocks of a tile in shared memory, borderMerge only the links across tiles,
+            // finalize finds the roots.
+            const dim3 block = dim3(BUF_2D_BLOCK_COLS, BUF_2D_BLOCK_ROWS);
+            const dim3 grid = dim3(
+                (bw + BUF_2D_BLOCK_COLS - 1) / BUF_2D_BLOCK_COLS,
+                (bh + BUF_2D_BLOCK_ROWS - 1) / BUF_2D_BLOCK_ROWS,
+                count);
+            int32_t *const chunk_blocks = blocks_ptr + static_cast<int64_t>(first) * bh * bw;
 
-                buf::ccl2d::localMerge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
-                STD_CUDA_KERNEL_LAUNCH_CHECK();
-                const dim3 border_grid = dim3((grid.x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES, grid.y, grid.z);
-                buf::ccl2d::borderMerge<<<border_grid, dim3(BUF_2D_BORDER_THREADS, BUF_2D_BORDER_TILES), 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
-                STD_CUDA_KERNEL_LAUNCH_CHECK();
-                buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, chunk_labels, w, h, count);
-                STD_CUDA_KERNEL_LAUNCH_CHECK();
-            }
+            buf::ccl2d::localMerge<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
+            const dim3 border_grid = dim3((grid.x + BUF_2D_BORDER_TILES - 1) / BUF_2D_BORDER_TILES, grid.y, grid.z);
+            buf::ccl2d::borderMerge<<<border_grid, dim3(BUF_2D_BORDER_THREADS, BUF_2D_BORDER_TILES), 0, stream>>>(chunk_x, sn, sh, chunk_blocks, w, h, count);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
+            buf::ccl2d::finalize<<<grid, block, 0, stream>>>(chunk_x, sn, sh, chunk_blocks, chunk_labels, w, h, count);
+            STD_CUDA_KERNEL_LAUNCH_CHECK();
         }
 
         return labels;
