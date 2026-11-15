@@ -17,6 +17,7 @@ namespace buf
 {
     namespace ccl2d
     {
+        // Join the blocks inside each tile with a union-find in shared memory (see csrc/buf.cu).
         __global__ void localMerge(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
@@ -25,6 +26,7 @@ namespace buf
             const uint32_t w,
             const uint32_t h,
             const uint32_t n);
+        // Join the blocks across tile borders in global memory (see csrc/buf.cu).
         __global__ void borderMerge(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
@@ -33,6 +35,7 @@ namespace buf
             const uint32_t w,
             const uint32_t h,
             const uint32_t n);
+        // Find the root of each block and write the pixel labels (see csrc/buf.cu).
         __global__ void finalize(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,

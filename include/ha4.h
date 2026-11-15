@@ -13,6 +13,7 @@ namespace ha4
 {
     namespace ccl2d
     {
+        // Merge the runs inside each strip of 4 rows (see csrc/ha4.cu).
         __global__ void stripLabeling(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
@@ -21,6 +22,7 @@ namespace ha4
             const uint32_t w,
             const uint32_t h,
             const uint32_t n);
+        // Merge the runs across the borders between strips (see csrc/ha4.cu).
         __global__ void borderMerge(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
@@ -29,6 +31,7 @@ namespace ha4
             const uint32_t w,
             const uint32_t h,
             const uint32_t n);
+        // Replace each label by its root (see csrc/ha4.cu).
         __global__ void relabel(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,

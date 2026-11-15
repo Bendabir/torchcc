@@ -14,8 +14,9 @@
 namespace
 {
     // Use constants so it's typed (instead of using text substitution)
-    constexpr uint32_t MAX_GRID_Z = 65535;
+    constexpr uint32_t MAX_GRID_Z = 65535; // Hardware limit of gridDim.z (one image per z)
 
+    // Check that x is a CUDA uint8 tensor with ndim dimensions.
     void checkBatch(const torch::stable::Tensor &x, const int64_t ndim, const char *const shape_message)
     {
         STD_TORCH_CHECK(x.is_cuda(), "Input must be a CUDA tensor.");
@@ -28,10 +29,10 @@ namespace
     {
         torch::stable::Tensor img; // row pixels are contiguous, batch and row strides are free
         int32_t *labels;           // dense [n, h, w]
-        uint32_t n;
-        uint32_t h;
-        uint32_t w;
-        cudaStream_t stream;
+        uint32_t n;          // images in the batch
+        uint32_t h;          // image height
+        uint32_t w;          // image width
+        cudaStream_t stream; // current stream of the input device
     };
 
     // HA4 : one warp per row, one block per strip of 4 rows. stripLabeling merges the runs
@@ -126,6 +127,9 @@ namespace
 
 namespace torchcc
 {
+    // Host entry point of 2D CCL. Checks the input, allocates the int32 labels [N, H, W]
+    // and launches HA4 (4-connectivity) or BUF (8-connectivity) on the current stream.
+    // Asynchronous. Empty inputs return empty labels.
     torch::stable::Tensor ccl2d(const torch::stable::Tensor &x, const int64_t connectivity)
     {
         STD_TORCH_CHECK(
@@ -180,6 +184,8 @@ namespace torchcc
         return labels;
     }
 
+    // Host entry point of 3D CCL. Not implemented yet : every valid connectivity (6, 18, 26)
+    // is rejected, so the zero-filled return at the end is unreachable for now.
     torch::stable::Tensor ccl3d(const torch::stable::Tensor &x, const int64_t connectivity)
     {
         STD_TORCH_CHECK(

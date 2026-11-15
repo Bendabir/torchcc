@@ -10,6 +10,7 @@
 // and it is a root when g_labels[l - BASE] == l (0 for BUF, 1 for HA4).
 namespace uf
 {
+    // Root of a label. Read only.
     template <uint32_t BASE>
     __device__ __forceinline__ uint32_t find(const int32_t *const g_labels, const uint32_t label)
     {
@@ -23,6 +24,7 @@ namespace uf
         return n;
     }
 
+    // Root of a label. The label is updated to point to the nodes met on the path.
     template <uint32_t BASE>
     __device__ __forceinline__ uint32_t findAndCompress(int32_t *const g_labels, const uint32_t label)
     {
@@ -37,6 +39,7 @@ namespace uf
         return n;
     }
 
+    // Join the trees of a and b. The smaller root wins, set with atomicMin, so it is safe across threads.
     template <uint32_t BASE>
     __device__ __forceinline__ void computeUnion(int32_t *const g_labels, uint32_t a, uint32_t b)
     {

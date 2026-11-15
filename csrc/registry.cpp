@@ -13,6 +13,7 @@ extern "C"
     }
 }
 
+// Op schemas (torch.ops.torchcc.*)
 STABLE_TORCH_LIBRARY(torchcc, m)
 {
     // Compute Connected Components Labeling of a 2D image (or a batch of 2D images).
@@ -21,6 +22,7 @@ STABLE_TORCH_LIBRARY(torchcc, m)
     m.def("ccl3d(Tensor x, int connectivity) -> Tensor");
 }
 
+// CUDA implementations of the ops
 STABLE_TORCH_LIBRARY_IMPL(torchcc, CUDA, m)
 {
     m.impl("ccl2d", TORCH_BOX(&torchcc::ccl2d));

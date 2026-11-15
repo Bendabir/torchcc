@@ -55,6 +55,7 @@ namespace buf
 {
     namespace ccl2d
     {
+        // Bit pos of mask (0 or 1).
         __device__ __forceinline__ uint8_t hasBit(const uint16_t mask, const uint8_t pos)
         {
             return (mask >> pos) & 1;
