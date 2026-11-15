@@ -46,23 +46,11 @@ jobs:
             exit 1
           fi
           echo "Max. glibc symbol : $(objdump -T "$so" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
-      - name: rename
-        id: rename
-        env:
-          CUDA_TAG: ${{ matrix.cuda }}
-        run: |
-          cd dist
-
-          WHEEL_NAME=$(ls)
-          NEW_WHEEL_NAME=$(echo $WHEEL_NAME | sed "s/\(torchcc-[^-]*\)/\1+${CUDA_TAG}/g")
-
-          mv $WHEEL_NAME $NEW_WHEEL_NAME
-          echo "wheel-name=${NEW_WHEEL_NAME}" >> "$GITHUB_OUTPUT"
-        shell: bash
+      # The wheel name already carries the CUDA tag (local version set in setup.py)
       - name: upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.rename.outputs.wheel-name }}
+          name: wheel-${{ matrix.cuda }}-py${{ matrix.python-version }}
           path: dist/*.whl
           if-no-files-found: error
           retention-days: 1
