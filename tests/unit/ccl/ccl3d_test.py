@@ -79,6 +79,11 @@ def assert_labels(labels: torch.Tensor, batch: npt.NDArray[np.uint8]) -> None:
         pytest.param((1, 2, 17, 64), id="tile-border-row"),
         pytest.param((1, 2, 16, 65), id="tile-border-column"),
         pytest.param((2, 3, 17, 65), id="tile-border-all"),
+        # Thin volumes use thin tiles (blocks) : 1x256x1 (D <= 2), 2x128x1 (D <= 4),
+        # 1x1x64 (D <= 2 and W <= 2)
+        pytest.param((2, 3, 513, 1), id="thin-tile-row"),
+        pytest.param((2, 3, 257, 4), id="thin-tile-row-2"),
+        pytest.param((2, 129, 2, 1), id="thin-tile-plane"),
         pytest.param((5, 17, 19, 23), id="batch-odd"),
         pytest.param((3, 64, 64, 64), id="batch-even"),
     ],

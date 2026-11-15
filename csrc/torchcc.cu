@@ -15,6 +15,7 @@ namespace
 {
     // Use constants so it's typed (instead of using text substitution)
     constexpr uint32_t MAX_GRID_Z = 65535; // Hardware limit of gridDim.z (one image per z)
+    constexpr uint32_t MAX_BLOCK_Z = 64;   // Hardware limit of blockDim.z
 
     // Check that x is a CUDA uint8 tensor with ndim dimensions.
     void checkBatch(const torch::stable::Tensor &x, const int64_t ndim, const char *const shape_message)
@@ -136,6 +137,28 @@ namespace
         cudaStream_t stream; // current stream of the input device
     };
 
+    // Smallest power of 2 that is at least x, up to limit (a power of 2).
+    // C++17 : torch 2.10 to 2.12 build extensions in C++17, so no std::bit_ceil.
+    // Once we only use C++20 or later, we can replace with the following : std::min(std::bit_ceil(x), limit)
+    uint32_t ceilPow2(uint32_t x, const uint32_t limit)
+    {
+        if (x <= 1)
+        {
+            return 1;
+        }
+
+        // Set all bits below the highest one, then add 1
+        --x;
+        x |= x >> 1;
+        x |= x >> 2;
+        x |= x >> 4;
+        x |= x >> 8;
+        x |= x >> 16;
+        ++x;
+
+        return std::min(x, limit);
+    }
+
     // BUF in 3D : one thread per 2x2x2 block. init makes each block a root, merge joins the
     // connected blocks in global memory, finalize finds the roots and writes the voxel labels.
     void launchBUF3D(const Batch3D &b)
@@ -157,9 +180,17 @@ namespace
         const int64_t volume_blocks = static_cast<int64_t>(bh) * bw * bd;
         const int64_t volume_voxels = static_cast<int64_t>(b.h) * b.w * b.d;
 
-        const dim3 block = dim3(BUF_3D_BLOCK_X, BUF_3D_BLOCK_Y);
-        const uint32_t tiles_x = (bd + BUF_3D_BLOCK_X - 1) / BUF_3D_BLOCK_X;
-        const uint32_t tiles_y = (bw + BUF_3D_BLOCK_Y - 1) / BUF_3D_BLOCK_Y;
+        // Tile shape from the volume : 32x8x1 blocks in general, but a thin volume (small D, then small W)
+        // gives its unused threads to rows, then planes, so no thread is idle.
+        // Without it, a volume with D <= 2 used 1 thread out of 32 (about 7x slower).
+        // Planes are capped by blockDim.z, so a volume with D <= 2 and W <= 2 runs 64 threads per block.
+        const uint32_t tile_x = ceilPow2(bd, BUF_3D_BLOCK_X);
+        const uint32_t tile_y = ceilPow2(bw, bd >= BUF_3D_BLOCK_X ? BUF_3D_BLOCK_Y : BUF_3D_THREADS / tile_x);
+        const uint32_t tile_z = std::min(BUF_3D_THREADS / (tile_x * tile_y), MAX_BLOCK_Z);
+        const dim3 block = dim3(tile_x, tile_y, tile_z);
+        const uint32_t tiles_x = (bd + tile_x - 1) / tile_x;
+        const uint32_t tiles_y = (bw + tile_y - 1) / tile_y;
+        const uint32_t tiles_z = (bh + tile_z - 1) / tile_z;
 
         // gridDim.z is limited, so launch the batch in chunks of volumes (one volume per grid z)
         for (uint32_t first = 0; first < b.n; first += MAX_GRID_Z)
@@ -169,7 +200,7 @@ namespace
             int32_t *const labels = b.labels + first * volume_voxels;
             int32_t *const chunk_blocks = blocks_ptr + first * volume_blocks;
             // Tiles of all planes are flattened on grid x : gridDim.y (65535) would cap the size of a volume
-            const dim3 grid = dim3(tiles_x * tiles_y * bh, 1, count);
+            const dim3 grid = dim3(tiles_x * tiles_y * tiles_z, 1, count);
 
             buf::ccl3d::init<<<grid, block, 0, b.stream>>>(chunk_blocks, b.d, b.w, b.h, count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();

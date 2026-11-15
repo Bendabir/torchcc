@@ -552,17 +552,16 @@ namespace buf
         }
 
         // Block coordinates (x on columns, y on rows, z on planes) of the thread.
-        // Tiles of BUF_3D_BLOCK_X x BUF_3D_BLOCK_Y blocks are flattened on grid x
-        // (gridDim.y and gridDim.z are limited to 65535).
+        // Tiles of blockDim blocks are flattened on grid x (gridDim.y and gridDim.z are limited to 65535).
         __device__ __forceinline__ uint3 blockCoords(const uint32_t bd, const uint32_t bw)
         {
-            const uint32_t tiles_x = (bd + BUF_3D_BLOCK_X - 1) / BUF_3D_BLOCK_X;
-            const uint32_t tiles_y = (bw + BUF_3D_BLOCK_Y - 1) / BUF_3D_BLOCK_Y;
+            const uint32_t tiles_x = (bd + blockDim.x - 1) / blockDim.x;
+            const uint32_t tiles_y = (bw + blockDim.y - 1) / blockDim.y;
 
             return make_uint3(
-                (blockIdx.x % tiles_x) * BUF_3D_BLOCK_X + threadIdx.x,
-                (blockIdx.x / tiles_x % tiles_y) * BUF_3D_BLOCK_Y + threadIdx.y,
-                blockIdx.x / tiles_x / tiles_y);
+                (blockIdx.x % tiles_x) * blockDim.x + threadIdx.x,
+                (blockIdx.x / tiles_x % tiles_y) * blockDim.y + threadIdx.y,
+                (blockIdx.x / tiles_x / tiles_y) * blockDim.z + threadIdx.z);
         }
 
         // --- KERNELS ---

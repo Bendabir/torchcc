@@ -13,8 +13,11 @@ constexpr uint32_t BUF_2D_BORDER_THREADS = BUF_2D_BLOCK_COLS + 2 * (BUF_2D_BLOCK
 // Tiles per thread block in borderMerge (one tile per block would cap occupancy at 16 small blocks per SM)
 constexpr uint32_t BUF_2D_BORDER_TILES = 4;
 
-// One thread per 2x2x2 block, in tiles of 32x8 blocks of a plane : warps are coalesced on a row.
-// Measured on sm_86 : 9-16% faster than 3D tiles (16x4x4, 32x4x2, 64x2x2), except on small volumes.
+// One thread per 2x2x2 block. A thread block is a tile of X x Y x Z blocks (columns, rows, planes)
+// with BUF_3D_THREADS threads. X is up to BUF_3D_BLOCK_X so warps are coalesced on a row,
+// the host shrinks X (then Y) when the volume is thin, so no thread is idle on small D or W.
+// Measured on sm_86 : 32x8x1 is 9-16% faster than 3D tiles (16x4x4, 32x4x2, 64x2x2) on usual volumes.
+constexpr uint32_t BUF_3D_THREADS = 256;
 constexpr uint32_t BUF_3D_BLOCK_X = 32;
 constexpr uint32_t BUF_3D_BLOCK_Y = 8;
 
