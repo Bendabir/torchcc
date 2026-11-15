@@ -46,17 +46,12 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
         or if the images are too big.
     TypeError
         If the data is not uint8.
-    NotImplementedError
-        If the connectivity is not yet implemented.
     """
     if x.is_cuda:
         # The stable ABI only raises RuntimeError, so validate here
         # to raise meaningful exceptions.
         if connectivity not in {4, 8}:
             raise ValueError("Only 4-connectivity and 8-connectivity are supported.")
-
-        if connectivity == 4:  # ruff: ignore[magic-value-comparison]
-            raise NotImplementedError("2D CCL 4-connectivity is not yet supported.")
 
         if x.ndim != BATCH_2D_DIM:
             raise ValueError("Input must be a batch of images [N, H, W].")

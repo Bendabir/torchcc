@@ -24,17 +24,14 @@ def imread(path: str) -> npt.NDArray[np.uint8]:
     return np.asarray(image, dtype=np.uint8)
 
 
-def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
+def consecutivize(labels: npt.NDArray[np.int32]) -> npt.NDArray[np.int32]:
+    ids, inverse = np.unique(labels, return_inverse=True)
+
     # Start at 1 : an image without background must not map its first label to 0.
-    foreground = sorted(id_ for id_ in np.unique(labels).tolist() if id_ > 0)
-    ids: dict[int, int] = {id_: i for i, id_ in enumerate(foreground, start=1)}
-    new_labels = np.zeros_like(labels)
+    if ids[0] != 0:
+        inverse += 1
 
-    for id_, i in ids.items():
-        mask = labels == id_
-        new_labels[mask] = i
-
-    return new_labels
+    return inverse.reshape(labels.shape).astype(labels.dtype)
 
 
 @pytest.mark.parametrize(
@@ -66,9 +63,6 @@ def test_ccl2d(
     contiguous: bool,
     connectivity: Literal[4, 8],
 ) -> None:
-    if connectivity == 4:
-        pytest.skip("4-connectivity is not yet supported.")
-
     image = imread(path)
     x = torch.from_numpy(image).unsqueeze_(0).to(device)
 
@@ -152,9 +146,6 @@ def test_ccl2d_batch(
     contiguous: bool,
     connectivity: Literal[4, 8],
 ) -> None:
-    if connectivity == 4:
-        pytest.skip("4-connectivity is not yet supported.")
-
     # Use some padding so batches have the same size.
     # Not really an issue for CCL.
     images = [imread(p) for p in paths]
@@ -200,22 +191,27 @@ def test_ccl2d_batch(
         # A tile is 64x16 pixels, these shapes go one pixel past a tile border
         pytest.param((2, 17, 65), id="tile-border"),
         pytest.param((1, 33, 129), id="tile-border-2"),
+        # 4-connectivity works on strips of 4 rows and chunks of 32 pixels
+        pytest.param((2, 9, 97), id="strip-warp-border"),
+        pytest.param((1, 3, 1000), id="wide"),
     ],
 )
-@pytest.mark.parametrize("density", [0.1, 0.5, 0.9])
+@pytest.mark.parametrize("density", [0.1, 0.5, 0.9, 1.0])
+@pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
 def test_ccl2d_random(
     device: torch.device,
     seed: int,
     shape: tuple[int, int, int],
     density: float,
+    connectivity: Literal[4, 8],
 ) -> None:
     rng = np.random.default_rng(seed)
     batch = (rng.random(shape) < density).astype(np.uint8)
 
-    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=8)
+    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=connectivity)
     expected = np.stack([
-        cv2.connectedComponents(img, connectivity=8)[1] for img in batch
+        cv2.connectedComponents(img, connectivity=connectivity)[1] for img in batch
     ])
 
     np.testing.assert_array_equal(
@@ -225,17 +221,55 @@ def test_ccl2d_random(
     )
 
 
+@pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
-def test_ccl2d_large_batch(device: torch.device, seed: int) -> None:
+def test_ccl2d_patterns(device: torch.device, connectivity: Literal[4, 8]) -> None:
+    # Patterns that random images rarely produce.
+    # They cross strips (4 rows) and chunks (32 pixels).
+    h, w = 13, 70
+    # One serpentine component: full rows linked at alternate ends.
+    serpentine = np.zeros((h, w), dtype=np.uint8)
+    serpentine[0::2, :] = 1
+    serpentine[1::4, -1] = 1
+    serpentine[3::4, 0] = 1
+    # A run ends at lane 31 and the next row starts at lane 0 of the next chunk:
+    # one component per row with 4-connectivity, one component with 8-connectivity.
+    staircase = np.zeros((h, w), dtype=np.uint8)
+    staircase[0::2, :32] = 1
+    staircase[1::2, 32:64] = 1
+    batch = np.stack([serpentine, staircase])
+
+    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=connectivity)
+    expected = np.stack([
+        cv2.connectedComponents(img, connectivity=connectivity)[1] for img in batch
+    ])
+
+    np.testing.assert_array_equal(
+        np.stack([consecutivize(lbl) for lbl in labels.cpu().numpy()]),
+        expected,
+        strict=True,
+    )
+
+
+@pytest.mark.parametrize("connectivity", [4, 8])
+@REQUIRES_CUDA
+def test_ccl2d_large_batch(
+    device: torch.device,
+    seed: int,
+    connectivity: Literal[4, 8],
+) -> None:
     # More images than the grid can hold at once (65535), so the batch runs in chunks.
     size = 65_535 + 7
     checked = 16
     rng = np.random.default_rng(seed)
     batch = (rng.random((size, 3, 5)) < 0.5).astype(np.uint8)
 
-    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=8)[-checked:]
+    labels = ccl2d(torch.from_numpy(batch).to(device), connectivity=connectivity)[
+        -checked:
+    ]
     expected = np.stack([
-        cv2.connectedComponents(img, connectivity=8)[1] for img in batch[-checked:]
+        cv2.connectedComponents(img, connectivity=connectivity)[1]
+        for img in batch[-checked:]
     ])
 
     np.testing.assert_array_equal(
@@ -258,17 +292,25 @@ def test_ccl2d_empty(device: torch.device, shape: tuple[int, int, int]) -> None:
     assert labels.dtype == torch.int32
 
 
+@pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
-def test_ccl2d_channel_slice(device: torch.device, seed: int) -> None:
+def test_ccl2d_channel_slice(
+    device: torch.device,
+    seed: int,
+    connectivity: Literal[4, 8],
+) -> None:
     # Typical model output [N, C, H, W]: the slice has a contiguous last dimension
     # but non-contiguous outer strides.
     rng = np.random.default_rng(seed)
     masks = (rng.random((4, 3, 67, 91)) < 0.5).astype(np.uint8)
     channel = 1
 
-    labels = ccl2d(torch.from_numpy(masks).to(device)[:, channel], connectivity=8)
+    labels = ccl2d(
+        torch.from_numpy(masks).to(device)[:, channel],
+        connectivity=connectivity,
+    )
     expected = np.stack([
-        cv2.connectedComponents(np.ascontiguousarray(img), connectivity=8)[1]
+        cv2.connectedComponents(np.ascontiguousarray(img), connectivity=connectivity)[1]
         for img in masks[:, channel]
     ])
 
@@ -287,15 +329,25 @@ def test_ccl2d_channel_slice(device: torch.device, seed: int) -> None:
         pytest.param(slice(5, 60), slice(3, 50), id="both"),
     ],
 )
+@pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
-def test_ccl2d_crop(device: torch.device, seed: int, rows: slice, cols: slice) -> None:
+def test_ccl2d_crop(
+    device: torch.device,
+    seed: int,
+    rows: slice,
+    cols: slice,
+    connectivity: Literal[4, 8],
+) -> None:
     # A crop keeps the last dimension contiguous, but the row stride is not the width.
     rng = np.random.default_rng(seed)
     masks = (rng.random((3, 67, 91)) < 0.5).astype(np.uint8)
 
-    labels = ccl2d(torch.from_numpy(masks).to(device)[:, rows, cols], connectivity=8)
+    labels = ccl2d(
+        torch.from_numpy(masks).to(device)[:, rows, cols],
+        connectivity=connectivity,
+    )
     expected = np.stack([
-        cv2.connectedComponents(np.ascontiguousarray(img), connectivity=8)[1]
+        cv2.connectedComponents(np.ascontiguousarray(img), connectivity=connectivity)[1]
         for img in masks[:, rows, cols]
     ])
 
@@ -318,14 +370,6 @@ def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
         _ = ccl2d(images, connectivity=connectivity)  # ty: ignore[invalid-argument-type]
 
 
-@REQUIRES_CUDA
-def test_ccl2d_4_connectivity(device: torch.device) -> None:
-    images = torch.zeros((4, 16, 16), device=device, dtype=torch.uint8)
-
-    with pytest.raises(NotImplementedError):
-        ccl2d(images, connectivity=4)
-
-
 @pytest.mark.parametrize(
     "shape",
     [(1), (32, 32), (4, 8, 32, 32)],
@@ -338,9 +382,6 @@ def test_ccl2d_input_shape(
     shape: tuple[int, ...],
     connectivity: Literal[4, 8],
 ) -> None:
-    if connectivity == 4:
-        pytest.skip("4-connectivity is not yet supported.")
-
     images = torch.zeros(shape, device=device, dtype=torch.uint8)
 
     with pytest.raises(
@@ -386,9 +427,6 @@ def test_ccl2d_input_type(
     connectivity: Literal[4, 8],
     dtype: torch.dtype,
 ) -> None:
-    if connectivity == 4:
-        pytest.skip("4-connectivity is not yet supported.")
-
     images = torch.zeros((4, 32, 32), device=device, dtype=dtype)
 
     with pytest.raises(TypeError):
@@ -398,9 +436,6 @@ def test_ccl2d_input_type(
 @pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
 def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> None:
-    if connectivity == 4:
-        pytest.skip("4-connectivity is not yet supported.")
-
     # One image with more than INT32_MAX pixels.
     # Expanding a single pixel needs no memory, the check runs before any copy.
     size = 46_341
@@ -413,13 +448,18 @@ def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> No
         ccl2d(images.expand(1, size, size), connectivity=connectivity)
 
 
+@pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
-def test_ccl2d_labels_per_image(device: torch.device, seed: int) -> None:
+def test_ccl2d_labels_per_image(
+    device: torch.device,
+    seed: int,
+    connectivity: Literal[4, 8],
+) -> None:
     # Labels restart in each image : the same image gives the same labels.
     rng = np.random.default_rng(seed)
     image = torch.from_numpy((rng.random((1, 33, 47)) < 0.5).astype(np.uint8))
 
-    labels = ccl2d(image.expand(3, -1, -1).to(device), connectivity=8)
+    labels = ccl2d(image.expand(3, -1, -1).to(device), connectivity=connectivity)
 
     assert torch.equal(labels[0], labels[1])
     assert torch.equal(labels[0], labels[2])
