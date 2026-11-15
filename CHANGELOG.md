@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The different improvements applied to 2D CCL represent a 2x to 4x improvements compared to the previous version. Of course, it depends on the dataset, the batch size, etc.
 
+### Added
+
+- Support 2D CCL with 4-connectivity on CUDA (HA4 algorithm).
+
 ### Changed
 
 - Move from Poetry to uv (with a lock file) and from `poetry-core` to setuptools.
