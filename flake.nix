@@ -41,7 +41,9 @@
             (lib.getDev cudaPackages.cuda_cudart)
             (lib.getLib cudaPackages.cuda_cudart)
             (lib.getStatic cudaPackages.cuda_cudart)
-          ];
+          ]
+          # CUDA 13 moved the crt/ headers out of cuda_nvcc
+          ++ lib.optional (cudaPackages ? cuda_crt) cudaPackages.cuda_crt;
           postBuild = "[ -e $out/lib64 ] || ln -s lib $out/lib64";
         };
 
