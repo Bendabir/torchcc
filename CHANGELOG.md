@@ -12,6 +12,7 @@ The different improvements applied to 2D CCL represent a 2x to 4x improvements c
 ### Added
 
 - Support 2D CCL with 4-connectivity on CUDA (HA4 algorithm).
+- Support 3D CCL with 26-connectivity on CUDA (BUF algorithm).
 - Add experimental build support for Windows (untested, no wheels yet).
 
 ### Changed
@@ -21,6 +22,7 @@ The different improvements applied to 2D CCL represent a 2x to 4x improvements c
 - Build one wheel per CUDA version (12.6, 12.8, 13.0, 13.2 and 13.4) and per Python version, like PyTorch. CUDA is provided by Nix in CI.
 - Raise the minimum Python version to 3.11.
 - Raise `ValueError` for negative connectivity on CUDA (it was a `TypeError`).
+- Make `connectivity` a keyword-only argument of `ccl3d`, like in `ccl2d`.
 - Make 2D CCL on CUDA up to 40% faster. It uses an extra buffer of 1 byte per pixel (about 20% more peak GPU memory).
 - Make 2D CCL labels on CUDA unique per image, not across the batch.
 - Read 2D input on CUDA without a copy when only its last dimension is contiguous (e.g. a channel slice `x[:, c]` or a crop). It makes such inputs up to 17% faster.
