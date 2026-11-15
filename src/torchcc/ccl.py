@@ -8,7 +8,7 @@ import torch
 
 # Importing the extension registers the torch.ops.torchcc.* operators.
 from torchcc import _cpu, _cuda  # ruff: ignore[unused-import]
-from torchcc.constants import BATCH_2D_DIM
+from torchcc.constants import BATCH_2D_DIM, BATCH_3D_DIM
 
 
 def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
@@ -17,7 +17,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     Note
     ----
     On CPU, computation is delegated to OpenCV if installed.
-    On GPU, non-contiguous data is copied first, unless only the last dimension
+    On GPU, non-contiguous data is copied first, unless its last dimension
     is contiguous (e.g. a channel slice of a [N, C, H, W] tensor).
 
     Parameters
@@ -72,7 +72,10 @@ def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tenso
 
     Note
     ----
-    3D CCL on CPU is not yet supported.
+    On CPU, computation is delegated to ConnectedComponents3D if installed.
+    On GPU, only 26-connectivity is supported. Non-contiguous data is copied first,
+    unless its last dimension is contiguous (e.g. a channel slice of a
+    [N, C, H, W, D] tensor).
 
     Parameters
     ----------
@@ -93,24 +96,41 @@ def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tenso
     -------
     torch.Tensor
         The labeled Connected Components.
+        Labels are unique within a volume, not across the batch.
 
     Raises
     ------
     ValueError
-        If the connectivity is not supported.
+        If the connectivity is not supported, if the data is not a batch of volumes
+        or if the volumes are too big.
+    TypeError
+        If the data is not uint8.
     NotImplementedError
-        If 3D CCL is used on GPU (not yet implemented).
+        If 6-connectivity or 18-connectivity is used on GPU (not yet implemented).
     """
     if x.is_cuda:
+        # The stable ABI only raises RuntimeError, so validate here
+        # to raise meaningful exceptions.
         if connectivity not in {6, 18, 26}:
             raise ValueError(
                 "Only 6-connectivity, 18-connectivity and 26-connectivity "
                 "are supported."
             )
 
-        # NOTE : Call torch.ops.torchcc.ccl3d once it is implemented.
-        raise NotImplementedError(
-            f"3D CCL {connectivity}-connectivity is not yet supported."
-        )
+        if connectivity in {6, 18}:
+            raise NotImplementedError(
+                f"3D CCL {connectivity}-connectivity is not yet supported."
+            )
+
+        if x.ndim != BATCH_3D_DIM:
+            raise ValueError("Input must be a batch of volumes [N, H, W, D].")
+
+        if x.dtype != torch.uint8:
+            raise TypeError("Input must be uint8 data.")
+
+        if x.shape[-3] * x.shape[-2] * x.shape[-1] > torch.iinfo(torch.int32).max:
+            raise ValueError("Volumes are too big and will cause overflow on labels.")
+
+        return torch.ops.torchcc.ccl3d(x, connectivity)
 
     return _cpu.ccl3d(x, connectivity)  # pragma: no cover
