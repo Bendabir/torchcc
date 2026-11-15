@@ -4,7 +4,7 @@ TorchCC is a library that brings efficient CUDA implementations of Connected Com
 CPU support is delegated to external libraries such as OpenCV. It is built to support multiple CUDA and PyTorch versions.
 
 > [!NOTE]
-> This library is still an early prototype. It's definitely not suitable for production. Only Linux is supported at the moment. Windows could probably be supported with some extra efforts.
+> This library is still an early prototype. It's definitely not suitable for production. Only Linux is supported at the moment. Windows can be built from source, but this is experimental and untested. There are no Windows wheels yet as this would require some more efforts. The provided instructions only describe Linux setup and builds.
 
 ## Install
 
