@@ -70,7 +70,7 @@ jobs:
       - name: install-deps
         run: >
           nix develop .#${{ matrix.cuda-version }} -c
-          uv sync --locked --python ${{ matrix.python-version }}
+          uv sync --locked --managed-python --python ${{ matrix.python-version }}
           --no-default-groups --group build --group ${{ matrix.cuda-version }}
           --no-install-project
       - name: build
