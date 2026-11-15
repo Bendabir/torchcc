@@ -153,5 +153,5 @@ def ccl3d(  # pragma: no cover
     raise RuntimeError(
         "3D CCL on CPU is not natively supported. "
         "Install ConnectedComponents3D for CPU support : "
-        'pip install "connected-components-3d>=3,<4".'
+        'pip install "connected-components-3d>=3,<5".'
     )

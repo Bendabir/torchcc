@@ -19,7 +19,7 @@ Documentation = "https://github.com/Bendabir/torchcc/README.md"
 [project.optional-dependencies]
 opencv = ["opencv-python>=4.0,<6"]
 opencv-headless = ["opencv-python-headless>=4.0,<6"]
-cc3d = ["connected-components-3d>=3.0,<4"]           # TODO : Update ?
+cc3d = ["connected-components-3d>=3.0,<5"]
 
 [dependency-groups]
 dev = [
@@ -30,7 +30,7 @@ dev = [
     "pytest-cov>=7.0,<8",
     "pytest-randomly>=5.0,<6",
     "opencv-python-headless>=4.0,<6",
-    "connected-components-3d>=3.0,<4",
+    "connected-components-3d>=3.0,<5",
     "rich>=14.0,<15",
     "cyclopts>=5.0,<6",
 ]

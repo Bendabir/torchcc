@@ -78,7 +78,7 @@ CPU support is delegated to third-party libraries. [OpenCV](https://github.com/o
 
 ```bash
 pip install "opencv-python-headless>=4,<6" # 2D
-pip install "connected-components-3d>=3,<4" # 3D
+pip install "connected-components-3d>=3,<5" # 3D
 ```
 
 ## Compatibility
