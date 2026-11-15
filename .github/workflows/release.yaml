@@ -48,7 +48,7 @@ jobs:
           - { cuda-version: cu134, python-version: "3.15" }
     steps:
       - name: sync-code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       # The runner ships ~25 GB of tooling the build does not need. Removing it leaves room for the CUDA toolkit.
       - name: free-disk-space
         run: |
@@ -102,7 +102,7 @@ jobs:
           echo "Max. GLIBCXX symbol : $(objdump -T "$so" | grep -o 'GLIBCXX_[0-9.]*' | sort -uV | tail -n 1)"
       # The wheel name already carries the CUDA tag (local version set in setup.py)
       - name: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-${{ matrix.cuda-version }}-py${{ matrix.python-version }}
           path: dist/*.whl
@@ -120,9 +120,9 @@ jobs:
     steps:
       # Sync code to get the changelog. The release notes are the section of the tag version.
       - name: sync-code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           pattern: "*.whl"
