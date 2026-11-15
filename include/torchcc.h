@@ -13,7 +13,8 @@ namespace torchcc
     // Labels are not consecutive.
     torch::stable::Tensor ccl2d(const torch::stable::Tensor &input, const int64_t connectivity);
     // Label the connected components of a batch of volumes [N, H, W, D] (CUDA, uint8).
-    // NOTE : Not implemented yet. It always raises, whatever the connectivity.
+    // Only 26-connectivity is implemented (6 and 18 raise). Returns int32 labels of the same shape
+    // (0 is background). Labels are unique per volume, not consecutive.
     torch::stable::Tensor ccl3d(const torch::stable::Tensor &input, const int64_t connectivity);
 }
 
