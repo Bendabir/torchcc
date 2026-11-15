@@ -23,6 +23,12 @@
         cu134 = pkgs.cudaPackages_13_4;
       };
 
+      # Compiler overrides, when the default one of a CUDA version does not build.
+      stdenvs = {
+        # CUDA 12.8 fails with the default G++ 14
+        cu128 = pkgs.gcc13Stdenv;
+      };
+
       # Minimal CUDA_HOME, as expected by torch.utils.cpp_extension
       cudaHome =
         cudaPackages:
@@ -42,30 +48,25 @@
       # Python, PyTorch and NVIDIA runtime libs come from PyPI (through uv).
       # Nix only provides the CUDA toolkit.
       shell =
-        { cudaPackages, withCompiler }:
-        (
-          if withCompiler then
-            pkgs.mkShell.override { stdenv = cudaPackages.backendStdenv; }
-          else
-            pkgs.mkShellNoCC
-        )
-          {
-            packages = [ pkgs.uv ];
-            CUDA_HOME = cudaHome cudaPackages;
-          };
+        { cudaPackages, stdenv }:
+        (if stdenv != null then pkgs.mkShell.override { inherit stdenv; } else pkgs.mkShellNoCC) {
+          packages = [ pkgs.uv ];
+          CUDA_HOME = cudaHome cudaPackages;
+        };
     in
     {
       # cuXXX : local development, with a host compiler supported by this CUDA version.
       # cuXXX-ci : no Nix compiler, so the host toolchain of the machine is used.
       #            This keeps wheels free of Nix glibc and RPATHs.
+      #            Exception: versions in `stdenvs` use their Nix compiler.
       devShells.${system} = lib.concatMapAttrs (name: cudaPackages: {
         ${name} = shell {
           inherit cudaPackages;
-          withCompiler = true;
+          stdenv = stdenvs.${name} or cudaPackages.backendStdenv;
         };
         "${name}-ci" = shell {
           inherit cudaPackages;
-          withCompiler = false;
+          stdenv = stdenvs.${name} or null;
         };
       }) toolkits;
 
