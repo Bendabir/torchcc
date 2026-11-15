@@ -24,17 +24,14 @@ def imread(path: str) -> npt.NDArray[np.uint8]:
     return np.asarray(image, dtype=np.uint8)
 
 
-def consecutivize(labels: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
+def consecutivize(labels: npt.NDArray[np.int32]) -> npt.NDArray[np.int32]:
+    ids, inverse = np.unique(labels, return_inverse=True)
+
     # Start at 1 : an image without background must not map its first label to 0.
-    foreground = sorted(id_ for id_ in np.unique(labels).tolist() if id_ > 0)
-    ids: dict[int, int] = {id_: i for i, id_ in enumerate(foreground, start=1)}
-    new_labels = np.zeros_like(labels)
+    if ids[0] != 0:
+        inverse += 1
 
-    for id_, i in ids.items():
-        mask = labels == id_
-        new_labels[mask] = i
-
-    return new_labels
+    return inverse.reshape(labels.shape).astype(labels.dtype)
 
 
 @pytest.mark.parametrize(
