@@ -108,8 +108,7 @@ jobs:
       id-token: write # Sigstore keyless signing
       attestations: write
     steps:
-      # Sync code to get the changelog, we could go for auto-generation
-      # We will inject the full changelog every time, not for the best...
+      # Sync code to get the changelog. The release notes are the section of the tag version.
       - name: sync-code
         uses: actions/checkout@v4
       - name: download
@@ -126,4 +125,11 @@ jobs:
       - name: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create ${{ github.ref_name }} -F CHANGELOG.md -t "TorchCC ${{ github.ref_name }}" dist/*.whl
+        run: |
+          awk -v v="$GITHUB_REF_NAME" '
+            /^## \[/ { p = index($0, "[" v "]") }
+            /^\[[^]]+\]: / { p = 0 }
+            p
+          ' CHANGELOG.md > notes.md
+          test -s notes.md
+          gh release create "$GITHUB_REF_NAME" -F notes.md -t "TorchCC $GITHUB_REF_NAME" dist/*.whl
