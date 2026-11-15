@@ -1,5 +1,6 @@
 // Copyright (c) 2024 Bendabir.
 #include <buf.h>
+#include <uf.h>
 #include <cuda.h>
 
 // TODO : Adapt this to switch to BKE which is SotA (thus a bit more efficient)
@@ -57,59 +58,6 @@ namespace buf
         __device__ __forceinline__ uint8_t hasBit(const uint16_t mask, const uint8_t pos)
         {
             return (mask >> pos) & 1;
-        }
-
-        __device__ uint32_t find(const int32_t *const g_labels, const uint32_t index)
-        {
-            uint32_t n = index;
-
-            while (g_labels[n] != n)
-            {
-                n = g_labels[n];
-            }
-
-            return n;
-        }
-
-        __device__ uint32_t findAndCompress(int32_t *const g_labels, const uint32_t index)
-        {
-            uint32_t n = index;
-
-            while (g_labels[n] != n)
-            {
-                n = g_labels[n];
-                g_labels[index] = n;
-            }
-
-            return n;
-        }
-
-        __device__ void computeUnion(int32_t *const g_labels, uint32_t a, uint32_t b)
-        {
-            bool done = false;
-
-            do
-            {
-                a = find(g_labels, a);
-                b = find(g_labels, b);
-
-                if (a < b)
-                {
-                    const int32_t old = atomicMin(g_labels + b, a);
-                    done = (old == b);
-                    b = old;
-                }
-                else if (b < a)
-                {
-                    const int32_t old = atomicMin(g_labels + a, b);
-                    done = (old == a);
-                    a = old;
-                }
-                else
-                {
-                    done = true;
-                }
-            } while (!done);
         }
 
         constexpr uint8_t LINK_P = 1; // top-left block
@@ -251,22 +199,22 @@ namespace buf
 
             if ((link & LINK_P) && (tx > 0) && (ty > 0))
             {
-                computeUnion(s_labels, local, local - BUF_2D_BLOCK_COLS - 1);
+                uf::computeUnion<0>(s_labels, local, local - BUF_2D_BLOCK_COLS - 1);
             }
 
             if ((link & LINK_Q) && (ty > 0))
             {
-                computeUnion(s_labels, local, local - BUF_2D_BLOCK_COLS);
+                uf::computeUnion<0>(s_labels, local, local - BUF_2D_BLOCK_COLS);
             }
 
             if ((link & LINK_R) && (ty > 0) && (tx + 1 < BUF_2D_BLOCK_COLS))
             {
-                computeUnion(s_labels, local, local - BUF_2D_BLOCK_COLS + 1);
+                uf::computeUnion<0>(s_labels, local, local - BUF_2D_BLOCK_COLS + 1);
             }
 
             if ((link & LINK_S) && (tx > 0))
             {
-                computeUnion(s_labels, local, local - 1);
+                uf::computeUnion<0>(s_labels, local, local - 1);
             }
 
             __syncthreads();
@@ -277,7 +225,7 @@ namespace buf
             }
 
             // Local and global raster orders match, so the root index is never above the block index
-            const uint32_t root = find(s_labels, local);
+            const uint32_t root = uf::find<0>(s_labels, local);
             const uint32_t root_row = blockIdx.y * BUF_2D_BLOCK_ROWS + root / BUF_2D_BLOCK_COLS;
             const uint32_t root_col = blockIdx.x * BUF_2D_BLOCK_COLS + root % BUF_2D_BLOCK_COLS;
 
@@ -340,22 +288,22 @@ namespace buf
 
             if ((link & LINK_P) && ((tx == 0) || (ty == 0)))
             {
-                computeUnion(g_blocks, block, block - bw - 1);
+                uf::computeUnion<0>(g_blocks, block, block - bw - 1);
             }
 
             if ((link & LINK_Q) && (ty == 0))
             {
-                computeUnion(g_blocks, block, block - bw);
+                uf::computeUnion<0>(g_blocks, block, block - bw);
             }
 
             if ((link & LINK_R) && ((ty == 0) || (tx + 1 == BUF_2D_BLOCK_COLS)))
             {
-                computeUnion(g_blocks, block, block - bw + 1);
+                uf::computeUnion<0>(g_blocks, block, block - bw + 1);
             }
 
             if ((link & LINK_S) && (tx == 0))
             {
-                computeUnion(g_blocks, block, block - 1);
+                uf::computeUnion<0>(g_blocks, block, block - 1);
             }
         }
 
@@ -389,7 +337,7 @@ namespace buf
             const uint8_t *const g_img = g_batch_img + depth * sn + row * sh + col;
             int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
             // Fused compress : the forest is final after merge, so each thread finds its root here.
-            const uint32_t label = findAndCompress(g_batch_blocks + static_cast<int64_t>(depth) * bh * bw, brow * bw + bcol) + 1;
+            const uint32_t label = uf::findAndCompress<0>(g_batch_blocks + static_cast<int64_t>(depth) * bh * bw, brow * bw + bcol) + 1;
 
             // Pseudo-algorithm of the paper uses multiplication to avoid checks
             // but I suppose that checks are more efficient
