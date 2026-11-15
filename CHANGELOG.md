@@ -12,6 +12,7 @@ The different improvements applied to 2D CCL represent a 2x to 4x improvements c
 ### Added
 
 - Support 2D CCL with 4-connectivity on CUDA (HA4 algorithm).
+- Add experimental build support for Windows (untested, no wheels yet).
 
 ### Changed
 
