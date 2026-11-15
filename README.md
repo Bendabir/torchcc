@@ -12,6 +12,13 @@ CPU support is delegated to external libraries such as OpenCV. It is built to su
 
 You can install TorchCC by using a custom PyPI index. There is one index per supported version of CUDA. This is still experimental though.
 
+> [!WARNING]
+> Install the TorchCC build that matches the CUDA version of your PyTorch. Package managers do not check this. They accept any combination (as long it's version 2.10+), and a wrong one only fails at `import torchcc` with a `libcudart.so` error.
+>
+> - The CUDA major version must be the same (12 or 13).
+> - Within the same major version, a different minor version should work (for example a `cu126` build with PyTorch on CUDA 12.8). Use the exact same version when you can.
+> - See the [compatibility matrix](#compatibility) for the supported pairs.
+
 #### pip
 
 ```bash
