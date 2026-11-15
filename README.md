@@ -66,7 +66,11 @@ labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W], connectiv
 
 ### 3D Connected Components Labeling
 
-**TODO**
+```python
+labels = torchcc.ccl3d(volumes, connectivity = 26) # volumes : [N x H x W x D], connectivity 6, 18 or 26
+```
+
+On CUDA, only 26-connectivity is supported for now. Labels are unique within a volume, not consecutive.
 
 ### CPU support
 
@@ -334,7 +338,7 @@ The following algorithms are used in the implementation. Some algorithms are not
 | CCL  | 2D       | 8            | BUF       | [1], [3]   |     ✔️      |
 | CCL  | 3D       | 6            |           |            |     ❌      |
 | CCL  | 3D       | 18           |           |            |     ❌      |
-| CCL  | 3D       | 26           | BUF       | [1], [3]   |     ❌      |
+| CCL  | 3D       | 26           | BUF       | [1], [3]   |     ✔️      |
 
 ## References
 
