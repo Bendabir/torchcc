@@ -112,42 +112,94 @@ More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-c
 
 ## Benchmarks
 
-`ccl2d` with 8-connectivity. Median time in milliseconds. GPU is an NVIDIA GeForce RTX 3080 Ti. CPU is an Intel Core i7-12700KF. The speedup is the CPU time divided by the GPU time.
+GPU is an NVIDIA GeForce RTX 3080 Ti. CPU is an Intel Core i7-12700KF. The speedup is the CPU time divided by the GPU time. Median time in milliseconds. Benchmark is executed in various [YACCLAB](https://github.com/prittt/YACCLAB) datasets. Figures are provided against a naive CPU execution of OpenCV CCL.
+
+GPU times exclude the transfers between host and device. Run `uv run --no-sync python scripts/benchmark.py --connectivity <4|8> --repeats 20` to reproduce (see `just data` first).
+
+| Task | Geometry | Connectivity | Speedup (mean) | Speedup (geometric mean) |
+| ---- | -------- | ------------ | -------------- | ------------------------ |
+| CCL  | 2D       | 4            | 11.7           | 6.7                      |
+| CCL  | 2D       | 8            | 15.5           | 8.5                      |
+
+<details>
+  <summary><b>CCL 2D 4-connectivity Figures</b></summary>
 
 | Dataset      | Batch | Shape     | CPU (ms) | GPU (ms) | Speedup |
 | ------------ | ----: | --------- | -------: | -------: | ------: |
-| 3dpes        |     1 | 576x704   |    0.501 |    0.083 |    6.0x |
-| 3dpes        |     8 | 576x704   |    1.887 |    0.163 |   11.6x |
-| 3dpes        |    32 | 576x704   |    6.473 |    0.402 |   16.1x |
-| 3dpes        |    64 | 576x704   |   14.084 |    0.756 |   18.6x |
-| fingerprints |     1 | 300x300   |    0.123 |    0.069 |    1.8x |
-| fingerprints |     8 | 300x300   |    2.024 |    0.105 |   19.3x |
-| fingerprints |    32 | 300x300   |    5.491 |    0.253 |   21.7x |
-| fingerprints |    64 | 300x300   |    9.576 |    0.458 |   20.9x |
-| hamlet       |     1 | 2125x1273 |    1.445 |    0.202 |    7.2x |
-| hamlet       |     8 | 2125x1273 |   11.381 |    0.880 |   12.9x |
-| hamlet       |    32 | 2125x1273 |   43.807 |    3.364 |   13.0x |
-| hamlet       |    64 | 2125x1273 |   97.559 |   10.852 |    9.0x |
-| medical      |     1 | 847x1920  |    1.073 |    0.250 |    4.3x |
-| medical      |     8 | 847x1920  |    9.222 |    0.955 |    9.7x |
-| medical      |    32 | 847x1920  |   30.343 |    3.631 |    8.4x |
-| medical      |    64 | 847x1920  |   61.151 |   10.468 |    5.8x |
-| mirflickr    |     1 | 375x500   |    0.284 |    0.124 |    2.3x |
-| mirflickr    |     8 | 375x500   |    2.604 |    0.361 |    7.2x |
-| mirflickr    |    32 | 375x500   |    8.849 |    1.572 |    5.6x |
-| mirflickr    |    64 | 375x500   |   15.902 |    2.330 |    6.8x |
-| random       |     1 | 32x32     |    0.009 |    0.064 |    0.1x |
-| random       |     8 | 32x32     |    0.023 |    0.073 |    0.3x |
-| random       |    32 | 32x32     |    0.240 |    0.110 |    2.2x |
-| random       |    64 | 32x32     |    0.440 |    0.103 |    4.3x |
-| tobacco800   |     1 | 1575x1200 |    0.821 |    0.680 |    1.2x |
-| tobacco800   |     8 | 1575x1200 |    8.476 |    2.760 |    3.1x |
-| tobacco800   |    32 | 1575x1200 |   29.103 |    4.639 |    6.3x |
-| tobacco800   |    64 | 1575x1200 |   53.197 |   12.429 |    4.3x |
-| xdocs        |     1 | 3381x5034 |    9.963 |    3.837 |    2.6x |
-| xdocs        |     8 | 3381x5034 |   86.350 |   13.399 |    6.4x |
-| xdocs        |    32 | 3381x5034 |  336.704 |   20.113 |   16.7x |
-| xdocs        |    64 | 3381x5034 |  663.592 |   51.600 |   12.9x |
+| 3dpes        |     1 | 576x704   |    0.178 |    0.066 |    2.7x |
+| 3dpes        |     8 | 576x704   |    2.223 |    0.109 |   20.4x |
+| 3dpes        |    32 | 576x704   |    7.147 |    0.250 |   28.6x |
+| 3dpes        |    64 | 576x704   |   13.882 |    0.474 |   29.3x |
+| fingerprints |     1 | 300x300   |    0.122 |    0.057 |    2.1x |
+| fingerprints |     8 | 300x300   |    2.294 |    0.080 |   28.8x |
+| fingerprints |    32 | 300x300   |    4.810 |    0.218 |   22.1x |
+| fingerprints |    64 | 300x300   |    9.104 |    0.314 |   29.0x |
+| hamlet       |     1 | 2125x1273 |    1.422 |    0.128 |   11.1x |
+| hamlet       |     8 | 2125x1273 |   11.077 |    0.563 |   19.7x |
+| hamlet       |    32 | 2125x1273 |   47.677 |    1.993 |   23.9x |
+| hamlet       |    64 | 2125x1273 |   91.916 |   10.021 |    9.2x |
+| medical      |     1 | 847x1920  |    1.405 |    0.310 |    4.5x |
+| medical      |     8 | 847x1920  |    9.478 |    1.186 |    8.0x |
+| medical      |    32 | 847x1920  |   33.942 |    5.305 |    6.4x |
+| medical      |    64 | 847x1920  |   68.915 |    5.117 |   13.5x |
+| mirflickr    |     1 | 375x500   |    0.105 |    0.149 |    0.7x |
+| mirflickr    |     8 | 375x500   |    2.553 |    0.293 |    8.7x |
+| mirflickr    |    32 | 375x500   |    7.181 |    0.805 |    8.9x |
+| mirflickr    |    64 | 375x500   |   15.783 |    1.629 |    9.7x |
+| random       |     1 | 32x32     |    0.009 |    0.100 |    0.1x |
+| random       |     8 | 32x32     |    0.024 |    0.102 |    0.2x |
+| random       |    32 | 32x32     |    0.113 |    0.078 |    1.5x |
+| random       |    64 | 32x32     |    0.344 |    0.100 |    3.5x |
+| tobacco800   |     1 | 1575x1200 |    1.402 |    0.403 |    3.5x |
+| tobacco800   |     8 | 1575x1200 |    7.903 |    1.526 |    5.2x |
+| tobacco800   |    32 | 1575x1200 |   28.819 |    3.549 |    8.1x |
+| tobacco800   |    64 | 1575x1200 |   61.913 |    9.930 |    6.2x |
+| xdocs        |     1 | 3381x5034 |   10.403 |    2.091 |    5.0x |
+| xdocs        |     8 | 3381x5034 |   91.376 |   12.409 |    7.4x |
+| xdocs        |    32 | 3381x5034 |  402.124 |   13.253 |   30.3x |
+| xdocs        |    64 | 3381x5034 |  769.600 |   43.055 |   17.9x |
+
+</details>
+
+<details>
+  <summary><b>CCL 2D 8-connectivity Figures</b></summary>
+
+| Dataset      | Batch | Shape     | CPU (ms) | GPU (ms) | Speedup |
+| ------------ | ----: | --------- | -------: | -------: | ------: |
+| 3dpes        |     1 | 576x704   |    0.154 |    0.059 |    2.6x |
+| 3dpes        |     8 | 576x704   |    1.934 |    0.097 |   20.0x |
+| 3dpes        |    32 | 576x704   |    6.148 |    0.227 |   27.1x |
+| 3dpes        |    64 | 576x704   |   14.782 |    0.391 |   37.8x |
+| fingerprints |     1 | 300x300   |    0.128 |    0.069 |    1.9x |
+| fingerprints |     8 | 300x300   |    0.994 |    0.071 |   14.0x |
+| fingerprints |    32 | 300x300   |    4.508 |    0.140 |   32.1x |
+| fingerprints |    64 | 300x300   |    9.402 |    0.213 |   44.2x |
+| hamlet       |     1 | 2125x1273 |    1.575 |    0.108 |   14.6x |
+| hamlet       |     8 | 2125x1273 |   13.974 |    0.387 |   36.1x |
+| hamlet       |    32 | 2125x1273 |   47.217 |    1.440 |   32.8x |
+| hamlet       |    64 | 2125x1273 |   83.564 |   10.226 |    8.2x |
+| medical      |     1 | 847x1920  |    0.848 |    0.147 |    5.8x |
+| medical      |     8 | 847x1920  |    8.530 |    0.558 |   15.3x |
+| medical      |    32 | 847x1920  |   30.143 |    2.518 |   12.0x |
+| medical      |    64 | 847x1920  |   70.027 |   12.494 |    5.6x |
+| mirflickr    |     1 | 375x500   |    0.103 |    0.101 |    1.0x |
+| mirflickr    |     8 | 375x500   |    2.192 |    0.139 |   15.7x |
+| mirflickr    |    32 | 375x500   |    8.143 |    0.355 |   22.9x |
+| mirflickr    |    64 | 375x500   |   16.375 |    0.662 |   24.7x |
+| random       |     1 | 32x32     |    0.008 |    0.052 |    0.2x |
+| random       |     8 | 32x32     |    0.021 |    0.059 |    0.4x |
+| random       |    32 | 32x32     |    0.147 |    0.105 |    1.4x |
+| random       |    64 | 32x32     |    0.404 |    0.109 |    3.7x |
+| tobacco800   |     1 | 1575x1200 |    1.119 |    0.326 |    3.4x |
+| tobacco800   |     8 | 1575x1200 |    6.550 |    1.104 |    5.9x |
+| tobacco800   |    32 | 1575x1200 |   24.899 |    2.817 |    8.8x |
+| tobacco800   |    64 | 1575x1200 |   53.400 |    7.338 |    7.3x |
+| xdocs        |     1 | 3381x5034 |    9.668 |    1.477 |    6.5x |
+| xdocs        |     8 | 3381x5034 |   74.450 |    6.431 |   11.6x |
+| xdocs        |    32 | 3381x5034 |  302.609 |    8.746 |   34.6x |
+| xdocs        |    64 | 3381x5034 |  617.387 |   17.038 |   36.2x |
+
+</details>
 
 ## Development
 
