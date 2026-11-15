@@ -67,7 +67,7 @@ def ccl2d(x: torch.Tensor, *, connectivity: Literal[4, 8] = 8) -> torch.Tensor:
     return _cpu.ccl2d(x, connectivity)  # pragma: no cover
 
 
-def ccl3d(x: torch.Tensor, connectivity: Literal[6, 18, 26] = 26) -> torch.Tensor:
+def ccl3d(x: torch.Tensor, *, connectivity: Literal[6, 18, 26] = 26) -> torch.Tensor:
     """Run Connected Components Labeling on 3D batches of volumes.
 
     Note
