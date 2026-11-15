@@ -5,18 +5,47 @@ on:
       - "*.*.*"
 jobs:
   build:
-    name: build (${{ matrix.cuda }}, python ${{ matrix.python-version }})
+    name: build (${{ matrix.cuda-version }}, python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
       fail-fast: true
       matrix:
-        cuda:
-          # One build per CUDA version, like PyTorch.
-          # The group and the Nix shell are defined in pyproject.toml and flake.nix.
-          [cu126, cu128, cu130, cu132, cu134]
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        # One line per build, like PyTorch. Follows the README compatibility matrix.
+        # The CUDA group and the Nix shell are defined in pyproject.toml and flake.nix.
+        # The locked Torch of each group sets the Python range.
+        # Python 3.10 has been dropped because it reached EoL.
+        include:
+          # CUDA 12.6 (3.10 to 3.15)
+          - { cuda-version: cu126, python-version: "3.11" }
+          - { cuda-version: cu126, python-version: "3.12" }
+          - { cuda-version: cu126, python-version: "3.13" }
+          - { cuda-version: cu126, python-version: "3.14" }
+          - { cuda-version: cu126, python-version: "3.15" }
+          # CUDA 12.8 (3.10 to 3.14)
+          - { cuda-version: cu128, python-version: "3.11" }
+          - { cuda-version: cu128, python-version: "3.12" }
+          - { cuda-version: cu128, python-version: "3.13" }
+          - { cuda-version: cu128, python-version: "3.14" }
+          # CUDA 13.0 (3.10 to 3.15)
+          - { cuda-version: cu130, python-version: "3.11" }
+          - { cuda-version: cu130, python-version: "3.12" }
+          - { cuda-version: cu130, python-version: "3.13" }
+          - { cuda-version: cu130, python-version: "3.14" }
+          - { cuda-version: cu130, python-version: "3.15" }
+          # CUDA 13.2 (3.10 to 3.15)
+          - { cuda-version: cu132, python-version: "3.11" }
+          - { cuda-version: cu132, python-version: "3.12" }
+          - { cuda-version: cu132, python-version: "3.13" }
+          - { cuda-version: cu132, python-version: "3.14" }
+          - { cuda-version: cu132, python-version: "3.15" }
+          # CUDA 13.4 (3.11 to 3.15)
+          - { cuda-version: cu134, python-version: "3.11" }
+          - { cuda-version: cu134, python-version: "3.12" }
+          - { cuda-version: cu134, python-version: "3.13" }
+          - { cuda-version: cu134, python-version: "3.14" }
+          - { cuda-version: cu134, python-version: "3.15" }
     steps:
       - name: sync-code
         uses: actions/checkout@v4
@@ -25,13 +54,13 @@ jobs:
         uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
       - name: install-deps
         run: >
-          nix develop .#${{ matrix.cuda }}-ci -c
+          nix develop .#${{ matrix.cuda-version }}-ci -c
           uv sync --locked --python ${{ matrix.python-version }}
-          --no-default-groups --group build --group ${{ matrix.cuda }}
+          --no-default-groups --group build --group ${{ matrix.cuda-version }}
           --no-install-project
       - name: build
         run: >
-          nix develop .#${{ matrix.cuda }}-ci -c
+          nix develop .#${{ matrix.cuda-version }}-ci -c
           uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
       # The extension must not depend on anything from the Nix store
       - name: check
@@ -50,7 +79,7 @@ jobs:
       - name: upload
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.cuda }}-py${{ matrix.python-version }}
+          name: wheel-${{ matrix.cuda-version }}-py${{ matrix.python-version }}
           path: dist/*.whl
           if-no-files-found: error
           retention-days: 1
