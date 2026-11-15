@@ -10,6 +10,7 @@ import torch
 
 from torchcc.constants import BATCH_2D_DIM, BATCH_3D_DIM
 
+# Whether the optional OpenCV backend (2D on CPU) is available
 try:
     import cv2
 except ImportError:  # pragma: no cover
@@ -17,6 +18,7 @@ except ImportError:  # pragma: no cover
 else:
     CV2_INSTALLED = True
 
+# Whether the optional connected-components-3d backend (3D on CPU) is available
 try:
     import cc3d as cpucc3d
 except ImportError:  # pragma: no cover

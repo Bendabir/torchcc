@@ -8,5 +8,7 @@ if TYPE_CHECKING:
     from typing import Final
 
 
+# Number of dimensions of a batch of images [N, H, W]
 BATCH_2D_DIM: Final = 3
+# Number of dimensions of a batch of volumes [N, H, W, D]
 BATCH_3D_DIM: Final = 4
