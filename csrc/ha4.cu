@@ -143,8 +143,9 @@ namespace ha4
         }
 
         // Merge the runs across the strip borders (first row of each strip but the first one).
-        // The 4 warps of a block share the chunks of the border row. Lane 0 counts as a run start :
-        // it is a node, and the union of a run that comes from a previous chunk is just redundant.
+        // One warp per (border row, chunk of 32 pixels) : warp ty of block (group, chunk) handles
+        // the border row of strip group * 4 + ty. Lane 0 counts as a run start : it is a node,
+        // and the union of a run that comes from a previous chunk is just redundant.
         __global__ void borderMerge(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
@@ -155,11 +156,13 @@ namespace ha4
             const uint32_t n)
         {
             const uint32_t tx = threadIdx.x;
-            const uint32_t ty = threadIdx.y;
-            const uint32_t y = blockIdx.x * HA4_2D_BLOCK_ROWS;
+            const uint32_t chunks = (w + HA4_2D_BLOCK_COLS - 1) / HA4_2D_BLOCK_COLS;
+            const uint32_t strip = (blockIdx.x / chunks) * HA4_2D_BLOCK_ROWS + threadIdx.y;
+            const uint32_t x = (blockIdx.x % chunks) * HA4_2D_BLOCK_COLS + tx;
+            const uint32_t y = strip * HA4_2D_BLOCK_ROWS;
             const uint32_t depth = blockIdx.z;
 
-            // Same for the whole block (no barrier in this kernel)
+            // Same for the whole warp (no barrier in this kernel)
             if ((y == 0) || (y >= h) || (depth >= n))
             {
                 return;
@@ -167,28 +170,20 @@ namespace ha4
 
             const uint8_t *const g_img = g_batch_img + depth * sn + y * sh;
             int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
-            const uint32_t line = y * w;
+            const bool p = (x < w) && g_img[x];
+            const bool p_y1 = (x < w) && g_img[static_cast<int64_t>(x) - sh];
+            const uint32_t s_y = startDistance(__ballot_sync(FULL_MASK, p), tx);
+            const uint32_t s_y1 = startDistance(__ballot_sync(FULL_MASK, p_y1), tx);
+            const uint32_t k = y * w + x;
 
-            // Loop bound only depends on ty, so all the lanes of a warp stay active for the ballots
-            // NOTE : Same remark for this loop
-            for (uint32_t i = ty * HA4_2D_BLOCK_COLS; i < w; i += HA4_2D_BLOCK_ROWS * HA4_2D_BLOCK_COLS)
+            if (p && p_y1 && ((s_y == 0) || (s_y1 == 0)))
             {
-                const uint32_t x = i + tx;
-                const bool p = (x < w) && g_img[x];
-                const bool p_y1 = (x < w) && g_img[static_cast<int64_t>(x) - sh];
-                const uint32_t s_y = startDistance(__ballot_sync(FULL_MASK, p), tx);
-                const uint32_t s_y1 = startDistance(__ballot_sync(FULL_MASK, p_y1), tx);
-                const uint32_t k = line + x;
-
-                if (p && p_y1 && ((s_y == 0) || (s_y1 == 0)))
-                {
-                    uf::computeUnion<1>(g_labels, k - s_y + 1, k - w - s_y1 + 1);
-                }
+                uf::computeUnion<1>(g_labels, k - s_y + 1, k - w - s_y1 + 1);
             }
         }
 
-        // Each node finds its root, its run gets it with a shuffle, then every lane writes its pixel
-        // (background included), so 32 consecutive int32 per warp per chunk.
+        // One warp per (row, chunk of 32 pixels). Each node finds its root, its run gets it with a shuffle,
+        // then every lane writes its pixel (background included), so 32 consecutive int32 per warp.
         __global__ void relabel(
             const uint8_t *__restrict__ const g_batch_img,
             const int64_t sn,
@@ -199,7 +194,9 @@ namespace ha4
             const uint32_t n)
         {
             const uint32_t tx = threadIdx.x;
-            const uint32_t y = blockIdx.x * HA4_2D_BLOCK_ROWS + threadIdx.y;
+            const uint32_t chunks = (w + HA4_2D_BLOCK_COLS - 1) / HA4_2D_BLOCK_COLS;
+            const uint32_t y = (blockIdx.x / chunks) * HA4_2D_BLOCK_ROWS + threadIdx.y;
+            const uint32_t x = (blockIdx.x % chunks) * HA4_2D_BLOCK_COLS + tx;
             const uint32_t depth = blockIdx.z;
 
             // Same for the whole warp (no barrier in this kernel)
@@ -210,29 +207,22 @@ namespace ha4
 
             const uint8_t *const g_img = g_batch_img + depth * sn + y * sh;
             int32_t *const g_labels = g_batch_labels + static_cast<int64_t>(depth) * h * w;
-            const uint32_t line = y * w;
+            const bool p = (x < w) && g_img[x];
+            const uint32_t s = startDistance(__ballot_sync(FULL_MASK, p), tx);
+            const uint32_t k = y * w + x;
+            uint32_t root = 0;
 
-            // NOTE : Same remark for this loop
-            for (uint32_t i = 0; i < w; i += HA4_2D_BLOCK_COLS)
+            if (p && (s == 0))
             {
-                const uint32_t x = i + tx;
-                const bool p = (x < w) && g_img[x];
-                const uint32_t s = startDistance(__ballot_sync(FULL_MASK, p), tx);
-                const uint32_t k = line + x;
-                uint32_t root = 0;
+                root = uf::find<1>(g_labels, k + 1);
+            }
 
-                if (p && (s == 0))
-                {
-                    root = uf::find<1>(g_labels, k + 1);
-                }
+            // Labels are 1-based, so the root label is the final label
+            const uint32_t label = __shfl_sync(FULL_MASK, root, tx - s);
 
-                // Labels are 1-based, so the root label is the final label
-                const uint32_t label = __shfl_sync(FULL_MASK, root, tx - s);
-
-                if (x < w)
-                {
-                    g_labels[k] = p ? label : 0;
-                }
+            if (x < w)
+            {
+                g_labels[k] = p ? label : 0;
             }
         }
     }

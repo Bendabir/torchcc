@@ -43,7 +43,11 @@ namespace
         const int64_t sn = b.img.stride(0);
         const int64_t sh = b.img.stride(1);
         const dim3 block = dim3(HA4_2D_BLOCK_COLS, HA4_2D_BLOCK_ROWS);
-        const uint32_t strips = (b.h + HA4_2D_BLOCK_ROWS - 1) / HA4_2D_BLOCK_ROWS; // grid.x goes to 2^31 - 1
+        // grid.x goes to 2^31 - 1 and h * w <= INT32_MAX, so no limit on h or w here
+        const uint32_t strips = (b.h + HA4_2D_BLOCK_ROWS - 1) / HA4_2D_BLOCK_ROWS;
+        const uint32_t chunks = (b.w + HA4_2D_BLOCK_COLS - 1) / HA4_2D_BLOCK_COLS;
+        // borderMerge : one warp per border row, so a block covers 4 strips
+        const uint32_t strip_groups = (strips + HA4_2D_BLOCK_ROWS - 1) / HA4_2D_BLOCK_ROWS;
 
         // gridDim.z is limited, so launch the batch in chunks of images (one image per grid z)
         for (uint32_t first = 0; first < b.n; first += MAX_GRID_Z)
@@ -51,13 +55,12 @@ namespace
             const uint32_t count = std::min(b.n - first, MAX_GRID_Z);
             const uint8_t *const img = img_ptr + first * sn;
             int32_t *const labels = b.labels + static_cast<int64_t>(first) * b.h * b.w;
-            const dim3 grid = dim3(strips, 1, count);
 
-            ha4::ccl2d::stripLabeling<<<grid, block, 0, b.stream>>>(img, sn, sh, labels, b.w, b.h, count);
+            ha4::ccl2d::stripLabeling<<<dim3(strips, 1, count), block, 0, b.stream>>>(img, sn, sh, labels, b.w, b.h, count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
-            ha4::ccl2d::borderMerge<<<grid, block, 0, b.stream>>>(img, sn, sh, labels, b.w, b.h, count);
+            ha4::ccl2d::borderMerge<<<dim3(strip_groups * chunks, 1, count), block, 0, b.stream>>>(img, sn, sh, labels, b.w, b.h, count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
-            ha4::ccl2d::relabel<<<grid, block, 0, b.stream>>>(img, sn, sh, labels, b.w, b.h, count);
+            ha4::ccl2d::relabel<<<dim3(strips * chunks, 1, count), block, 0, b.stream>>>(img, sn, sh, labels, b.w, b.h, count);
             STD_CUDA_KERNEL_LAUNCH_CHECK();
         }
     }
