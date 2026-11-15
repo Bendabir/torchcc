@@ -73,7 +73,7 @@ def ccl2d(  # pragma: no cover
             raise ValueError("Input must be a batch of images [N, H, W].")
 
         data = x.numpy()
-        labels = np.zeros(data.shape, dtype=np.uint8)
+        labels = np.zeros(data.shape, dtype=np.int32)
 
         # NOTE : Use a threadpool to parallelize as much as possible ?
         #        OpenCV should release the GIL, so it could really improve performances.
@@ -139,7 +139,7 @@ def ccl3d(  # pragma: no cover
             raise ValueError("Input must be a batch of volumes [N, H, W, D].")
 
         data = x.numpy()
-        labels = np.zeros(data.shape, dtype=np.uint8)
+        labels = np.zeros(data.shape, dtype=np.int32)
 
         # NOTE : We need to investigate parallelization here.
         for i in range(len(data)):

@@ -449,6 +449,23 @@ def test_ccl2d_max_size(device: torch.device, connectivity: Literal[4, 8]) -> No
 
 
 @pytest.mark.parametrize("connectivity", [4, 8])
+def test_ccl2d_cpu_many_components(connectivity: Literal[4, 8]) -> None:
+    # Isolated pixels give 1024 components : labels must not wrap around at 255.
+    batch = np.zeros((2, 64, 64), dtype=np.uint8)
+    batch[:, ::2, ::2] = 1
+
+    with pytest.warns(UserWarning, match="Falling back to OpenCV"):
+        labels = ccl2d(torch.from_numpy(batch), connectivity=connectivity)
+
+    expected = np.stack([
+        cv2.connectedComponents(img, connectivity=connectivity)[1] for img in batch
+    ])
+
+    assert labels.dtype == torch.int32
+    np.testing.assert_array_equal(labels.numpy(), expected, strict=True)
+
+
+@pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
 def test_ccl2d_labels_per_image(
     device: torch.device,
