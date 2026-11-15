@@ -61,7 +61,7 @@ All algorithms are implemented in a batch fashion for easy integration with PyTo
 ### 2D Connected Components Labeling
 
 ```python
-labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W]
+labels = torchcc.ccl2d(masks, connectivity = 8) # masks : [N x H x W], connectivity 4 or 8
 ```
 
 ### 3D Connected Components Labeling
@@ -245,13 +245,13 @@ just test # Extra arguments go to pytest, for example : just test -k ccl2d
 
 The following algorithms are used in the implementation. Some algorithms are not implemented yet. This is still a work in progress.
 
-| Geometry | Connectivity | Algorithm | References | Implemented |
-| -------- | ------------ | --------- | ---------- | :---------: |
-| 2D       | 4            | HA4       | [3], [4]   |     ❌      |
-| 2D       | 8            | BUF       | [1], [3]   |     ✔️      |
-| 3D       | 6            |           |            |     ❌      |
-| 3D       | 18           |           |            |     ❌      |
-| 3D       | 26           | BUF       | [1], [3]   |     ❌      |
+| Task | Geometry | Connectivity | Algorithm | References | Implemented |
+| ---- | -------- | ------------ | --------- | ---------- | :---------: |
+| CCL  | 2D       | 4            | HA4       | [3], [4]   |     ✔️      |
+| CCL  | 2D       | 8            | BUF       | [1], [3]   |     ✔️      |
+| CCL  | 3D       | 6            |           |            |     ❌      |
+| CCL  | 3D       | 18           |           |            |     ❌      |
+| CCL  | 3D       | 26           | BUF       | [1], [3]   |     ❌      |
 
 ## References
 
@@ -274,12 +274,3 @@ Deeper details on CUDA can be found here.
 - [CUDA Tutorial 2022 Part 1 : Introduction and CUDA Basics](https://cuda-tutorial.github.io/part1_22.pdf)
 - [CUDA Tutorial 2022 Part 2 : GPU Hardware Details](https://cuda-tutorial.github.io/part2_22.pdf)
 - [CUDA Cheatsheet](https://kdm.icm.edu.pl/Tutorials/GPU-intro/introduction.en)
-
-## TODOs
-
-Here is a list of possible improvements to investigate :
-
-- [ ] Proper benchmarking.
-- [ ] 2D 4-connectivity CCL.
-- [ ] 3D CCL.
-- [ ] Make IDs consecutive for 2D 8-connectivity CCL.
