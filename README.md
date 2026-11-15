@@ -1,10 +1,10 @@
 # Torch Connected Components
 
-TorchCC is a library that brings efficient CUDA implementations of Connected Components related algorithms (such as Connection Components Labeling).
+TorchCC is a library that brings efficient CUDA implementations of Connected Components related algorithms (such as Connected Components Labeling).
 CPU support is delegated to external libraries such as OpenCV. It is built to support multiple CUDA and PyTorch versions.
 
 > [!NOTE]
-> This library is still an early prototype. It's definitely not suitable for production. Only Linux is supported at the moment. Windows could probably be supported with some extra efforts.
+> This library is still an early prototype. It's definitely not suitable for production. Only Linux is supported at the moment. Windows can be built from source, but this is experimental and untested. There are no Windows wheels yet as this would require some more efforts. The provided instructions only describe Linux setup and builds.
 
 ## Install
 
@@ -15,14 +15,14 @@ You can install TorchCC by using a custom PyPI index. There is one index per sup
 #### pip
 
 ```bash
-pip install --index-url https://bendabir.github.io/pypi/cu126 torchcc
+pip install --index-url https://bendabir.github.io/pypi/cu126 "torchcc>=0.2.0"
 ```
 
 #### uv
 
 ```toml
 [project]
-dependencies = ["torchcc>=0.1.0"]
+dependencies = ["torchcc>=0.2.0"]
 
 [tool.uv.sources]
 torchcc = { index = "bendabir-cu126" }
@@ -42,7 +42,7 @@ url = "https://bendabir.github.io/pypi/cu126"
 priority = "explicit"
 
 [tool.poetry.dependencies]
-torchcc = { version = "^0.1.0", source = "bendabir-cu126" }
+torchcc = { version = "^0.2.0", source = "bendabir-cu126" }
 ```
 
 ### Direct Install
@@ -52,7 +52,7 @@ torchcc = { version = "^0.1.0", source = "bendabir-cu126" }
 
 1. Go to the [release page](https://github.com/Bendabir/torchcc/releases).
 2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
-3. Install it in your env. For example : `pip install torchcc-0.1.0+cu126-cp312-cp312-linux_x86_64.whl`
+3. Install it in your env. For example : `pip install torchcc-0.2.0+cu126-cp312-cp312-linux_x86_64.whl`
 
 ## Usage
 
@@ -105,6 +105,8 @@ TorchCC requires Python 3.11 or newer and PyTorch 2.10 or newer. It relies on th
 - ☑️ : Stable CUDA
 - 🟦 : Experimental CUDA
 - ❌ : Unsupported
+
+The minimum Python version is the one of PyTorch. TorchCC itself requires Python 3.11 or newer.
 
 More details : https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix
 
@@ -207,6 +209,35 @@ The CUDA Toolkit comes from Nix (see [`flake.nix`](./flake.nix)). Python, PyTorc
 
 Common tasks are available as [just](https://just.systems) recipes. Run `just` to list them. Recipes that depend on CUDA take the version as argument (default : `cu126`), for example `just build cu130`.
 
+### Tools
+
+| Tool                                                                                                                                    | Usage                                                                                           | Install                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Nix](https://nixos.org)                                                                                                                | CUDA Toolkit, compilers and `uv`. Flakes must be [enabled](https://wiki.nixos.org/wiki/Flakes). | [Download](https://nixos.org/download/)                            |
+| [just](https://just.systems)                                                                                                            | Task runner (see the [`justfile`](./justfile)).                                                 | [Packages](https://just.systems/man/en/packages.html)              |
+| [uv](https://docs.astral.sh/uv/)                                                                                                        | Python env, dependencies and wheel build.                                                       | [Install](https://docs.astral.sh/uv/getting-started/installation/) |
+| [prek](https://prek.j178.dev)                                                                                                           | Git hooks. Installed by `just init`.                                                            | Via `uv` (dev group)                                               |
+| [Ruff](https://docs.astral.sh/ruff/)                                                                                                    | Python format and lint.                                                                         | Via `uv` (dev group)                                               |
+| [ty](https://docs.astral.sh/ty/)                                                                                                        | Python type check.                                                                              | Via `uv` (dev group)                                               |
+| [nixfmt](https://github.com/NixOS/nixfmt), [deadnix](https://github.com/astro/deadnix), [statix](https://github.com/oppiliappan/statix) | Nix format and lint. Used by the git hooks.                                                     | Must be on your `PATH` (not in the Nix shell)                      |
+| [Prettier](https://prettier.io)                                                                                                         | JSON, Markdown and YAML format. Used by the git hooks.                                          | Managed by `prek`                                                  |
+
+Typical Nix usage :
+
+```bash
+nix develop .#cu126 # Shell with the CUDA 12.6 Toolkit
+nix develop .#cu126 -c <command> # Run one command in that shell
+```
+
+Typical just usage :
+
+```bash
+just # List recipes
+just init cu126 # Create the env
+just test -k ccl2d # Run a subset of the tests
+just data # Download the test datasets
+```
+
 ### Install
 
 Create the virtual env for a CUDA version (default `cu126`) and install the git hooks.
@@ -215,7 +246,7 @@ Create the virtual env for a CUDA version (default `cu126`) and install the git 
 just init cu126
 ```
 
-This runs `nix develop .#cu126 -c uv sync --group cu126` and `uv run prek install`.
+This runs `nix develop .#cu126 -c uv sync --group build --group cu126` and `uv run prek install`.
 
 The `cuXXX` shells provide a host compiler for local development. The `cuXXX-ci` shells do not, so the compiler of the machine is used (this is what CI does to build wheels).
 
@@ -262,7 +293,7 @@ One can define `TORCH_CUDA_ARCH_LIST` to tune the CUDA architectures the library
 MAX_JOBS=4 TORCH_CUDA_ARCH_LIST="7.0 7.2 7.5" just build cu126
 ```
 
-The library can be built with debug mode by defined the `DEBUG_MODE=true` env variable.
+The library can be built with debug mode by defining the `DEBUG_MODE=true` env variable.
 
 ### Quality
 
