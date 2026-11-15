@@ -17,6 +17,8 @@ The different improvements applied to 2D CCL represent a 2x to 4x improvements c
 
 ### Changed
 
+- Allow OpenCV 5 for CPU fallback (extras `opencv` and `opencv-headless`).
+- Allow Connected Components 3D 4 for CPU fallback (extra `cc3d`).
 - Move from Poetry to uv (with a lock file) and from `poetry-core` to setuptools.
 - Use the PyTorch stable ABI. Wheels now work with PyTorch 2.10 or newer.
 - Build one wheel per CUDA version (12.6, 12.8, 13.0, 13.2 and 13.4) and per Python version, like PyTorch. CUDA is provided by Nix in CI.

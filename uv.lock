@@ -2884,9 +2884,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "connected-components-3d", marker = "extra == 'cc3d'", specifier = ">=3.0,<4" },
-    { name = "opencv-python", marker = "extra == 'opencv'", specifier = ">=4.0,<5" },
-    { name = "opencv-python-headless", marker = "extra == 'opencv-headless'", specifier = ">=4.0,<5" },
+    { name = "connected-components-3d", marker = "extra == 'cc3d'", specifier = ">=3.0,<5" },
+    { name = "opencv-python", marker = "extra == 'opencv'", specifier = ">=4.0,<6" },
+    { name = "opencv-python-headless", marker = "extra == 'opencv-headless'", specifier = ">=4.0,<6" },
     { name = "torch", specifier = ">=2.10,<3" },
 ]
 provides-extras = ["opencv", "opencv-headless", "cc3d"]
@@ -2917,9 +2917,9 @@ cu134 = [
     { name = "torch", specifier = ">=2.15,<3", index = "https://download.pytorch.org/whl/cu134", conflict = { package = "torchcc", group = "cu134" } },
 ]
 dev = [
-    { name = "connected-components-3d", specifier = ">=3.0,<4" },
+    { name = "connected-components-3d", specifier = ">=3.0,<5" },
     { name = "cyclopts", specifier = ">=5.0,<6" },
-    { name = "opencv-python-headless", specifier = ">=4.0,<5" },
+    { name = "opencv-python-headless", specifier = ">=4.0,<6" },
     { name = "prek", specifier = ">=0.5,<1" },
     { name = "pytest", specifier = ">=9.0,<10" },
     { name = "pytest-cov", specifier = ">=7.0,<8" },

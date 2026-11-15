@@ -87,7 +87,7 @@ def ccl2d(  # pragma: no cover
 
     raise RuntimeError(
         "2D CCL on CPU is not natively supported. "
-        'Install OpenCV for CPU support : pip install "opencv-python-headless>=4,<5".'
+        'Install OpenCV for CPU support : pip install "opencv-python-headless>=4,<6".'
     )
 
 
@@ -153,5 +153,5 @@ def ccl3d(  # pragma: no cover
     raise RuntimeError(
         "3D CCL on CPU is not natively supported. "
         "Install ConnectedComponents3D for CPU support : "
-        'pip install "connected-components-3d>=3,<4".'
+        'pip install "connected-components-3d>=3,<5".'
     )
