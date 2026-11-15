@@ -49,6 +49,21 @@ jobs:
     steps:
       - name: sync-code
         uses: actions/checkout@v4
+      # The runner ships ~25 GB of tooling the build does not need. Removing it leaves room for the CUDA toolkit.
+      - name: free-disk-space
+        run: |
+          df -h /
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/share/dotnet \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/share/boost \
+            /usr/share/swift \
+            /opt/hostedtoolcache \
+            "${AGENT_TOOLSDIRECTORY:-}"
+          sudo docker image prune --all --force || true
+          df -h /
       # Nix only provides the CUDA toolkit. Python, PyTorch and NVIDIA libs come from PyPI.
       - name: setup-nix
         uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
