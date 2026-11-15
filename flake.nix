@@ -25,6 +25,8 @@
 
       # Compiler overrides, when the default one of a CUDA version does not build.
       stdenvs = {
+        # CUDA 12.6 needs G++ < 14, the host one is too new
+        cu126 = pkgs.gcc13Stdenv;
         # CUDA 12.8 fails with the default G++ 14
         cu128 = pkgs.gcc13Stdenv;
       };
