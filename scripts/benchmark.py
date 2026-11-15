@@ -1,7 +1,6 @@
 """Copyright (c) 2026 Bendabir.
 
-Benchmark CPU vs GPU 2D Connected Components Labeling (4-connectivity is not yet
-supported on GPU, so 8-connectivity is used) on the YACCLAB datasets.
+Benchmark CPU vs GPU 2D Connected Components Labeling on the YACCLAB datasets.
 
 Run `just data` first, then : `uv run --no-sync python scripts/benchmark.py`.
 """
@@ -17,7 +16,7 @@ from collections import Counter
 # Cyclopts resolves the type hints at runtime.
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import cv2
 import cyclopts
@@ -39,7 +38,6 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("benchmark")
 
 MS: Final = 1e3
-CONNECTIVITY: Final = 8
 # Max images read per dataset to find the most common shape (datasets are huge).
 SCAN_LIMIT: Final = 512
 # Check images are tiny edge cases, not representative.
@@ -139,6 +137,7 @@ def main(
     warmup: int = 3,
     repeats: int = 10,
     device: str = "cuda:0",
+    connectivity: Literal[4, 8] = 8,
 ) -> None:
     """Benchmark CPU vs GPU 2D Connected Components Labeling.
 
@@ -156,6 +155,8 @@ def main(
         Number of timed calls.
     device : str
         GPU to use.
+    connectivity : Literal[4, 8]
+        Connectivity for the connected components labeling.
     """
     logging.basicConfig(
         level=logging.INFO,
@@ -168,7 +169,7 @@ def main(
     gpu = torch.device(device)
     gpu_name = torch.cuda.get_device_name(gpu)
     opts = {"warmup": warmup, "repeats": repeats}
-    table = Table(title=f"ccl2d, {CONNECTIVITY}-connectivity, {gpu_name} (median, ms)")
+    table = Table(title=f"ccl2d, {connectivity}-connectivity, {gpu_name} (median, ms)")
 
     LOGGER.info("GPU : %s", gpu_name)
 
@@ -196,17 +197,17 @@ def main(
                 x = batch[:size]
                 x_gpu = x.to(gpu)
                 cpu = measure(
-                    lambda x=x: torchcc.ccl2d(x, connectivity=CONNECTIVITY),
+                    lambda x=x: torchcc.ccl2d(x, connectivity=connectivity),
                     **opts,
                 )
                 on_gpu = measure(
-                    lambda x=x_gpu: torchcc.ccl2d(x, connectivity=CONNECTIVITY),
+                    lambda x=x_gpu: torchcc.ccl2d(x, connectivity=connectivity),
                     **opts,
                 )
                 e2e = measure(
                     lambda x=x: torchcc.ccl2d(
                         x.to(gpu),
-                        connectivity=CONNECTIVITY,
+                        connectivity=connectivity,
                     ).cpu(),
                     **opts,
                 )
