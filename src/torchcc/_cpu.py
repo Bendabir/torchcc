@@ -87,7 +87,7 @@ def ccl2d(  # pragma: no cover
 
     raise RuntimeError(
         "2D CCL on CPU is not natively supported. "
-        'Install OpenCV for CPU support : pip install "opencv-python-headless>=4,<5".'
+        'Install OpenCV for CPU support : pip install "opencv-python-headless>=4,<6".'
     )
 
 
