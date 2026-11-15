@@ -54,6 +54,16 @@ torchcc = { version = "^0.2.0", source = "bendabir-cu126" }
 2. Download a Wheel file for your version of CUDA and Python. Not all versions are supported (see [the compatibility matrix](#compatibility)).
 3. Install it in your env. For example : `pip install torchcc-0.2.0+cu126-cp312-cp312-linux_x86_64.whl`
 
+### Verify a Wheel
+
+Release wheels are signed with [Sigstore](https://docs.sigstore.dev/) (GitHub artifact attestations). To check that a wheel comes from this repository's release workflow :
+
+```bash
+gh attestation verify torchcc-0.2.0+cu126-cp312-cp312-linux_x86_64.whl --repo bendabir/torchcc
+```
+
+Only wheels from releases made after this change carry an attestation.
+
 ## Usage
 
 All algorithms are implemented in a batch fashion for easy integration with PyTorch.
@@ -249,6 +259,7 @@ Common tasks are available as [just](https://just.systems) recipes. Run `just` t
 | [ty](https://docs.astral.sh/ty/)                                                                                                        | Python type check.                                                                              | Via `uv` (dev group)                                               |
 | [nixfmt](https://github.com/NixOS/nixfmt), [deadnix](https://github.com/astro/deadnix), [statix](https://github.com/oppiliappan/statix) | Nix format and lint. Used by the git hooks.                                                     | Must be on your `PATH` (not in the Nix shell)                      |
 | [Prettier](https://prettier.io)                                                                                                         | JSON, Markdown and YAML format. Used by the git hooks.                                          | Managed by `prek`                                                  |
+| [GitHub CLI](https://cli.github.com)                                                                                                    | Optional. Verify the signature of a release wheel (see [Verify a Wheel](#verify-a-wheel)).      | [Install](https://github.com/cli/cli#installation)                 |
 
 Typical Nix usage :
 

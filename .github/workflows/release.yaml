@@ -105,6 +105,8 @@ jobs:
       - build
     permissions:
       contents: write
+      id-token: write # Sigstore keyless signing
+      attestations: write
     steps:
       # Sync code to get the changelog, we could go for auto-generation
       # We will inject the full changelog every time, not for the best...
@@ -116,6 +118,11 @@ jobs:
           path: dist
           pattern: "*.whl"
           merge-multiple: true # Send all artifacts to the same directory
+      # Signed with Sigstore. Verify with : gh attestation verify <wheel> --repo bendabir/torchcc
+      - name: attest
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/*.whl
       - name: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
