@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, final
 
@@ -19,6 +20,9 @@ if TYPE_CHECKING:
 # Couldn't find a better way to do this
 TORCH_CUDA_ARCH_LIST: Final = "TORCH_CUDA_ARCH_LIST"
 DEBUG_MODE: Final = "DEBUG_MODE"
+
+# NOTE : Windows support is experimental and untested.
+IS_WINDOWS: Final = sys.platform == "win32"
 
 # Restrict to the PyTorch stable ABI introduced in 2.10, whatever PyTorch version
 # is used to build. Format : (major << 56) | (minor << 48)
@@ -133,7 +137,6 @@ if TORCH_CUDA_ARCH_LIST not in os.environ:
 
 def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
     extra_compile_args = [
-        "-D__STRICT_ANSI__",
         "-DCUDA_HAS_FP16=1",
         "-D__CUDA_NO_HALF_OPERATORS__",
         "-D__CUDA_NO_HALF_CONVERSIONS__",
@@ -144,6 +147,10 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
         "-O0" if debug_mode else "-O3",
     ]
 
+    # Assumed to conflict with the MSVC headers (not verified)
+    if not IS_WINDOWS:
+        extra_compile_args.append("-D__STRICT_ANSI__")
+
     if debug_mode:
         extra_compile_args.append("-g")
 
@@ -151,22 +158,22 @@ def _nvcc_extra_compile_args(*, debug_mode: bool) -> list[str]:
 
 
 def _cxx_extra_compile_args(*, debug_mode: bool) -> list[str]:
-    extra_compile_args = [
-        f"-DTORCH_TARGET_VERSION={TORCH_TARGET_VERSION}",
-        "-O0" if debug_mode else "-O3",
-    ]
+    extra_compile_args = [f"-DTORCH_TARGET_VERSION={TORCH_TARGET_VERSION}"]
 
-    if debug_mode:
-        extra_compile_args.append("-g")
+    # MSVC doesn't know the GCC flags
+    if IS_WINDOWS:
+        extra_compile_args.extend(["/Od", "/Zi"] if debug_mode else ["/O2"])
+    else:
+        extra_compile_args.extend(["-O0", "-g"] if debug_mode else ["-O3"])
 
     return extra_compile_args
 
 
 def _extra_link_args(*, debug_mode: bool) -> list[str]:
-    if debug_mode:
-        return ["-O0", "-g"]
+    if not debug_mode:
+        return []
 
-    return []
+    return ["/DEBUG"] if IS_WINDOWS else ["-O0", "-g"]
 
 
 def _include_dirs() -> list[str]:
