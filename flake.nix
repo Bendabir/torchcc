@@ -42,8 +42,11 @@
             (lib.getLib cudaPackages.cuda_cudart)
             (lib.getStatic cudaPackages.cuda_cudart)
           ]
-          # CUDA 13 moved the crt/ headers out of cuda_nvcc
-          ++ lib.optional (cudaPackages ? cuda_crt) cudaPackages.cuda_crt;
+          # CUDA 13 moved the crt/ headers out of cuda_nvcc.
+          # CUDA 12 has an unsupported cuda_crt stub, so check availability too.
+          ++ lib.optional (
+            cudaPackages ? cuda_crt && lib.meta.availableOn pkgs.stdenv.hostPlatform cudaPackages.cuda_crt
+          ) cudaPackages.cuda_crt;
           postBuild = "[ -e $out/lib64 ] || ln -s lib $out/lib64";
         };
 
