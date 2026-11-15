@@ -221,8 +221,11 @@ def test_ccl3d_large_batch(device: torch.device, seed: int) -> None:
 
 @pytest.mark.parametrize(
     "order",
-    [(0, 1, 3, 2), (0, 3, 2, 1), (0, 2, 1, 3)],
-    ids=["columns", "planes", "rows"],
+    [
+        pytest.param((0, 1, 3, 2), id="columns"),
+        pytest.param((0, 3, 2, 1), id="planes"),
+        pytest.param((0, 2, 1, 3), id="rows"),
+    ],
 )
 @REQUIRES_CUDA
 def test_ccl3d_non_contiguous(
@@ -280,8 +283,12 @@ def test_ccl3d_crop(
 
 @pytest.mark.parametrize(
     "shape",
-    [(0, 8, 8, 8), (2, 0, 5, 5), (2, 5, 0, 5), (2, 5, 5, 0)],
-    ids=["no-volume", "no-plane", "no-row", "no-column"],
+    [
+        pytest.param((0, 8, 8, 8), id="no-volume"),
+        pytest.param((2, 0, 5, 5), id="no-plane"),
+        pytest.param((2, 5, 0, 5), id="no-row"),
+        pytest.param((2, 5, 5, 0), id="no-column"),
+    ],
 )
 @REQUIRES_CUDA
 def test_ccl3d_empty(device: torch.device, shape: tuple[int, int, int, int]) -> None:
@@ -352,8 +359,12 @@ def test_ccl3d_not_implemented(
 
 @pytest.mark.parametrize(
     "shape",
-    [(1,), (32, 32), (4, 32, 32), (2, 4, 8, 32, 32)],
-    ids=["dim-1", "dim-2", "dim-3", "dim-5"],
+    [
+        pytest.param((1,), id="dim-1"),
+        pytest.param((32, 32), id="dim-2"),
+        pytest.param((4, 32, 32), id="dim-3"),
+        pytest.param((2, 4, 8, 32, 32), id="dim-5"),
+    ],
 )
 @REQUIRES_CUDA
 def test_ccl3d_input_shape(device: torch.device, shape: tuple[int, ...]) -> None:
@@ -369,14 +380,13 @@ def test_ccl3d_input_shape(device: torch.device, shape: tuple[int, ...]) -> None
 @pytest.mark.parametrize(
     "dtype",
     [
-        torch.uint16,
-        torch.int8,
-        torch.int32,
-        torch.int64,
-        torch.float32,
-        torch.bool,
+        pytest.param(torch.uint16, id="uint16"),
+        pytest.param(torch.int8, id="int8"),
+        pytest.param(torch.int32, id="int32"),
+        pytest.param(torch.int64, id="int64"),
+        pytest.param(torch.float32, id="float32"),
+        pytest.param(torch.bool, id="bool"),
     ],
-    ids=["uint16", "int8", "int32", "int64", "float32", "bool"],
 )
 @REQUIRES_CUDA
 def test_ccl3d_input_type(device: torch.device, dtype: torch.dtype) -> None:

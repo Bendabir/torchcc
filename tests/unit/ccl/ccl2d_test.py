@@ -52,8 +52,10 @@ def consecutivize(labels: npt.NDArray[np.int32]) -> npt.NDArray[np.int32]:
 )
 @pytest.mark.parametrize(
     "contiguous",
-    [True, False],
-    ids=["contiguous", "non-contiguous"],
+    [
+        pytest.param(True, id="contiguous"),
+        pytest.param(False, id="non-contiguous"),
+    ],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
@@ -135,8 +137,10 @@ def test_ccl2d(
 )
 @pytest.mark.parametrize(
     "contiguous",
-    [True, False],
-    ids=["contiguous", "non-contiguous"],
+    [
+        pytest.param(True, id="contiguous"),
+        pytest.param(False, id="non-contiguous"),
+    ],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
@@ -283,8 +287,11 @@ def test_ccl2d_large_batch(
 
 @pytest.mark.parametrize(
     "shape",
-    [(0, 8, 8), (2, 0, 5), (2, 5, 0)],
-    ids=["no-image", "no-row", "no-column"],
+    [
+        pytest.param((0, 8, 8), id="no-image"),
+        pytest.param((2, 0, 5), id="no-row"),
+        pytest.param((2, 5, 0), id="no-column"),
+    ],
 )
 @REQUIRES_CUDA
 def test_ccl2d_empty(device: torch.device, shape: tuple[int, int, int]) -> None:
@@ -374,8 +381,11 @@ def test_ccl2d_connectivity(connectivity: int, device: torch.device) -> None:
 
 @pytest.mark.parametrize(
     "shape",
-    [(1), (32, 32), (4, 8, 32, 32)],
-    ids=["dim-1", "dim-2", "dim-4"],
+    [
+        pytest.param((1), id="dim-1"),
+        pytest.param((32, 32), id="dim-2"),
+        pytest.param((4, 8, 32, 32), id="dim-4"),
+    ],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
 @REQUIRES_CUDA
@@ -396,30 +406,17 @@ def test_ccl2d_input_shape(
 @pytest.mark.parametrize(
     "dtype",
     [
-        torch.uint16,
-        torch.uint32,
-        torch.uint64,
-        torch.int8,
-        torch.int16,
-        torch.int32,
-        torch.int64,
-        torch.float16,
-        torch.float32,
-        torch.float64,
-        torch.bool,
-    ],
-    ids=[
-        "uint16",
-        "uint32",
-        "uint64",
-        "int8",
-        "int16",
-        "int32",
-        "int64",
-        "float16",
-        "float32",
-        "float64",
-        "bool",
+        pytest.param(torch.uint16, id="uint16"),
+        pytest.param(torch.uint32, id="uint32"),
+        pytest.param(torch.uint64, id="uint64"),
+        pytest.param(torch.int8, id="int8"),
+        pytest.param(torch.int16, id="int16"),
+        pytest.param(torch.int32, id="int32"),
+        pytest.param(torch.int64, id="int64"),
+        pytest.param(torch.float16, id="float16"),
+        pytest.param(torch.float32, id="float32"),
+        pytest.param(torch.float64, id="float64"),
+        pytest.param(torch.bool, id="bool"),
     ],
 )
 @pytest.mark.parametrize("connectivity", [4, 8])
