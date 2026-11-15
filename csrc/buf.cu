@@ -400,7 +400,8 @@ namespace buf
         //      3  4  5             12  X
         //      6  7  8
         constexpr uint32_t NEIGHBOURS = 13;
-        constexpr uint64_t BITS[NEIGHBOURS] = {
+        // __device__ : device code cannot index a host constexpr array with a runtime index
+        __device__ constexpr uint64_t BITS[NEIGHBOURS] = {
             0x0000'0000'0000'0001, // 0 : 0
             0x0000'0000'0000'0006, // 1 : 1, 2
             0x0000'0000'0000'0008, // 2 : 3
