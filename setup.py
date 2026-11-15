@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 import torch.version
 from setuptools import setup
+from setuptools.command.egg_info import egg_info
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 if TYPE_CHECKING:
@@ -178,6 +179,25 @@ def _include_dirs() -> list[str]:
     ]
 
 
+@final
+class _EggInfo(egg_info):
+    """Append the CUDA tag in the version, so the wheel name matches the metadata."""
+
+    # Must happen before `finalize_options`, which computes the egg version.
+    def finalize_options(self) -> None:
+        metadata = self.distribution.metadata
+
+        if torch.version.cuda is None:
+            raise RuntimeError("Couldn't infer CUDA version.")
+
+        major, minor = torch.version.cuda.split(".")[:2]
+
+        if "+" not in str(metadata.version):
+            metadata.version = f"{metadata.version}+cu{major}{minor}"
+
+        super().finalize_options()
+
+
 debug_mode = os.getenv(DEBUG_MODE, "false").strip().lower() == "true"
 
 csrc = Path("csrc")
@@ -199,6 +219,9 @@ setup(
             extra_link_args=_extra_link_args(debug_mode=debug_mode),
         )
     ],
-    cmdclass={"build_ext": BuildExtension.with_options(no_python_abi_suffix=True)},
+    cmdclass={
+        "build_ext": BuildExtension.with_options(no_python_abi_suffix=True),
+        "egg_info": _EggInfo,
+    },
     zip_safe=False,
 )
