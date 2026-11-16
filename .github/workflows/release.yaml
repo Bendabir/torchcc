@@ -125,7 +125,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: dist
-          pattern: "*.whl"
+          pattern: wheel-*
           merge-multiple: true # Send all artifacts to the same directory
       # Signed with Sigstore. Verify with : gh attestation verify <wheel> --repo bendabir/torchcc
       - name: attest
