@@ -294,7 +294,7 @@ just init cu126
 
 This runs `nix develop .#cu126 -c uv sync --group build --group cu126` and `uv run prek install`.
 
-The `cuXXX` shells provide a host compiler supported by the CUDA version. CI uses the same shells to build wheels, then strips the RPATH of the extension.
+The `cuXXX` shells provide a manylinux_2_28 toolchain (AlmaLinux gcc-toolset and glibc 2.28, from [Hugging Face kernels](https://github.com/huggingface/kernels)) supported by the CUDA version. CI uses the same shells, so the wheels run with glibc 2.28 or later, like the PyTorch wheels. Add `https://huggingface.cachix.org` to your Nix substituters to download glibc 2.28 instead of building it.
 
 #### Why `uv` does not sync automatically
 

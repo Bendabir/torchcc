@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "kernels": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794844568,
+        "narHash": "sha256-owuN3kNBxTY31JaPwRoz62aRqYq0q6DOr7BY3SwDhSs=",
+        "owner": "huggingface",
+        "repo": "kernels",
+        "rev": "91196ce248da8f6b9e0237e8fa00d0eeaec90f7e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "huggingface",
+        "repo": "kernels",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1794042290,
@@ -18,6 +34,7 @@
     },
     "root": {
       "inputs": {
+        "kernels": "kernels",
         "nixpkgs": "nixpkgs"
       }
     }

@@ -67,6 +67,11 @@ jobs:
       # Nix only provides the CUDA toolkit. Python, PyTorch and NVIDIA libs come from PyPI.
       - name: setup-nix
         uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
+        with:
+          # Prebuilt glibc 2.28 of the manylinux toolchain (see flake.nix)
+          extra_nix_config: |
+            extra-substituters = https://huggingface.cachix.org
+            extra-trusted-public-keys = huggingface.cachix.org-1:ynTPbLS0W8ofXd9fDjk1KvoFky9K2jhxe6r4nXAkc/o=
       - name: install-deps
         run: >
           nix develop .#${{ matrix.cuda-version }} -c
@@ -77,29 +82,25 @@ jobs:
         run: >
           nix develop .#${{ matrix.cuda-version }} -c
           uv build --wheel --no-build-isolation --no-config --python .venv/bin/python
-      # The Nix compiler sets an RPATH to the Nix store (glibc, libstdc++, CUDA).
-      # PyTorch is loaded by Python first, so the extension does not need it.
-      - name: strip-rpath
-        run: |
-          mkdir unpacked
-          unzip -q dist/*.whl -d unpacked
-          so=$(find unpacked -name "_cuda*.so")
-          nix develop .#${{ matrix.cuda-version }} -c patchelf --remove-rpath "$so"
-          rm dist/*.whl
-          # Repack so that RECORD matches the patched file
-          nix develop .#${{ matrix.cuda-version }} -c uvx --from wheel wheel pack unpacked --dest-dir dist
-      # The extension must not depend on anything from the Nix store
+      # The extension must not depend on the Nix store, and must run with glibc 2.28 (manylinux_2_28, like PyTorch)
       - name: check
         shell: bash
         run: |
+          mkdir unpacked
+          unzip -q dist/*.whl -d unpacked
           so=$(find unpacked -name "_cuda*.so")
           readelf -d "$so"
           if readelf -d "$so" | grep -q /nix/store; then
             echo "The extension refers to the Nix store." >&2
             exit 1
           fi
-          echo "Max. glibc symbol : $(objdump -T "$so" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
+          glibc=$(objdump -T "$so" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
+          echo "Max. glibc symbol : $glibc"
           echo "Max. GLIBCXX symbol : $(objdump -T "$so" | grep -o 'GLIBCXX_[0-9.]*' | sort -uV | tail -n 1)"
+          if [ "$(printf '%s\n' "$glibc" GLIBC_2.28 | sort -V | tail -n 1)" != GLIBC_2.28 ]; then
+            echo "The extension needs $glibc, above GLIBC_2.28." >&2
+            exit 1
+          fi
       # The wheel name already carries the CUDA tag (local version set in setup.py)
       - name: upload
         uses: actions/upload-artifact@v7
