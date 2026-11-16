@@ -1,7 +1,7 @@
 # --- project ---
 [project]
 name = "torchcc"
-version = "0.2.0"
+version = "0.2.1"
 description = "Efficient Connected Components Labeling for PyTorch."
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -9,7 +9,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Bendabir" }]
 keywords = ["torch"]
 requires-python = ">=3.11,<4"
-dependencies = ["torch>=2.10,<3"]
+dependencies = ["numpy>=1.0,<3", "torch>=2.10,<3"]
 
 [project.urls]
 Homepage = "https://github.com/bendabir/torchcc"
