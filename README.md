@@ -24,17 +24,28 @@ You can install TorchCC by using a custom PyPI index. There is one index per sup
 #### pip
 
 ```bash
-pip install --index-url https://bendabir.github.io/pypi/cu126 "torchcc>=0.2.0"
+pip install \
+    --index-url https://download.pytorch.org/whl/cu126 \
+    --extra-index-url https://bendabir.github.io/pypi/cu126 \
+    "torchcc>=0.2.0"
 ```
+
+The PyTorch index provides `torch` with the same CUDA version. Our index does not host PyTorch, so do not use it with `--index-url` alone. Without the PyTorch index, PyPI gives a `torch` built for its default CUDA version, which might be incompatible with the TorchCC version you've picked.
 
 #### uv
 
 ```toml
 [project]
-dependencies = ["torchcc>=0.2.0"]
+dependencies = ["torch>=2.10", "torchcc>=0.2.0"]
 
 [tool.uv.sources]
+torch = { index = "pytorch-cu126" }
 torchcc = { index = "bendabir-cu126" }
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
 
 [[tool.uv.index]]
 name = "bendabir-cu126"
@@ -42,15 +53,24 @@ url = "https://bendabir.github.io/pypi/cu126"
 explicit = true
 ```
 
+> [!NOTE]
+> Our index has no upload dates. With `exclude-newer` set (in `pyproject.toml` or `uv.toml`), uv hides every TorchCC wheel. Exclude the package from the cutoff, or disable the setting.
+
 #### Poetry
 
 ```toml
+[[tool.poetry.source]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+priority = "explicit"
+
 [[tool.poetry.source]]
 name = "bendabir-cu126"
 url = "https://bendabir.github.io/pypi/cu126"
 priority = "explicit"
 
 [tool.poetry.dependencies]
+torch = { version = "^2.10", source = "pytorch-cu126" }
 torchcc = { version = "^0.2.0", source = "bendabir-cu126" }
 ```
 
